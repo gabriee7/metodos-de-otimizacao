@@ -1,0 +1,16 @@
+# Material bruto de terceiros / pessoal — nunca publicar
+Métodos/
+Métodos.rar
+metodos-de-otimizacao-outro-aluno/
+metodos-de-otimizacao-outro-aluno.zip
+PlanoEnsino/
+PROMPT-INICIAL.md
+
+# binarios de teste local
+*.exe
+*.o
+*.obj
+
+# lixo de SO
+.DS_Store
+Thumbs.db

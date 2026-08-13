@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Exercícios — Métodos de Otimização</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+  <nav>
+    <a class="brand" href="../index.html">Métodos de Otimização</a>
+    <a href="teoria.html">Teoria</a>
+    <a href="exercicios.html" class="active">Exercícios</a>
+  </nav>
+
+  <div class="ex-lista-tabs">
+    <button class="ex-lista-tab active" data-prova="p1">P1 — TSP</button>
+    <button class="ex-lista-tab" data-prova="p2">P2 — sdTSP</button>
+    <button class="ex-lista-tab" data-prova="p3">P3 — PRCP</button>
+  </div>
+
+  <div class="ex-mobile-nav">
+    <label for="prova-select">Prova</label>
+    <select id="prova-select">
+      <option value="p1">P1 — TSP</option>
+      <option value="p2" disabled>P2 — sdTSP (em construção)</option>
+      <option value="p3" disabled>P3 — PRCP (em construção)</option>
+    </select>
+  </div>
+
+  <div class="ex-layout">
+    <aside class="ex-sidebar" data-prova="p1">
+      <div class="ex-sidebar-label">P1 — TSP</div>
+      <a href="#p1-q1" class="active"><span class="ex-num">1</span><span>Leitura da instância</span></a>
+      <a href="#p1-q2"><span class="ex-num">2</span><span>Struct de solução</span></a>
+      <a href="#p1-q3"><span class="ex-num">3</span><span>Escrita da solução</span></a>
+      <a href="#p1-q4"><span class="ex-num">4</span><span>Função objetivo</span></a>
+    </aside>
+
+    <div class="prova-conteudo" data-prova="p1">
+      <h1>P1 — Caixeiro Viajante (TSP)</h1>
+      <p>
+        Objetivo da prova: modelar o TSP em C — leitura de instância, struct de solução, escrita
+        de solução e função objetivo com penalização (peso α = 100 para cidades repetidas ou não
+        visitadas). Instância: matriz de custos n×n, formato dado abaixo.
+      </p>
+
+      <div class="math-block">n
+c11 c12 c13 ... c1n
+c21 c22 c23 ... c2n
+...
+cn1 cn2 cn3 ... cnn</div>
+
+      <div class="attn">
+        <strong>Pontos de atenção desta prova:</strong> zerar <code>valor_objetivo</code> no início
+        de <code>calcular_funcao_objetivo</code> (senão acumula entre chamadas); a rota é um ciclo
+        — não esquecer a aresta de volta da última cidade para a primeira; a função de escrita e a
+        de cálculo da FO recebem a solução <strong>por referência</strong> e retornam <code>void</code>,
+        como exige o enunciado; dimensionar os vetores com <code>#define</code> para o limite de 200
+        cidades, sem alocação dinâmica.
+      </div>
+
+      <div id="p1-q1" class="phase">
+        <div class="phase-head">
+          <span class="phase-tag">Q1 · 0,5</span>
+          <span class="phase-title">Leitura da instância</span>
+          <span class="phase-line"></span>
+        </div>
+        <div class="phase-body">
+          <p>
+            Lê o número de cidades e a matriz de custos de um arquivo texto, recebendo o
+            nome/diretório do arquivo por parâmetro. Os dados ficam em variáveis globais, como
+            exige o enunciado — evita passar a instância inteira por parâmetro em toda função.
+          </p>
+          <div class="math-block">void ler_instancia(const char *nome_arquivo) {
+    FILE *arquivo = fopen(nome_arquivo, "r");
+    if (arquivo == NULL) {
+        printf("Erro ao abrir o arquivo de instancia: %s\n", nome_arquivo);
+        exit(1);
+    }
+
+    fscanf(arquivo, "%d", &numero_cidades);
+
+    for (int i = 0; i < numero_cidades; i++)
+        for (int j = 0; j < numero_cidades; j++)
+            fscanf(arquivo, "%f", &matriz_custos[i][j]);
+
+    fclose(arquivo);
+}</div>
+        </div>
+      </div>
+
+      <div id="p1-q2" class="phase">
+        <div class="phase-head">
+          <span class="phase-tag">Q2 · 0,5</span>
+          <span class="phase-title">Struct de solução</span>
+          <span class="phase-line"></span>
+        </div>
+        <div class="phase-body">
+          <p>
+            A solução do TSP é a rota (permutação das cidades) e o valor da função objetivo
+            correspondente. <code>rota[k]</code> guarda a cidade visitada na k-ésima posição.
+          </p>
+          <div class="math-block">#define MAXIMO_CIDADES 200
+#define PESO_PENALIDADE 100
+
+extern int numero_cidades;
+extern float matriz_custos[MAXIMO_CIDADES][MAXIMO_CIDADES];
+
+typedef struct tSolucao {
+    int rota[MAXIMO_CIDADES];
+    float valor_objetivo;
+} Solucao;</div>
+        </div>
+      </div>
+
+      <div id="p1-q3" class="phase">
+        <div class="phase-head">
+          <span class="phase-tag">Q3 · 0,5</span>
+          <span class="phase-title">Escrita da solução</span>
+          <span class="phase-line"></span>
+        </div>
+        <div class="phase-body">
+          <p>Escreve a FO e a rota na tela e em arquivo, recebendo a solução por referência.</p>
+          <div class="math-block">void escrever_solucao(Solucao &s, const char *nome_arquivo) {
+    printf("Valor da FO: %.2f\n", s.valor_objetivo);
+    printf("Rota: ");
+    for (int k = 0; k < numero_cidades; k++)
+        printf("%d ", s.rota[k]);
+    printf("\n");
+
+    FILE *arquivo = fopen(nome_arquivo, "w");
+    if (arquivo == NULL) return;
+    fprintf(arquivo, "Valor da FO: %.2f\n", s.valor_objetivo);
+    fprintf(arquivo, "Rota: ");
+    for (int k = 0; k < numero_cidades; k++)
+        fprintf(arquivo, "%d ", s.rota[k]);
+    fprintf(arquivo, "\n");
+    fclose(arquivo);
+}</div>
+        </div>
+      </div>
+
+      <div id="p1-q4" class="phase">
+        <div class="phase-head">
+          <span class="phase-tag">Q4 · 1,0</span>
+          <span class="phase-title">Função objetivo com penalização</span>
+          <span class="phase-line"></span>
+        </div>
+        <div class="phase-body">
+          <p>
+            Soma o custo de percorrer o ciclo completo (incluindo a volta da última cidade para a
+            primeira) e penaliza, com o mesmo peso α = 100, cada cidade nunca visitada e cada
+            visita repetida além da primeira.
+          </p>
+          <div class="math-block">void calcular_funcao_objetivo(Solucao &s) {
+    s.valor_objetivo = 0.0f;
+
+    int quantidade_visitas[MAXIMO_CIDADES];
+    for (int i = 0; i < numero_cidades; i++)
+        quantidade_visitas[i] = 0;
+
+    for (int k = 0; k < numero_cidades; k++) {
+        int cidade_atual = s.rota[k];
+        int proxima_cidade = s.rota[(k + 1) % numero_cidades];
+        s.valor_objetivo += matriz_custos[cidade_atual][proxima_cidade];
+        quantidade_visitas[cidade_atual]++;
+    }
+
+    for (int i = 0; i < numero_cidades; i++) {
+        if (quantidade_visitas[i] == 0)
+            s.valor_objetivo += PESO_PENALIDADE;
+        else if (quantidade_visitas[i] > 1)
+            s.valor_objetivo += PESO_PENALIDADE * (quantidade_visitas[i] - 1);
+    }
+}</div>
+
+          <div class="exemplo">
+            <strong>Verificação por segundo caminho (instância toy, 5 cidades):</strong>
+            <p>Rota viável 0-1-2-3-4-0: custo manual 10+35+30,5+22+10 = <strong>107,50</strong> — bate com a saída do programa.</p>
+            <p>Rota inviável 0-1-1-3-3-0 (cidade 1 e 3 repetidas, cidades 2 e 4 nunca visitadas): custo de arestas 55,3 + 4×100 de penalidade = <strong>455,30</strong> — bate.</p>
+          </div>
+
+          <div class="attn">
+            <strong>Pegadinha comum:</strong> usar <code>%</code> (módulo) para fechar o ciclo —
+            <code>rota[(k+1) % numero_cidades]</code> — em vez de tratar a última aresta como caso
+            especial separado; os dois funcionam, mas esquecer completamente a aresta de volta
+            (tratar a rota como caminho aberto, não ciclo) é o erro mais comum aqui.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Material de estudo pessoal — COM10393 Métodos de Otimização, UFES.
+  </footer>
+
+  <script>
+    // navegação simples entre provas (tabs desktop + select mobile)
+    var tabs = document.querySelectorAll('.ex-lista-tab');
+    var select = document.getElementById('prova-select');
+
+    function ativarProva(prova) {
+      tabs.forEach(function (t) { t.classList.toggle('active', t.dataset.prova === prova); });
+      document.querySelectorAll('.ex-sidebar').forEach(function (s) {
+        s.style.display = s.dataset.prova === prova ? '' : 'none';
+      });
+      document.querySelectorAll('.prova-conteudo').forEach(function (c) {
+        c.style.display = c.dataset.prova === prova ? '' : 'none';
+      });
+      select.value = prova;
+    }
+
+    tabs.forEach(function (t) {
+      t.addEventListener('click', function () { ativarProva(t.dataset.prova); });
+    });
+    select.addEventListener('change', function () { ativarProva(select.value); });
+
+    ativarProva('p1');
+  </script>
+
+</body>
+</html>

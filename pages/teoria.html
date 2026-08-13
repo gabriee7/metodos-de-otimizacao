@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teoria — Métodos de Otimização</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+  <nav>
+    <a class="brand" href="../index.html">Métodos de Otimização</a>
+    <a href="teoria.html" class="active">Teoria</a>
+    <a href="exercicios.html">Exercícios</a>
+  </nav>
+
+  <main>
+    <h1>Teoria</h1>
+    <p>
+      Referência conceitual por unidade da ementa. Em construção — conforme as unidades forem
+      cobertas em aula, cada uma ganha aqui: conceito, algoritmo base em pseudocódigo,
+      calibração de parâmetros, quando aplicar e erros comuns.
+    </p>
+
+    <div class="phase">
+      <div class="phase-head">
+        <span class="phase-tag">CONCEITO</span>
+        <span class="phase-title">Heurística × Meta-heurística</span>
+        <span class="phase-line"></span>
+      </div>
+      <div class="phase-body">
+        <p>
+          Uma <strong>heurística</strong> é um procedimento específico para um problema, que busca
+          uma solução boa (não necessariamente ótima) em tempo razoável — ex.: uma regra gulosa de
+          construção. Uma <strong>meta-heurística</strong> é um framework genérico de busca,
+          aplicável a várias classes de problemas, que orquestra heurísticas (construtivas, de
+          vizinhança) com estratégias de escape de ótimos locais — ex.: Simulated Annealing, GRASP,
+          Algoritmos Genéticos.
+        </p>
+        <div class="attn">
+          <strong>Ponto de atenção:</strong> uma busca local "melhor melhora" ou "primeira melhora"
+          sozinha é heurística, não meta-heurística — ela fica presa no primeiro ótimo local.
+          Meta-heurísticas envolvem algum mecanismo de diversificação (aceitar piora, reiniciar,
+          perturbar) para escapar disso.
+        </div>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-head">
+        <span class="phase-tag">UNIDADES</span>
+        <span class="phase-title">Roteiro da ementa</span>
+        <span class="phase-line"></span>
+      </div>
+      <div class="phase-body">
+        <table class="tab">
+          <thead><tr><th>Unidade</th><th>Tópico</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>Introdução — heurística vs. meta-heurística</td><td><span class="badge badge-blue">em construção</span></td></tr>
+            <tr><td>2</td><td>Heurísticas construtivas e busca local</td><td><span class="badge badge-blue">em construção</span></td></tr>
+            <tr><td>3</td><td>Simulated Annealing</td><td><span class="badge badge-orange">pendente</span></td></tr>
+            <tr><td>4</td><td>Busca Tabu</td><td><span class="badge badge-orange">pendente</span></td></tr>
+            <tr><td>5</td><td>GRASP</td><td><span class="badge badge-orange">pendente</span></td></tr>
+            <tr><td>6</td><td>Algoritmos Genéticos</td><td><span class="badge badge-orange">pendente</span></td></tr>
+            <tr><td>7</td><td>VNS, ILS, Scatter Search, Colônia de Formigas</td><td><span class="badge badge-orange">pendente</span></td></tr>
+            <tr><td>8</td><td>Relaxação Lagrangiana</td><td><span class="badge badge-orange">pendente</span></td></tr>
+            <tr><td>9</td><td>Decomposição Dantzig-Wolfe e Geração de Colunas</td><td><span class="badge badge-orange">pendente</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    Material de estudo pessoal — COM10393 Métodos de Otimização, UFES.
+  </footer>
+
+</body>
+</html>

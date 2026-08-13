@@ -1,0 +1,441 @@
+/* ============================================================
+   Métodos de Otimização — Estilo Global
+   (mesmo design system do projeto irmão "Otimização Linear")
+   ============================================================ */
+
+:root {
+  --primary:    #1a56db;
+  --primary-dk: #1240a8;
+  --accent:     #0ea5e9;
+  --bg:         #f8fafc;
+  --surface:    #ffffff;
+  --border:     #e2e8f0;
+  --text:       #1e293b;
+  --text-muted: #64748b;
+  --success:    #16a34a;
+  --warning:    #d97706;
+  --danger:     #dc2626;
+  --radius:     8px;
+  --shadow:     0 1px 4px rgba(0,0,0,.08);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+}
+
+/* ── Navbar ── */
+nav {
+  background: var(--primary);
+  padding: .75rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  box-shadow: 0 2px 8px rgba(0,0,0,.18);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+nav .brand {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #fff;
+  text-decoration: none;
+  margin-right: auto;
+}
+
+nav a {
+  color: rgba(255,255,255,.85);
+  text-decoration: none;
+  font-size: .93rem;
+  padding: .3rem .6rem;
+  border-radius: var(--radius);
+  transition: background .15s, color .15s;
+}
+
+nav a:hover, nav a.active {
+  background: rgba(255,255,255,.18);
+  color: #fff;
+}
+
+/* ── Hero ── */
+.hero {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+  color: #fff;
+  text-align: center;
+  padding: 4rem 1.5rem 3rem;
+}
+
+.hero h1 { font-size: 2.4rem; font-weight: 800; margin-bottom: .5rem; }
+.hero p  { font-size: 1.1rem; opacity: .9; max-width: 560px; margin: 0 auto 1.8rem; }
+
+.hero-cards {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 2rem;
+}
+
+.hero-card {
+  background: rgba(255,255,255,.15);
+  border: 1px solid rgba(255,255,255,.3);
+  border-radius: var(--radius);
+  padding: 1.2rem 1.5rem;
+  width: 180px;
+  text-decoration: none;
+  color: #fff;
+  transition: background .2s, transform .2s;
+}
+
+.hero-card:hover {
+  background: rgba(255,255,255,.25);
+  transform: translateY(-3px);
+}
+
+.hero-card .icon { font-size: 2rem; display: block; margin-bottom: .4rem; }
+.hero-card span  { font-size: .92rem; font-weight: 500; }
+
+/* ── Layout ── */
+main {
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 0 1.2rem 3rem;
+}
+
+/* ── Section headings ── */
+h1 { font-size: 1.9rem; font-weight: 700; margin-bottom: 1rem; }
+h2 { font-size: 1.4rem; font-weight: 600; margin: 2rem 0 .7rem; color: var(--primary); border-bottom: 2px solid var(--border); padding-bottom: .3rem; }
+h3 { font-size: 1.1rem; font-weight: 600; margin: 1.4rem 0 .4rem; }
+p  { margin-bottom: .8rem; }
+
+/* ── Cards ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.4rem;
+  margin-bottom: 1.2rem;
+  box-shadow: var(--shadow);
+}
+
+.card-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-bottom: .7rem;
+  color: var(--primary);
+}
+
+/* ── Code / pseudocódigo ── */
+.math-block {
+  background: #f1f5f9;
+  border-left: 4px solid var(--primary);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  padding: .8rem 1.2rem;
+  margin: .8rem 0;
+  font-family: 'Courier New', monospace;
+  font-size: .95rem;
+  overflow-x: auto;
+  white-space: pre-wrap;
+}
+
+/* ── Badges ── */
+.badge {
+  display: inline-block;
+  padding: .15rem .55rem;
+  border-radius: 999px;
+  font-size: .78rem;
+  font-weight: 600;
+}
+.badge-blue   { background: #dbeafe; color: #1e40af; }
+.badge-green  { background: #dcfce7; color: #15803d; }
+.badge-orange { background: #ffedd5; color: #c2410c; }
+
+/* ── Botões ── */
+.btn {
+  display: inline-block;
+  padding: .55rem 1.3rem;
+  border-radius: var(--radius);
+  font-size: .95rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: background .15s, transform .1s;
+}
+
+.btn:active { transform: scale(.97); }
+
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover { background: var(--primary-dk); }
+.btn-outline { background: transparent; color: var(--primary); border: 2px solid var(--primary); }
+.btn-outline:hover { background: var(--primary); color: #fff; }
+.btn-sm { padding: .3rem .8rem; font-size: .85rem; }
+
+.btn-group { display: flex; gap: .6rem; flex-wrap: wrap; margin-top: 1rem; }
+
+/* ── Alertas ── */
+.alert {
+  padding: .8rem 1.1rem;
+  border-radius: var(--radius);
+  margin: .8rem 0;
+  font-size: .92rem;
+}
+.alert-info    { background: #eff6ff; border-left: 4px solid var(--primary); }
+.alert-success { background: #f0fdf4; border-left: 4px solid var(--success); }
+.alert-warning { background: #fffbeb; border-left: 4px solid var(--warning); }
+
+/* .attn é alias semântico de alert-warning, usado nos pontos de atenção
+   dos exercícios (pegadinhas de prova, erros comuns) */
+.attn { background: #fffbeb; border-left: 4px solid var(--warning); padding: .8rem 1.1rem; border-radius: var(--radius); margin: .8rem 0; font-size: .92rem; }
+
+/* .exemplo destaca um bloco de código/execução de exemplo dentro de um exercício */
+.exemplo { background: #eff6ff; border-left: 4px solid var(--primary); padding: .8rem 1.1rem; border-radius: var(--radius); margin: .8rem 0; }
+
+/* ── Steps (passo a passo numerado) ── */
+.step {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.2rem;
+  align-items: flex-start;
+}
+.step-num {
+  min-width: 2rem;
+  height: 2rem;
+  background: var(--primary);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: .9rem;
+  flex-shrink: 0;
+  margin-top: .1rem;
+}
+
+/* ── Phase (bloco de questão dentro de um exercício resolvido) ── */
+.phase { margin-bottom: 2.4rem; }
+.phase-head {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  margin-bottom: 1rem;
+}
+.phase-tag {
+  background: #eff6ff;
+  color: var(--primary);
+  border: 1px solid #bfdbfe;
+  border-radius: 5px;
+  padding: 2px 9px;
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  font-family: 'Courier New', monospace;
+  flex-shrink: 0;
+}
+.phase-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.phase-line { flex: 1; height: 1px; background: var(--border); }
+.phase-body { padding-left: 2px; }
+
+/* ── Tabelas ── */
+table.tab, table.tgrid, table.gtbl {
+  border-collapse: collapse;
+  font-size: .9rem;
+  width: 100%;
+}
+table.tab th, table.tab td,
+table.tgrid th, table.tgrid td,
+table.gtbl th, table.gtbl td {
+  border: 1px solid var(--border);
+  padding: .4rem .75rem;
+  text-align: center;
+}
+table.tab thead th, table.tgrid thead th, table.gtbl thead th {
+  background: var(--primary);
+  color: #fff;
+  font-weight: 600;
+}
+table.tab tbody tr:nth-child(even),
+table.tgrid tbody tr:nth-child(even),
+table.gtbl tbody tr:nth-child(even) { background: #f1f5f9; }
+.t-outer { overflow-x: auto; margin: 1rem 0; }
+
+/* ── Ex tabs (navegação por prova) ── */
+.ex-lista-tabs {
+  display: flex;
+  gap: .5rem;
+  max-width: 1000px;
+  margin: 1.2rem auto 1rem;
+  padding: 0 1.2rem;
+  flex-wrap: wrap;
+}
+.ex-lista-tab {
+  font-family: inherit;
+  font-size: .85rem;
+  font-weight: 600;
+  padding: .5rem 1.1rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all .12s;
+}
+.ex-lista-tab:hover { background: #eff6ff; color: var(--text); }
+.ex-lista-tab.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+/* ── Layout com sidebar (desktop) + select (mobile) ── */
+.ex-layout {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 2rem;
+  max-width: 1000px;
+  margin: 2rem auto;
+  padding: 0 1.2rem 3rem;
+}
+.ex-sidebar { position: sticky; top: 72px; align-self: start; }
+.ex-sidebar-label {
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 0 .5rem .5rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: .4rem;
+}
+.ex-sidebar a {
+  display: flex;
+  align-items: flex-start;
+  gap: .6rem;
+  padding: .55rem .6rem;
+  border-radius: var(--radius);
+  text-decoration: none;
+  color: var(--text-muted);
+  font-size: .85rem;
+  border-left: 3px solid transparent;
+  transition: all .12s;
+}
+.ex-sidebar a:hover { background: #eff6ff; color: var(--text); }
+.ex-sidebar a.active {
+  background: #eff6ff;
+  color: var(--primary);
+  border-left-color: var(--primary);
+  font-weight: 600;
+}
+.ex-mobile-nav {
+  display: none;
+  padding: .6rem 1rem .2rem;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+.ex-mobile-nav label {
+  display: block;
+  font-size: .72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--text-muted);
+  margin-bottom: .35rem;
+}
+.ex-mobile-nav select {
+  width: 100%;
+  padding: .55rem .8rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: .9rem;
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+}
+
+/* ── Footer ── */
+footer {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: .83rem;
+  padding: 2rem 1rem;
+  border-top: 1px solid var(--border);
+  margin-top: 3rem;
+}
+
+/* ── Tablet (até 900px) ── */
+@media (max-width: 900px) {
+  .ex-layout { grid-template-columns: 170px 1fr; gap: 1.2rem; padding: 0 1rem 2rem; }
+  .ex-sidebar a { font-size: .8rem; padding: .45rem .5rem; }
+}
+
+/* ── Tablet (até 768px) ── */
+@media (max-width: 768px) {
+  main { padding: 0 .9rem 2rem; }
+  .hero { padding: 2.5rem 1rem 2rem; }
+  .hero h1 { font-size: 1.9rem; }
+  .hero p  { font-size: 1rem; }
+  .hero-cards { gap: .8rem; }
+  .hero-card { width: 155px; }
+}
+
+/* ── Mobile (até 640px) ── */
+@media (max-width: 640px) {
+  .ex-layout { grid-template-columns: 1fr; padding: 0 .6rem 2rem; gap: 0; }
+  .ex-sidebar { display: none; }
+  .ex-mobile-nav { display: block; padding: .5rem .6rem .2rem; }
+  .ex-lista-tabs { padding: 0 .6rem; }
+
+  table.tab, table.tgrid, table.gtbl { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; font-size: .8rem; }
+  table.tab th, table.tab td, table.tgrid th, table.tgrid td, table.gtbl th, table.gtbl td { padding: 5px 8px; }
+
+  .phase-head { flex-wrap: wrap; gap: .35rem; margin-bottom: .7rem; }
+  .phase-line { display: none; }
+  .phase-tag  { font-size: .7rem; padding: 2px 7px; }
+  .phase-title { font-size: .92rem; width: 100%; }
+  .phase-body { padding-left: 0; }
+  .phase { margin-bottom: 1.6rem; }
+}
+
+/* ── Mobile (até 600px) ── */
+@media (max-width: 600px) {
+  nav { gap: .4rem; padding: .55rem .8rem; flex-wrap: wrap; }
+  nav .brand { font-size: .95rem; }
+  nav a { font-size: .8rem; padding: .28rem .45rem; }
+
+  .hero { padding: 1.8rem .9rem 1.4rem; }
+  .hero h1 { font-size: 1.4rem; }
+  .hero p  { font-size: .9rem; margin-bottom: 1.2rem; }
+  .hero-cards { gap: .6rem; }
+  .hero-card { width: 120px; padding: .9rem .7rem; }
+  .hero-card .icon { font-size: 1.5rem; }
+  .hero-card span  { font-size: .82rem; }
+
+  main { padding: 0 .7rem 2rem; margin: 1.2rem auto; }
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.2rem; }
+  h3 { font-size: 1rem; }
+
+  .alert, .attn { font-size: .85rem; padding: .6rem .85rem; }
+  .card  { padding: 1rem 1rem; }
+
+  .math-block {
+    font-size: .8rem;
+    padding: .6rem .9rem;
+    overflow-x: auto;
+    max-width: 100%;
+  }
+
+  .btn { padding: .48rem 1rem; font-size: .9rem; }
+  .btn-group { gap: .4rem; }
+}
