@@ -1,8 +1,9 @@
 # Design Prompt — Site Métodos de Otimização
 
-Mesmo design system do projeto irmão [Otimização Linear](https://github.com/gabriee7/otimizacao-linear)
-— ver `docs/design-prompt.md` daquele repositório para a especificação completa (paleta, tipografia,
-componentes). Resumo aplicado aqui:
+Mesmo design system do projeto irmão Otimização Linear. A especificação canônica completa
+(paleta, tipografia, componentes, responsividade) vive em `E:\DesignSystem\docs\design-prompt.md`,
+compartilhada entre os dois sites — consultar lá antes de mudanças visuais estruturais. Resumo
+aplicado aqui:
 
 - Paleta em `--primary` (#1a56db), `--accent` (#0ea5e9), tokens definidos em `assets/css/style.css`.
 - Sem fontes externas — stack do sistema (`'Segoe UI'`), monospace (`'Courier New'`) para código C.
@@ -12,5 +13,6 @@ componentes). Resumo aplicado aqui:
 - Navegação de exercícios: `.ex-lista-tabs` (abas por prova) + `.ex-sidebar` (desktop) + `<select>`
   `.ex-mobile-nav` (mobile), mesmo padrão do `exercicios.html` de Otimização Linear.
 
-> Nota: há uma tarefa pendente de consolidar a documentação canônica do design system num diretório
-> próprio em `E:\`, compartilhado entre os dois projetos, em vez de duplicar/referenciar entre repos.
+Este site adicionou componentes próprios (`.phase`, `.attn`, `.exemplo`, navegação `.ex-*`) que
+não existiam na folha de estilo original de Otimização Linear — ver `E:\DesignSystem\README.md`
+para o detalhamento de onde cada folha de estilo diverge.
