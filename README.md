@@ -1,7 +1,7 @@
-# Métodos de Otimização — COM10393 (UFES)
+# Métodos de Otimização
 
 Site de estudo estático (HTML/CSS/JS puro, sem frameworks), hospedado no GitHub Pages, sobre a
-disciplina de heurísticas e meta-heurísticas COM10393. Continuação de
+disciplina de heurísticas e meta-heurísticas. Continuação de
 [Otimização Linear](https://github.com/gabriee7/otimizacao-linear) — mesmo design system.
 
 ## Estrutura
