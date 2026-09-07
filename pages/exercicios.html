@@ -305,11 +305,19 @@ typedef struct TSolucao {
         <div class="phase-body">
           <p>Mesma técnica do TSP: um único parâmetro de arquivo decide tela vs. arquivo.</p>
           <div class="math-block">void escrever_solucao(Solucao &sol, char* arq) {
-    FILE* f = (strcmp(arq, "") == 0) ? stdout : fopen(arq, "w");
+    FILE* f;
+
+    if (strcmp(arq, "") == 0)
+        f = stdout;
+    else
+        f = fopen(arq, "w");
+
     fprintf(f, "FO: %d\n", sol.fo);
     for (int i = 1; i <= numero_itens; i++)
         fprintf(f, "%d ", sol.vet_obj[i]);
-    if (strcmp(arq, "") != 0) fclose(f);
+
+    if (strcmp(arq, "") != 0)
+        fclose(f);
 }</div>
         </div>
       </div>
@@ -459,11 +467,19 @@ typedef struct TSolucao {
             e, para cada item, o índice da mochila em que ele foi colocado.
           </p>
           <div class="math-block">void escrever_solucao(Solucao &sol, char* arq) {
-    FILE* f = (strcmp(arq, "") == 0) ? stdout : fopen(arq, "w");
+    FILE* f;
+
+    if (strcmp(arq, "") == 0)
+        f = stdout;
+    else
+        f = fopen(arq, "w");
+
     fprintf(f, "FO: %d\n", sol.fo);
     for (int i = 1; i <= numero_itens; i++)
         fprintf(f, "%d ", sol.vet_obj[i]);
-    if (strcmp(arq, "") != 0) fclose(f);
+
+    if (strcmp(arq, "") != 0)
+        fclose(f);
 }</div>
         </div>
       </div>
@@ -619,7 +635,13 @@ typedef struct TSolucao {
         <div class="phase-body">
           <p>Escreve a FO e, para cada veículo, a rota completa (depósito no início e no fim).</p>
           <div class="math-block">void escrever_solucao(Solucao &sol, char* arq) {
-    FILE* f = (strcmp(arq, "") == 0) ? stdout : fopen(arq, "w");
+    FILE* f;
+
+    if (strcmp(arq, "") == 0)
+        f = stdout;
+    else
+        f = fopen(arq, "w");
+
     fprintf(f, "Valor da FO: %.1f\n\n", sol.fo);
 
     for (int k = 0; k < num_veiculos; k++) {
@@ -629,7 +651,8 @@ typedef struct TSolucao {
         fprintf(f, "\n");
     }
 
-    if (strcmp(arq, "") != 0) fclose(f);
+    if (strcmp(arq, "") != 0)
+        fclose(f);
 }</div>
         </div>
       </div>
