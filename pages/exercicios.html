@@ -18,8 +18,9 @@
     <button class="ex-lista-tab active" data-prova="p1">P1 — TSP</button>
     <button class="ex-lista-tab" data-prova="pm">P2 — Mochila</button>
     <button class="ex-lista-tab" data-prova="pmm">P3 — Mochila Múltipla</button>
-    <button class="ex-lista-tab" data-prova="p2">P4 — sdTSP</button>
-    <button class="ex-lista-tab" data-prova="p3">P5 — PRCP</button>
+    <button class="ex-lista-tab" data-prova="prvc">P4 — Roteamento Capacitado</button>
+    <button class="ex-lista-tab" data-prova="p2">P5 — sdTSP</button>
+    <button class="ex-lista-tab" data-prova="p3">P6 — PRCP</button>
   </div>
 
   <div class="ex-mobile-nav">
@@ -28,8 +29,9 @@
       <option value="p1">P1 — TSP</option>
       <option value="pm">P2 — Mochila</option>
       <option value="pmm">P3 — Mochila Múltipla</option>
-      <option value="p2" disabled>P4 — sdTSP (em construção)</option>
-      <option value="p3" disabled>P5 — PRCP (em construção)</option>
+      <option value="prvc">P4 — Roteamento Capacitado</option>
+      <option value="p2" disabled>P5 — sdTSP (em construção)</option>
+      <option value="p3" disabled>P6 — PRCP (em construção)</option>
     </select>
   </div>
 
@@ -56,6 +58,14 @@
       <a href="#pmm-q2"><span class="ex-num">2</span><span>Struct de solução</span></a>
       <a href="#pmm-q3"><span class="ex-num">3</span><span>Escrita da solução</span></a>
       <a href="#pmm-q4"><span class="ex-num">4</span><span>Função objetivo</span></a>
+    </aside>
+
+    <aside class="ex-sidebar" data-prova="prvc" style="display:none">
+      <div class="ex-sidebar-label">P4 — Roteamento Capacitado</div>
+      <a href="#prvc-q1" class="active"><span class="ex-num">1</span><span>Leitura da instância</span></a>
+      <a href="#prvc-q2"><span class="ex-num">2</span><span>Struct de solução</span></a>
+      <a href="#prvc-q3"><span class="ex-num">3</span><span>Escrita da solução</span></a>
+      <a href="#prvc-q4"><span class="ex-num">4</span><span>Função objetivo</span></a>
     </aside>
 
     <div class="prova-conteudo" data-prova="p1">
@@ -508,6 +518,175 @@ void calcular_FO(Solucao &sol) {
             cada mochila tem seu próprio desconto, é possível ter <strong>várias mochilas
             excedidas ao mesmo tempo</strong> — o laço final soma o desconto de todas elas na FO,
             não só da primeira que encontrar.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="prova-conteudo" data-prova="prvc" style="display:none">
+      <h1>P4 — Roteamento de Veículos Capacitados (PRVC)</h1>
+      <p>
+        Objetivo: determinar rotas de menor custo para uma frota de veículos idênticos que partem
+        de um depósito (vértice 0) para atender a demanda de um conjunto de clientes, sem
+        ultrapassar a capacidade de cada veículo. É o TSP generalizado para <strong>várias rotas
+        simultâneas</strong> que compartilham o mesmo ponto de partida/chegada.
+      </p>
+
+      <div class="math-block">V N C
+d0 d1 d2 ... dV
+c00 c01 ... c0V
+c10 c11 ... c1V
+...
+cV0 cV1 ... cVV</div>
+
+      <div class="attn">
+        <strong>O que muda em relação ao TSP:</strong> não existe uma única rota, e sim
+        <code>N</code> rotas independentes, todas começando e terminando no <strong>mesmo</strong>
+        vértice (o depósito, vértice 0); a instância traz uma linha extra de demandas e a
+        capacidade do veículo; e as penalidades usam pesos <strong>diferentes</strong> —
+        <code>ALFA = 100</code> para vértice não visitado, <code>BETA = 50</code> para vértice
+        visitado mais de uma vez — em vez do peso único do TSP.
+      </div>
+
+      <div id="prvc-q1" class="phase">
+        <div class="phase-head">
+          <span class="phase-tag">Q1 · leitura</span>
+          <span class="phase-title">Leitura da instância</span>
+          <span class="phase-line"></span>
+        </div>
+        <div class="phase-body">
+          <p>
+            Lê quantidade de vértices, número de veículos e capacidade na primeira linha, o vetor
+            de demandas (uma por vértice, depósito sempre com demanda 0) e por fim a matriz de
+            custos <code>V×V</code> entre todos os vértices.
+          </p>
+          <div class="math-block">int num_vertices;   // deposito + clientes
+int num_veiculos;
+int capacidade_veiculo;
+int vet_demanda[MAX_VERTICES];
+float mat_custo[MAX_VERTICES][MAX_VERTICES];
+
+void ler_instancia(char* arq) {
+    FILE* f = fopen(arq, "r");
+    fscanf(f, "%d %d %d", &num_vertices, &num_veiculos, &capacidade_veiculo);
+
+    for (int i = 0; i < num_vertices; i++)
+        fscanf(f, "%d", &vet_demanda[i]);
+
+    for (int i = 0; i < num_vertices; i++)
+        for (int j = 0; j < num_vertices; j++)
+            fscanf(f, "%f", &mat_custo[i][j]);
+
+    fclose(f);
+}</div>
+          <div class="attn">
+            <strong>Ponto de atenção:</strong> a matriz de custo é do tamanho de
+            <strong>todos os vértices</strong> (depósito incluso), não só dos clientes — o índice 0
+            sempre existe nela e representa o depósito, igual à numeração usada na instância.
+          </div>
+        </div>
+      </div>
+
+      <div id="prvc-q2" class="phase">
+        <div class="phase-head">
+          <span class="phase-tag">Q2 · struct</span>
+          <span class="phase-title">Struct de solução</span>
+          <span class="phase-line"></span>
+        </div>
+        <div class="phase-body">
+          <p>
+            No TSP a solução era um vetor só (uma rota). Aqui é uma <strong>matriz de rotas</strong>
+            — uma linha por veículo — mais um vetor com o tamanho de cada rota, já que cada veículo
+            pode atender uma quantidade diferente de clientes.
+          </p>
+          <div class="math-block">#define MAX_VERTICES 100
+#define MAX_VEICULOS 20
+
+typedef struct TSolucao {
+    int vet_rota[MAX_VEICULOS][MAX_VERTICES + 2]; // rota de cada veiculo
+    int vet_tam_rota[MAX_VEICULOS];                // posicoes preenchidas por veiculo
+    float fo;
+} Solucao;</div>
+        </div>
+      </div>
+
+      <div id="prvc-q3" class="phase">
+        <div class="phase-head">
+          <span class="phase-tag">Q3 · escrita</span>
+          <span class="phase-title">Escrita da solução</span>
+          <span class="phase-line"></span>
+        </div>
+        <div class="phase-body">
+          <p>Escreve a FO e, para cada veículo, a rota completa (depósito no início e no fim).</p>
+          <div class="math-block">void escrever_solucao(Solucao &sol, char* arq) {
+    FILE* f = (strcmp(arq, "") == 0) ? stdout : fopen(arq, "w");
+    fprintf(f, "Valor da FO: %.1f\n\n", sol.fo);
+
+    for (int k = 0; k < num_veiculos; k++) {
+        fprintf(f, "Veiculo %d: ", k);
+        for (int i = 0; i < sol.vet_tam_rota[k]; i++)
+            fprintf(f, "%d ", sol.vet_rota[k][i]);
+        fprintf(f, "\n");
+    }
+
+    if (strcmp(arq, "") != 0) fclose(f);
+}</div>
+        </div>
+      </div>
+
+      <div id="prvc-q4" class="phase">
+        <div class="phase-head">
+          <span class="phase-tag">Q4 · FO</span>
+          <span class="phase-title">Função objetivo com duas penalidades</span>
+          <span class="phase-line"></span>
+        </div>
+        <div class="phase-body">
+          <p>
+            Soma o custo dos arcos de <strong>cada</strong> rota (igual ao TSP, feito uma vez por
+            veículo) e depois conta, somando as ocorrências de todas as rotas juntas, quantas vezes
+            cada cliente foi visitado.
+          </p>
+          <div class="math-block">#define ALFA 100
+#define BETA 50
+
+void calcular_fo(Solucao &sol) {
+    sol.fo = 0;
+    int vet_count_vis[MAX_VERTICES];
+    memset(vet_count_vis, 0, sizeof(vet_count_vis));
+
+    for (int k = 0; k < num_veiculos; k++) {
+        for (int i = 0; i < sol.vet_tam_rota[k] - 1; i++) {
+            int origem  = sol.vet_rota[k][i];
+            int destino = sol.vet_rota[k][i + 1];
+            sol.fo += mat_custo[origem][destino];
+            vet_count_vis[origem]++;
+        }
+    }
+
+    // o deposito (vertice 0) fica fora: e' visitado uma vez por veiculo, por definicao
+    for (int i = 1; i < num_vertices; i++) {
+        if (vet_count_vis[i] == 0) sol.fo += ALFA;
+        if (vet_count_vis[i] > 1)  sol.fo += BETA;
+    }
+}</div>
+
+          <div class="exemplo">
+            <strong>Verificação manual (instância com 5 vértices, 2 veículos):</strong>
+            <p>Veículo 0 = 0-2-1-0 (custo 8+35+10=53) e veículo 1 = 0-4-3-0 (custo 4+22+15=41):
+            todos os clientes visitados exatamente uma vez → FO = 53+41 = <strong>94</strong>,
+            sem penalidade.</p>
+            <p>Trocando o cliente 3 do veículo 1 pelo cliente 1 (já usado no veículo 0): cliente 3
+            fica sem visita e cliente 1 é visitado duas vezes → custo 53+31=84, penalidade
+            100 (ALFA) + 50 (BETA) = 150 → FO = <strong>234</strong>.</p>
+          </div>
+
+          <div class="attn">
+            <strong>Pontos de atenção:</strong> a contagem de visitas soma as ocorrências de
+            <strong>todas</strong> as rotas antes de checar quem falta ou repetiu — contar rota por
+            rota separadamente (zerando o contador entre veículos) faria o programa não perceber um
+            cliente atendido duas vezes por veículos diferentes. E o depósito precisa ficar fora
+            dessa checagem (`for i = 1..num_vertices`, pulando o índice 0) — do contrário, toda
+            solução válida seria penalizada só por ter <code>N</code> veículos passando por ele.
           </div>
         </div>
       </div>
