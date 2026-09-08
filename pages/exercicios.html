@@ -15,29 +15,25 @@
   </nav>
 
   <div class="ex-lista-tabs">
-    <button class="ex-lista-tab active" data-prova="p1">P1 — TSP</button>
-    <button class="ex-lista-tab" data-prova="pm">P2 — Mochila</button>
-    <button class="ex-lista-tab" data-prova="pmm">P3 — Mochila Múltipla</button>
-    <button class="ex-lista-tab" data-prova="prvc">P4 — Roteamento Capacitado</button>
-    <button class="ex-lista-tab" data-prova="p2">P5 — sdTSP</button>
-    <button class="ex-lista-tab" data-prova="p3">P6 — PRCP</button>
+    <button class="ex-lista-tab active" data-prova="p1">Q1 — TSP</button>
+    <button class="ex-lista-tab" data-prova="pm">Q2 — Mochila</button>
+    <button class="ex-lista-tab" data-prova="pmm">Q3 — Mochila Múltipla</button>
+    <button class="ex-lista-tab" data-prova="prvc">Q4 — Roteamento Capacitado</button>
   </div>
 
   <div class="ex-mobile-nav">
     <label for="prova-select">Prova</label>
     <select id="prova-select">
-      <option value="p1">P1 — TSP</option>
-      <option value="pm">P2 — Mochila</option>
-      <option value="pmm">P3 — Mochila Múltipla</option>
-      <option value="prvc">P4 — Roteamento Capacitado</option>
-      <option value="p2" disabled>P5 — sdTSP (em construção)</option>
-      <option value="p3" disabled>P6 — PRCP (em construção)</option>
+      <option value="p1">Q1 — TSP</option>
+      <option value="pm">Q2 — Mochila</option>
+      <option value="pmm">Q3 — Mochila Múltipla</option>
+      <option value="prvc">Q4 — Roteamento Capacitado</option>
     </select>
   </div>
 
   <div class="ex-layout">
     <aside class="ex-sidebar" data-prova="p1">
-      <div class="ex-sidebar-label">P1 — TSP</div>
+      <div class="ex-sidebar-label">Q1 — TSP</div>
       <a href="#p1-q1" class="active"><span class="ex-num">1</span><span>Leitura da instância</span></a>
       <a href="#p1-q2"><span class="ex-num">2</span><span>Struct de solução</span></a>
       <a href="#p1-q3"><span class="ex-num">3</span><span>Escrita da solução</span></a>
@@ -45,7 +41,7 @@
     </aside>
 
     <aside class="ex-sidebar" data-prova="pm" style="display:none">
-      <div class="ex-sidebar-label">P2 — Mochila</div>
+      <div class="ex-sidebar-label">Q2 — Mochila</div>
       <a href="#pm-q1" class="active"><span class="ex-num">1</span><span>Leitura da instância</span></a>
       <a href="#pm-q2"><span class="ex-num">2</span><span>Struct de solução</span></a>
       <a href="#pm-q3"><span class="ex-num">3</span><span>Escrita da solução</span></a>
@@ -53,7 +49,7 @@
     </aside>
 
     <aside class="ex-sidebar" data-prova="pmm" style="display:none">
-      <div class="ex-sidebar-label">P3 — Mochila Múltipla</div>
+      <div class="ex-sidebar-label">Q3 — Mochila Múltipla</div>
       <a href="#pmm-q1" class="active"><span class="ex-num">1</span><span>Leitura da instância</span></a>
       <a href="#pmm-q2"><span class="ex-num">2</span><span>Struct de solução</span></a>
       <a href="#pmm-q3"><span class="ex-num">3</span><span>Escrita da solução</span></a>
@@ -61,7 +57,7 @@
     </aside>
 
     <aside class="ex-sidebar" data-prova="prvc" style="display:none">
-      <div class="ex-sidebar-label">P4 — Roteamento Capacitado</div>
+      <div class="ex-sidebar-label">Q4 — Roteamento Capacitado</div>
       <a href="#prvc-q1" class="active"><span class="ex-num">1</span><span>Leitura da instância</span></a>
       <a href="#prvc-q2"><span class="ex-num">2</span><span>Struct de solução</span></a>
       <a href="#prvc-q3"><span class="ex-num">3</span><span>Escrita da solução</span></a>
@@ -69,7 +65,7 @@
     </aside>
 
     <div class="prova-conteudo" data-prova="p1">
-      <h1>P1 — Caixeiro Viajante (TSP)</h1>
+      <h1>Q1 — Caixeiro Viajante (TSP)</h1>
       <p>
         Objetivo da prova: modelar o TSP em C — leitura de instância, struct de solução, escrita
         de solução e função objetivo com penalização (peso α = 100 para cidades repetidas ou não
@@ -253,7 +249,7 @@ void calcular_fo(Solucao &sol) {
     </div>
 
     <div class="prova-conteudo" data-prova="pm" style="display:none">
-      <h1>P2 — Problema da Mochila (PM)</h1>
+      <h1>Q2 — Problema da Mochila (PM)</h1>
       <p>
         Objetivo: selecionar o subconjunto de itens que maximize o valor total sem exceder a
         capacidade da mochila. Mesma estrutura de solução do TSP (struct + leitura de instância em
@@ -400,7 +396,7 @@ void calcular_FO(Solucao &sol) {
     </div>
 
     <div class="prova-conteudo" data-prova="pmm" style="display:none">
-      <h1>P3 — Problema da Mochila Múltipla (PMM)</h1>
+      <h1>Q3 — Problema da Mochila Múltipla (PMM)</h1>
       <p>
         Objetivo: distribuir um conjunto de itens em <strong>múltiplas mochilas</strong>, cada uma
         com sua própria capacidade, maximizando o valor total dos itens guardados. É a generalização
@@ -570,7 +566,7 @@ void calcular_FO(Solucao &sol) {
     </div>
 
     <div class="prova-conteudo" data-prova="prvc" style="display:none">
-      <h1>P4 — Roteamento de Veículos Capacitados (PRVC)</h1>
+      <h1>Q4 — Roteamento de Veículos Capacitados (PRVC)</h1>
       <p>
         Objetivo: determinar rotas de menor custo para uma frota de veículos idênticos que partem
         de um depósito (vértice 0) para atender a demanda de um conjunto de clientes, sem
