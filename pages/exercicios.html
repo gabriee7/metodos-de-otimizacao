@@ -83,12 +83,14 @@ c21 c22 c23 ... c2n
 cn1 cn2 cn3 ... cnn</div>
 
       <div class="attn">
-        <strong>Pontos de atenção desta prova:</strong> zerar <code>valor_objetivo</code> no início
-        de <code>calcular_funcao_objetivo</code> (senão acumula entre chamadas); a rota é um ciclo
-        — não esquecer a aresta de volta da última cidade para a primeira; a função de escrita e a
-        de cálculo da FO recebem a solução <strong>por referência</strong> e retornam <code>void</code>,
-        como exige o enunciado; dimensionar os vetores com <code>#define</code> para o limite de 200
-        cidades, sem alocação dinâmica.
+        <strong>Pontos de atenção desta prova:</strong> zerar <code>sol.fo</code> no início de
+        <code>calcular_fo</code> (senão acumula entre chamadas); a rota é um ciclo — antes de
+        calcular a FO é preciso fechar o ciclo copiando a cidade inicial para a última posição do
+        vetor; a função de escrita e a de cálculo da FO recebem a solução <strong>por
+        referência</strong> e retornam <code>void</code>, como exige o enunciado; dimensionar os
+        vetores com <code>#define</code> para o limite de 200 cidades, sem alocação dinâmica; e os
+        dados da instância ficam em <strong>variáveis globais</strong> (não em parâmetros), como o
+        enunciado pede explicitamente.
       </div>
 
       <div id="p1-q1" class="phase">
@@ -102,21 +104,24 @@ cn1 cn2 cn3 ... cnn</div>
             Lê o número de cidades e a matriz de custos de um arquivo texto, recebendo o
             nome/diretório do arquivo por parâmetro. Os dados ficam em variáveis globais, como
             exige o enunciado — evita passar a instância inteira por parâmetro em toda função.
+            Indexação de 1 a <code>num_cid</code> (não de 0), com uma posição de folga no vetor
+            para fechar o ciclo mais tarde (ver Q4).
           </p>
-          <div class="math-block">void ler_instancia(const char *nome_arquivo) {
-    FILE *arquivo = fopen(nome_arquivo, "r");
-    if (arquivo == NULL) {
-        printf("Erro ao abrir o arquivo de instancia: %s\n", nome_arquivo);
-        exit(1);
-    }
+          <div class="math-block">#define MAX_CIDADES 200
 
-    fscanf(arquivo, "%d", &numero_cidades);
+int num_cid;
+float mat_custo_cid[MAX_CIDADES][MAX_CIDADES];
 
-    for (int i = 0; i < numero_cidades; i++)
-        for (int j = 0; j < numero_cidades; j++)
-            fscanf(arquivo, "%f", &matriz_custos[i][j]);
+void ler_instancia(char* arq) {
+    FILE* f = fopen(arq, "r");
 
-    fclose(arquivo);
+    fscanf(f, "%d", &num_cid);
+
+    for (int i = 1; i <= num_cid; i++)
+        for (int j = 1; j <= num_cid; j++)
+            fscanf(f, "%f", &mat_custo_cid[i][j]);
+
+    fclose(f);
 }</div>
         </div>
       </div>
@@ -129,18 +134,13 @@ cn1 cn2 cn3 ... cnn</div>
         </div>
         <div class="phase-body">
           <p>
-            A solução do TSP é a rota (permutação das cidades) e o valor da função objetivo
-            correspondente. <code>rota[k]</code> guarda a cidade visitada na k-ésima posição.
+            A solução do TSP é a rota (sequência de visita às cidades) e o valor da função
+            objetivo correspondente — o enunciado pede "todas as informações necessárias" nesse
+            tipo, então a FO mora dentro da própria struct, não numa variável separada.
           </p>
-          <div class="math-block">#define MAXIMO_CIDADES 200
-#define PESO_PENALIDADE 100
-
-extern int numero_cidades;
-extern float matriz_custos[MAXIMO_CIDADES][MAXIMO_CIDADES];
-
-typedef struct tSolucao {
-    int rota[MAXIMO_CIDADES];
-    float valor_objetivo;
+          <div class="math-block">typedef struct TSolucao {
+    int vet_seq_vis[MAX_CIDADES];
+    float fo;
 } Solucao;</div>
         </div>
       </div>
@@ -152,23 +152,32 @@ typedef struct tSolucao {
           <span class="phase-line"></span>
         </div>
         <div class="phase-body">
-          <p>Escreve a FO e a rota na tela e em arquivo, recebendo a solução por referência.</p>
-          <div class="math-block">void escrever_solucao(Solucao &s, const char *nome_arquivo) {
-    printf("Valor da FO: %.2f\n", s.valor_objetivo);
-    printf("Rota: ");
-    for (int k = 0; k < numero_cidades; k++)
-        printf("%d ", s.rota[k]);
-    printf("\n");
+          <p>
+            Escreve a FO e a rota, recebendo a solução por referência. Um único parâmetro de
+            arquivo decide entre tela (<code>stdout</code>) e arquivo — string vazia
+            <code>""</code> escreve na tela, qualquer outro valor abre um arquivo de verdade.
+          </p>
+          <div class="math-block">void escrever_solucao(Solucao &sol, char* arq) {
+    FILE* f;
 
-    FILE *arquivo = fopen(nome_arquivo, "w");
-    if (arquivo == NULL) return;
-    fprintf(arquivo, "Valor da FO: %.2f\n", s.valor_objetivo);
-    fprintf(arquivo, "Rota: ");
-    for (int k = 0; k < numero_cidades; k++)
-        fprintf(arquivo, "%d ", s.rota[k]);
-    fprintf(arquivo, "\n");
-    fclose(arquivo);
+    if (strcmp(arq, "") == 0)
+        f = stdout;
+    else
+        f = fopen(arq, "w");
+
+    fprintf(f, "Valor da FO: %.1f\n\n", sol.fo);
+
+    for (int i = 1; i <= num_cid + 1; i++)
+        fprintf(f, "%d ", sol.vet_seq_vis[i]);
+
+    if (strcmp(arq, "") != 0)
+        fclose(f);
 }</div>
+          <div class="attn">
+            <strong>Ponto de atenção:</strong> o laço vai até <code>num_cid + 1</code>, não até
+            <code>num_cid</code> — a rota impressa é o ciclo já fechado (última posição repete a
+            cidade inicial), calculado na Q4.
+          </div>
         </div>
       </div>
 
@@ -180,43 +189,64 @@ typedef struct tSolucao {
         </div>
         <div class="phase-body">
           <p>
-            Soma o custo de percorrer o ciclo completo (incluindo a volta da última cidade para a
-            primeira) e penaliza, com o mesmo peso α = 100, cada cidade nunca visitada e cada
-            visita repetida além da primeira.
+            Antes de calcular a FO, uma função separada garante que a rota fecha o ciclo (última
+            posição igual à primeira). Depois, soma o custo de percorrer o ciclo completo e
+            penaliza, com o mesmo peso α = 100, cada cidade nunca visitada e cada visita repetida.
           </p>
-          <div class="math-block">void calcular_funcao_objetivo(Solucao &s) {
-    s.valor_objetivo = 0.0f;
+          <div class="math-block">#define ALFA 100
 
-    int quantidade_visitas[MAXIMO_CIDADES];
-    for (int i = 0; i < numero_cidades; i++)
-        quantidade_visitas[i] = 0;
+void verifica_ret_cid_ini(Solucao &sol) {
+    if (sol.vet_seq_vis[1] != sol.vet_seq_vis[num_cid + 1])
+        sol.vet_seq_vis[num_cid + 1] = sol.vet_seq_vis[1];
+}
 
-    for (int k = 0; k < numero_cidades; k++) {
-        int cidade_atual = s.rota[k];
-        int proxima_cidade = s.rota[(k + 1) % numero_cidades];
-        s.valor_objetivo += matriz_custos[cidade_atual][proxima_cidade];
-        quantidade_visitas[cidade_atual]++;
+void calcular_fo(Solucao &sol) {
+    int vet_count_vis[num_cid + 1];
+    sol.fo = 0;
+    memset(&vet_count_vis, 0, sizeof(vet_count_vis));
+
+    for (int i = 1; i <= num_cid; i++) {
+        int origem  = sol.vet_seq_vis[i];
+        int destino = sol.vet_seq_vis[i + 1];
+        sol.fo += mat_custo_cid[origem][destino];
+        vet_count_vis[origem]++;
     }
 
-    for (int i = 0; i < numero_cidades; i++) {
-        if (quantidade_visitas[i] == 0)
-            s.valor_objetivo += PESO_PENALIDADE;
-        else if (quantidade_visitas[i] > 1)
-            s.valor_objetivo += PESO_PENALIDADE * (quantidade_visitas[i] - 1);
+    for (int i = 1; i <= num_cid; i++) {
+        if (i == sol.vet_seq_vis[1] && vet_count_vis[sol.vet_seq_vis[1]] == 2)
+            continue; // cidade inicial contando 2x = fechou o ciclo certo, nao e' erro
+
+        if (vet_count_vis[i] == 0)
+            sol.fo += ALFA;
+
+        if (vet_count_vis[i] > 1)
+            sol.fo += ALFA;
     }
 }</div>
 
           <div class="exemplo">
-            <strong>Verificação por segundo caminho (instância toy, 5 cidades):</strong>
-            <p>Rota viável 0-1-2-3-4-0: custo manual 10+35+30,5+22+10 = <strong>107,50</strong> — bate com a saída do programa.</p>
-            <p>Rota inviável 0-1-1-3-3-0 (cidade 1 e 3 repetidas, cidades 2 e 4 nunca visitadas): custo de arestas 55,3 + 4×100 de penalidade = <strong>455,30</strong> — bate.</p>
+            <strong>Verificação manual (instância toy, 5 cidades):</strong>
+            <p>Rota viável 1-2-3-4-5-1: custo 10+35+30,5+22+10 = <strong>107,50</strong> — bate
+            com a saída do programa, sem penalidade (todas as 5 cidades visitadas uma vez).</p>
+            <p>Rota 3-4-2-3-5 (cidade 1 nunca visitada, cidade 3 aparece 2× — uma vez na posição
+            inicial, outra no meio): custo dos arcos 3→4→2→3→5→3 = 30,5+25+35+28+28 =
+            <strong>146,50</strong>, mais <strong>100</strong> de penalidade só pela cidade 1
+            ausente → FO = <strong>246,50</strong>.</p>
           </div>
 
           <div class="attn">
-            <strong>Pegadinha comum:</strong> usar <code>%</code> (módulo) para fechar o ciclo —
-            <code>rota[(k+1) % numero_cidades]</code> — em vez de tratar a última aresta como caso
-            especial separado; os dois funcionam, mas esquecer completamente a aresta de volta
-            (tratar a rota como caminho aberto, não ciclo) é o erro mais comum aqui.
+            <strong>Pontos de atenção:</strong> a exceção do <code>continue</code> existe porque a
+            cidade inicial <strong>tem</strong> que aparecer 2 vezes no vetor contado (início e fim
+            do ciclo) — sem essa exceção, toda solução válida seria penalizada por "repetir" a
+            própria cidade inicial. Só que essa exceção compara apenas a <strong>contagem</strong>
+            (<code>== 2</code>), não a <strong>posição</strong> das ocorrências — no exemplo acima
+            a cidade 3 repete no meio da rota (não seria simplesmente o fechamento do ciclo) e
+            mesmo assim escapa da penalidade de repetição, porque o código não distingue os dois
+            casos. É uma limitação real do algoritmo, não um erro de digitação — vale citar se a
+            prova pedir para discutir os limites da modelagem. Além disso,
+            <code>verifica_ret_cid_ini</code> precisa ser chamada <strong>antes</strong> de
+            <code>calcular_fo</code>, senão o laço lê <code>vet_seq_vis[num_cid + 1]</code> sem
+            estar inicializado.
           </div>
         </div>
       </div>
