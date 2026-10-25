@@ -91,8 +91,21 @@ void gerar_vizinha(Solucao&amp; s)
 <div class="code-file">codigo/prcp/construtivas_prcp.cpp</div>
           <ul>
             <li>O <code>do ... while (pos == s.vet_sol[pt])</code> garante que a vizinha seja <em>de fato diferente</em>.</li>
-            <li><code>calcular_fo(s)</code> no final: sem isso a <code>fo</code> fica desatualizada e o método falha na correção.</li>
+            <li><code>calcular_fo(s)</code> no final: deixa a <code>fo</code> atualizada dentro da solução.</li>
           </ul>
+          <div class="attn">
+            <strong>O que muda de uma base para outra:</strong> na resolução de P2 do professor que vimos (sdTSP), <code>gerar_vizinha</code> e as construtivas
+            <strong>não</strong> chamam <code>calcular_fo</code> — o <code>main</code> chama depois. Se a sua prova pedir assim, siga; se não disser nada,
+            <strong>chamar lá dentro é seguro nos dois casos</strong> (só custa um recálculo). O perigo é <u>ninguém</u> calcular.
+          </div>
+          <div class="t-outer"><table class="tab">
+            <thead><tr><th>Problema</th><th>O que o <code>gerar_vizinha</code> faz</th></tr></thead>
+            <tbody>
+              <tr><td>PRCP</td><td>sorteia 1 ponto, nova posição diferente</td></tr>
+              <tr><td>TSP / sdTSP</td><td>sorteia 2 posições diferentes e troca as cidades (swap)</td></tr>
+              <tr><td>PET</td><td>sorteia 1 tarefa, tira da tripulação e insere em outra</td></tr>
+            </tbody>
+          </table></div>
           <div class="attn">
             <strong>Ponto de atenção:</strong> se <code>num_pos == 1</code> o laço do-while nunca termina (não existe "outra"
             posição). Em instâncias com <code>m ≥ 2</code> (como as da prova) não ocorre; vale saber como cai.
@@ -112,6 +125,9 @@ void heuristica_construtiva_aleatoria(Solucao&amp; s)
     calcular_fo(s);
 }</code></pre>
 <div class="code-file">codigo/prcp/construtivas_prcp.cpp</div>
+          <div class="exemplo">
+            <strong>Resultado real (PRCP, 25 pontos):</strong> a aleatória deixa só 4 dos 25 pontos livres (a gulosa chega a 17) — por isso ela serve só de linha de base.
+          </div>
           <div class="attn">
             <strong>Em problemas de permutação</strong> (TSP, sdTSP) "aleatória" não é <code>rand() % n</code> por posição — isso repete cidades.
             Parte-se da permutação <code>0,1,2,...</code> e embaralha-se (Fisher–Yates): para cada <code>i</code>, troca com um <code>j</code> sorteado em <code>[i, n−1]</code>.
@@ -219,10 +235,63 @@ void heuristica_construtiva_aleatoria_gulosa(Solucao&amp; s, float per_ale)
               </tbody>
             </table>
           </div>
+          <h3>A outra "aleatória-gulosa": percentual de decisões aleatórias (estilo do professor)</h3>
+          <p>
+            No sdTSP da resolução do professor, <code>per_ale</code> é uma <strong>porcentagem</strong>: as primeiras <code>per_ale%</code> decisões são sorteadas e o restante é guloso.
+            Mesma ideia (misturar acaso e guloso), mecanismo diferente do corte da LRC acima. Versão equivalente para o PRCP:
+          </p>
+          <pre class="code"><code>// Variante "percentual" (como o professor fez no sdTSP): as primeiras decisões são SORTEADAS
+// e as demais são GULOSAS. per_ale é a PORCENTAGEM (0 a 100) de decisões aleatórias.
+int escolher_posicao_gulosa(const Solucao&amp; s, int pt)
+{
+    int melhor_posicao = 0;
+    int menor_custo = contar_conflitos_parciais(s, pt, 0);
+    for (int pos = 1; pos &lt; num_pos; pos++)
+    {
+        int custo = contar_conflitos_parciais(s, pt, pos);
+        if (custo &lt; menor_custo)
+        {
+            menor_custo = custo;
+            melhor_posicao = pos;
+        }
+    }
+    return melhor_posicao;
+}
+
+void heuristica_construtiva_aleatoria_gulosa_percentual(Solucao&amp; s, float per_ale)
+{
+    int quantidade_aleatorias = (int) ((per_ale / 100.0f) * num_pts);
+    for (int i = 0; i &lt; num_pts; i++)
+    {
+        if (i &lt; quantidade_aleatorias)
+            s.vet_sol[i] = rand() % num_pos;          // fase aleatória
+        else
+            s.vet_sol[i] = escolher_posicao_gulosa(s, i); // fase gulosa
+    }
+    calcular_fo(s);
+}</code></pre>
+<div class="code-file">codigo/prcp/construtivas_prcp.cpp</div>
+          <div class="t-outer"><table class="tab">
+            <thead><tr><th></th><th>LRC (GRASP)</th><th>Percentual (professor, sdTSP)</th></tr></thead>
+            <tbody>
+              <tr><td><code>per_ale</code> significa</td><td>folga aceita no custo, de 0 a 1</td><td>% das decisões que serão aleatórias (0–100)</td></tr>
+              <tr><td>Onde está o acaso</td><td>em <em>toda</em> decisão, entre as "boas"</td><td>só nas <em>primeiras</em> decisões; o resto é determinístico</td></tr>
+              <tr><td><code>per_ale = 0</code></td><td>100% gulosa</td><td>100% gulosa</td></tr>
+              <tr><td>máximo</td><td>1 → 100% aleatória</td><td>100 → 100% aleatória</td></tr>
+            </tbody>
+          </table></div>
+          <div class="exemplo">
+            <strong>Resultado real (PRCP, 25 pontos):</strong> LRC: 0,0 → 16 · 0,3 → 15 · 1,0 → 4. Percentual: 0% → 17 · 30% → 16 · 100% → 7.
+            Mesmos extremos, caminhos diferentes — uma execução só, para ilustrar.
+          </div>
+          <div class="attn">
+            <strong>Ponto de atenção:</strong> leia o enunciado: se ele disser "percentual", é divisão por 100 e <code>int</code>; se falar em "lista restrita", é a LRC.
+            Na dúvida entre os dois, implemente o que o <em>código de aula</em> da turma usa e documente em um comentário.
+          </div>
           <div class="attn">
             <strong>Por que a LRC nunca fica vazia:</strong> o próprio candidato de custo mínimo sempre passa no limite
             (<code>mín ≤ mín + α·faixa</code>), então <code>tamanho ≥ 1</code> e o <code>rand() % tamanho</code> é seguro. Se o enunciado der <code>per_ale</code> em
-            <strong>porcentagem</strong> (0–100), divida por 100; em outros problemas ele define <em>quantas</em> decisões são aleatórias (ver o sdTSP do professor).
+            <strong>porcentagem</strong> (0–100), divida por 100.
           </div>
         </div>
       </div>

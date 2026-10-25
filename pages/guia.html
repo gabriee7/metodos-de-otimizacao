@@ -148,6 +148,16 @@
               </tbody>
             </table>
           </div>
+          <h3>Exemplo: mesma solução inicial, dois métodos</h3>
+<pre class="code"><code>PRCP minúsculo (6 pontos x 3 posições), início [1,1,1,1,1,1], FO 1, maximiza
+
+PRIMEIRA melhora:  aplica ponto1→pos2 (FO 2) na hora, recomeça ...
+                   para em [2,3,1,1,1,1]  FO 4    (21 vizinhos avaliados)
+
+MELHOR melhora:    avalia os 12 vizinhos, aplica só ponto3→pos3 (FO 4) ...
+                   para em [1,3,3,1,1,1]  FO 6    (36 vizinhos avaliados)</code></pre>
+          <div class="attn"><strong>O que muda de um método para o outro:</strong> só <em>quando</em> o movimento é aplicado (na hora × depois de olhar tudo).
+          O custo e o resultado final mudam por consequência. Veja ao vivo no <a href="laboratorio.html">Laboratório</a>.</div>
           <p>Código completo e passo a passo: página <a href="p3-busca-local.html">P3 — Busca local</a>.</p>
           <div class="attn">
             <strong>Ponto de atenção:</strong> "melhor melhora" <u>não</u> é garantidamente melhor que "primeira melhora" no

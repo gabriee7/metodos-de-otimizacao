@@ -158,6 +158,39 @@ void heuristica_construtiva_aleatoria_gulosa(Solucao& s, float per_ale)
 }
 // <<< aleatoria_gulosa
 
+// >>> aleatoria_gulosa_professor
+// Variante "percentual" (como o professor fez no sdTSP): as primeiras decisões são SORTEADAS
+// e as demais são GULOSAS. per_ale é a PORCENTAGEM (0 a 100) de decisões aleatórias.
+int escolher_posicao_gulosa(const Solucao& s, int pt)
+{
+    int melhor_posicao = 0;
+    int menor_custo = contar_conflitos_parciais(s, pt, 0);
+    for (int pos = 1; pos < num_pos; pos++)
+    {
+        int custo = contar_conflitos_parciais(s, pt, pos);
+        if (custo < menor_custo)
+        {
+            menor_custo = custo;
+            melhor_posicao = pos;
+        }
+    }
+    return melhor_posicao;
+}
+
+void heuristica_construtiva_aleatoria_gulosa_percentual(Solucao& s, float per_ale)
+{
+    int quantidade_aleatorias = (int) ((per_ale / 100.0f) * num_pts);
+    for (int i = 0; i < num_pts; i++)
+    {
+        if (i < quantidade_aleatorias)
+            s.vet_sol[i] = rand() % num_pos;          // fase aleatória
+        else
+            s.vet_sol[i] = escolher_posicao_gulosa(s, i); // fase gulosa
+    }
+    calcular_fo(s);
+}
+// <<< aleatoria_gulosa_professor
+
 int main(int argc, char** argv)
 {
     const char* arq = "i25.txt";
@@ -177,6 +210,12 @@ int main(int argc, char** argv)
     {
         heuristica_construtiva_aleatoria_gulosa(s, alfas[k]);
         printf("aleatoria-gulosa %.1f: %d\n", alfas[k], s.fo);
+    }
+    float percentuais[3] = {0.0f, 30.0f, 100.0f};
+    for (int k = 0; k < 3; k++)
+    {
+        heuristica_construtiva_aleatoria_gulosa_percentual(s, percentuais[k]);
+        printf("percentual (prof) %3.0f%%: %d\n", percentuais[k], s.fo);
     }
     gerar_vizinha(s);
     printf("apos 1 vizinha:       %d\n", s.fo);

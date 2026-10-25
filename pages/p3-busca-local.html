@@ -29,6 +29,7 @@
       <a href="#q1"><span>Q1 — Randômica</span></a>
       <a href="#q2"><span>Q2 — Primeira melhora</span></a>
       <a href="#q3"><span>Q3 — Melhor melhora</span></a>
+      <a href="#estilo"><span>Estilo do professor</span></a>
       <a href="#comparar"><span>Comparando as três</span></a>
       <a href="#variantes"><span>Variantes e bônus</span></a>
       <a href="#testar"><span>Como testar</span></a>
@@ -127,6 +128,7 @@
 <div class="code-file">codigo/prcp/busca_local_prcp.cpp</div>
           <h3>Passo 4 — Por que cada trecho está ali</h3>
           <ul>
+            <li><code>calcular_fo(vizinha)</code> depois do <code>gerar_vizinha</code>: na base da prova de referência o <code>gerar_vizinha</code> <strong>não</strong> calcula a <code>fo</code> (quem chama calcula). Se a sua base já calcular lá dentro, a chamada extra é inofensiva — só gasta tempo.</li>
             <li><code>calcular_fo(s)</code> no início: garante que <code>s.fo</code> é confiável mesmo que quem chamou tenha esquecido.</li>
             <li><code>memcpy</code> para <code>vizinha</code>: o movimento é aplicado na <em>cópia</em>; se for ruim, descarta-se a cópia e <code>s</code> não foi tocada (é o "desfazer" mais simples).</li>
             <li><code>melhorou</code> volta a 0 a cada rodada: o laço externo só termina quando <strong>uma rodada inteira de <code>iter</code> tentativas</strong> não melhora nada.</li>
@@ -136,6 +138,23 @@
             <strong>Ponto de decisão:</strong> depois de aceitar um vizinho, esta versão <em>continua</em> a rodada de
             <code>iter</code> tentativas (como no código de aula do professor). A alternativa é reiniciar a contagem a cada aceite.
             Ambas estão certas; a diferença é só quanto tempo se gasta. Se a prova pedir uma, siga a prova.
+          </div>
+          <h3>Exemplo e o que muda de um problema para outro</h3>
+          <div class="grid-2">
+            <div>
+<pre class="code"><code>PRCP (maximiza)          TSP (minimiza)
+gerar_vizinha:           gerar_vizinha:
+  muda a posição           troca 2 cidades
+  de 1 ponto               da rota
+if (vizinha.fo &gt; s.fo)   if (vizinha.fo &lt; s.fo)
+
+iter sugerido:           iter sugerido:
+  num_pts * num_pos        num_cidades * num_cidades</code></pre>
+            </div>
+            <div class="exemplo">
+              <strong>Em uma frase:</strong> a randômica <u>quase não muda</u> entre problemas — o movimento mora no <code>gerar_vizinha</code> e só o sinal da comparação troca.
+              <br><br><strong>Ponto de atenção:</strong> é a única das 3 que <em>nunca</em> precisa saber como o movimento é feito. Por isso é a mais fácil de portar (e a mais fraca).
+            </div>
           </div>
           <div class="attn">
             <strong>Fraqueza que você deve saber explicar:</strong> por ser sorteio, a randômica pode terminar com um vizinho melhor
@@ -197,6 +216,26 @@
             <li>Se melhorou, <strong>não desfaz</strong> — o movimento fica aplicado e <code>s.fo</code> já está atualizada pelo <code>calcular_fo</code>.</li>
             <li>Se não melhorou, desfaz o vetor <em>e</em> a <code>fo</code>. Esquecer <code>s.fo = fo_original</code> é a causa clássica de <code>fo</code> errada ao final.</li>
           </ul>
+          <h3>Exemplo rodando (instância A do <a href="laboratorio.html">Laboratório</a>)</h3>
+<pre class="code"><code>início [1,1,1,1,1,1]  FO 1
+APLICA   ponto 1→pos 2  FO 2   ← 1º vizinho já melhora: fica e RECOMEÇA a varredura
+APLICA   ponto 2→pos 2  FO 3   (antes reavaliou 1→pos 1 e 1→pos 3: nenhum &gt; 2)
+APLICA   ponto 2→pos 3  FO 4
+... varredura inteira sem nenhuma melhora → para
+resultado [2,3,1,1,1,1]  FO 4   (21 vizinhos avaliados, 3 aplicados)</code></pre>
+          <h3>O que muda de um problema para outro</h3>
+          <div class="t-outer"><table class="tab">
+            <thead><tr><th></th><th>Laços da varredura</th><th>Aplicar</th><th>Desfazer</th><th>Sinal</th></tr></thead>
+            <tbody>
+              <tr><td>PRCP</td><td><code>ponto</code> × <code>pos</code></td><td><code>vet_sol[ponto] = pos</code></td><td>restaura 1 valor</td><td><code>&gt;</code></td></tr>
+              <tr><td>TSP</td><td><code>i</code> × <code>j &gt; i</code></td><td><code>trocar(s, i, j)</code></td><td><code>trocar</code> de novo</td><td><code>&lt;</code></td></tr>
+              <tr><td>PET</td><td><code>origem</code> × <code>posição</code> × <code>destino</code></td><td>remover + inserir</td><td>restaura 2 linhas</td><td><code>&lt;</code></td></tr>
+            </tbody>
+          </table></div>
+          <div class="attn">
+            <strong>O que mais muda:</strong> o <em>desfazer</em>. No PRCP é uma atribuição; no TSP é repetir o swap; no PET é guardar e restaurar duas linhas
+            (remover+inserir não são inversos exatos quando há empate de horário). Desfazer errado é o bug mais difícil de achar.
+          </div>
           <div class="alert alert-danger">
             <strong>Sobre o <code>goto INICIO</code> do professor:</strong> voltar para um rótulo anterior (como ele faz) é válido em C++.
             O perigo é um <code>goto</code> que salte <em>para frente</em> por cima de uma declaração com inicialização
@@ -270,9 +309,242 @@
             <li>Desfaz <u>sempre</u>, ao contrário da PM: nesta busca nenhum movimento é aplicado durante a varredura.</li>
             <li>Só depois da varredura completa é que um único movimento é aplicado, e <code>s.fo = melhor_fo</code> evita um <code>calcular_fo</code> extra.</li>
           </ul>
+          <h3>Exemplo rodando (mesma instância e mesma solução inicial da PM)</h3>
+<pre class="code"><code>início [1,1,1,1,1,1]  FO 1
+varredura 1: avalia os 12 vizinhos SEM aplicar nenhum
+   ponto 1→pos 2: 2   ponto 2→pos 3: 3   ponto 3→pos 3: 4  ← melhor   ...   ponto 6→pos 3: 0
+APLICA   ponto 3→pos 3  FO 4   (um único movimento por varredura)
+varredura 2 → aplica o melhor de novo; varredura 3 → nenhum melhora → para
+resultado [1,3,3,1,1,1]  FO 6   (36 vizinhos avaliados, 2 aplicados)</code></pre>
+          <div class="alert alert-info">
+            <strong>PM × MM no mesmo exemplo:</strong> a PM deu passos pequenos e parou em <strong>FO 4</strong> (21 avaliações);
+            a MM gastou mais avaliações (36), escolheu o movimento mais forte e chegou a <strong>FO 6</strong>.
+            Na instância B do laboratório acontece o contrário — não decore "MM é melhor".
+          </div>
+          <h3>O que muda de um problema para outro</h3>
+          <div class="t-outer"><table class="tab">
+            <thead><tr><th></th><th>O que se anota como "melhor"</th><th>Aplicar no fim</th></tr></thead>
+            <tbody>
+              <tr><td>PRCP</td><td><code>melhor_ponto</code>, <code>melhor_posicao</code></td><td><code>s.vet_sol[melhor_ponto] = melhor_posicao</code></td></tr>
+              <tr><td>TSP</td><td><code>melhor_i</code>, <code>melhor_j</code></td><td><code>trocar(s, melhor_i, melhor_j)</code></td></tr>
+              <tr><td>PET</td><td><code>melhor_origem</code>, <code>melhor_tarefa</code>, <code>melhor_destino</code></td><td>remover da origem e inserir no destino</td></tr>
+            </tbody>
+          </table></div>
+          <div class="attn">
+            <strong>O que muda:</strong> <em>quantas variáveis</em> descrevem o movimento. Regra: anote exatamente o que for preciso para <u>reaplicar</u> o movimento depois dos laços
+            (por isso o PET guarda a <em>tarefa</em> e não a posição — a posição muda quando a linha é alterada).
+          </div>
           <div class="attn">
             <strong>Custo:</strong> cada passo paga a vizinhança <em>inteira</em> (n × (m−1) avaliações no PRCP), mesmo que o primeiro vizinho já fosse bom.
             Por isso a MM costuma ser a mais lenta por iteração.
+          </div>
+        </div>
+      </div>
+
+      <div class="phase" id="estilo">
+        <div class="phase-head"><span class="phase-tag">ESTILO</span><span class="phase-title">Como o professor escreve × como este site escreve</span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <p>
+            Os dois estilos fazem <strong>exatamente a mesma coisa</strong> (testado: mesmas FOs nas mesmas instâncias). O professor escreve de forma mais compacta;
+            este site, de forma mais explícita. Na prova, <strong>escreva do jeito que você domina</strong> — o que vale é compilar e estar certo.
+          </p>
+          <div class="t-outer">
+            <table class="tab">
+              <thead><tr><th>Aspecto</th><th>Professor (aula/prova)</th><th>Este site</th></tr></thead>
+              <tbody>
+                <tr><td>Nomes</td><td><code>heur_bl_ra/pm/mm</code>, <code>pt</code>, <code>pos_orig</code>, <code>fo_orig</code></td><td><code>busca_local_*</code>, <code>ponto</code>, <code>posicao_original</code></td></tr>
+                <tr><td>Recomeçar a varredura</td><td><code>goto INICIO</code></td><td><code>while (melhorou == 1)</code></td></tr>
+                <tr><td>"Nada melhorou"</td><td><code>flag = 1</code> (vira 0 se melhorar)</td><td><code>melhorou = 0</code> (vira 1 se melhorar)</td></tr>
+                <tr><td>Sair dos laços (PM)</td><td><code>goto</code> direto</td><td><code>&amp;&amp; melhorou == 0</code> nos <code>for</code></td></tr>
+                <tr><td>Randômica</td><td><code>clone</code> + <code>memcpy</code></td><td><code>vizinha</code> + <code>memcpy</code> (igual)</td></tr>
+                <tr><td>Alocação (leitura)</td><td><code>new</code> / <code>delete[]</code></td><td><code>malloc</code> (C puro)</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3>Randômica — professor (em cima) × site (embaixo)</h3>
+          <pre class="code"><code>void heur_bl_ra(Solucao&amp; s, const int iter)
+{
+    Solucao clone;
+    while (1)
+    {
+        int flag = 1;                                 // flag = 1: "nada melhorou nesta rodada"
+        for (int i = 0; i &lt; iter; i++)
+        {
+            memcpy(&amp;clone, &amp;s, sizeof(Solucao));
+            gerar_vizinha(clone);
+            calcular_fo(clone);                       // aqui é o chamador que calcula a fo
+            if (clone.fo &gt; s.fo)
+            {
+                memcpy(&amp;s, &amp;clone, sizeof(Solucao));
+                flag = 0;
+            }
+        }
+        if (flag)
+            break;
+    }
+}</code></pre>
+<div class="code-file">codigo/prcp/estilo_professor.cpp</div>
+          <pre class="code"><code>void busca_local_randomica(Solucao&amp; s, const int iteracoes)
+{
+    Solucao vizinha;
+    int melhorou = 1;
+    calcular_fo(s);                                   // garante fo válida na entrada
+    while (melhorou == 1)
+    {
+        melhorou = 0;
+        for (int i = 0; i &lt; iteracoes; i++)
+        {
+            memcpy(&amp;vizinha, &amp;s, sizeof(Solucao));    // trabalha numa cópia
+            gerar_vizinha(vizinha);                   // 1 movimento ao acaso
+            calcular_fo(vizinha);
+            if (vizinha.fo &gt; s.fo)                    // PRCP maximiza
+            {
+                memcpy(&amp;s, &amp;vizinha, sizeof(Solucao));
+                melhorou = 1;
+            }
+        }
+    }
+}</code></pre>
+<div class="code-file">codigo/prcp/busca_local_prcp.cpp</div>
+          <div class="attn"><strong>O que muda:</strong> só a "bandeira" (<code>flag</code> invertida) e o nome. A lógica é a mesma: copiar, vizinha, calcular, aceitar se melhor.</div>
+          <h3>Primeira melhora — professor (em cima) × site (embaixo)</h3>
+          <pre class="code"><code>void heur_bl_pm(Solucao&amp; s)
+{
+    INICIO : ;                                        // rótulo: recomeça a varredura
+    int melhor_fo = s.fo;
+    for (int pt = 0; pt &lt; num_pts; pt++)
+    {
+        int fo_orig = s.fo;
+        int pos_orig = s.vet_sol[pt];
+        for (int pos = 0; pos &lt; num_pos; pos++)
+        {
+            if (pos != pos_orig)
+            {
+                s.vet_sol[pt] = pos;
+                calcular_fo(s);
+                if (s.fo &gt; melhor_fo)
+                {
+                    goto INICIO;                      // primeira melhora: fica e recomeça
+                }
+                else
+                {
+                    s.vet_sol[pt] = pos_orig;         // desfaz por restauração
+                    s.fo = fo_orig;
+                }
+            }
+        }
+    }
+}</code></pre>
+<div class="code-file">codigo/prcp/estilo_professor.cpp</div>
+          <pre class="code"><code>void busca_local_primeira_melhora(Solucao&amp; s)
+{
+    int melhorou = 1;
+    calcular_fo(s);
+    while (melhorou == 1)
+    {
+        melhorou = 0;
+        for (int ponto = 0; ponto &lt; num_pts &amp;&amp; melhorou == 0; ponto++)
+        {
+            int posicao_original = s.vet_sol[ponto];
+            int fo_original = s.fo;
+            for (int pos = 0; pos &lt; num_pos &amp;&amp; melhorou == 0; pos++)
+            {
+                if (pos == posicao_original)
+                    continue;                         // não é um movimento
+                s.vet_sol[ponto] = pos;               // aplica o movimento
+                calcular_fo(s);
+                if (s.fo &gt; fo_original)
+                    melhorou = 1;                     // fica aplicado; sai dos laços
+                else
+                {
+                    s.vet_sol[ponto] = posicao_original; // desfaz
+                    s.fo = fo_original;
+                }
+            }
+        }
+    }
+}</code></pre>
+<div class="code-file">codigo/prcp/busca_local_prcp.cpp</div>
+          <div class="attn">
+            <strong>O que muda:</strong> o professor <em>recomeça</em> com <code>goto INICIO</code> e recalcula <code>melhor_fo = s.fo</code> logo após o rótulo; aqui o <code>while</code> faz isso.
+            Ao copiar o estilo dele, mantenha o <code>;</code> depois do rótulo (<code>INICIO : ;</code>): em C, um rótulo não pode vir direto antes de uma declaração; em C++ é opcional, mas não custa.
+          </div>
+          <h3>Melhor melhora — professor (em cima) × site (embaixo)</h3>
+          <pre class="code"><code>void heur_bl_mm(Solucao&amp; s)
+{
+    int melhor_pt, melhor_pos;
+    int melhor_fo = s.fo;
+    while (1)
+    {
+        int flag = 1;
+        for (int pt = 0; pt &lt; num_pts; pt++)
+        {
+            int fo_orig = s.fo;
+            int pos_orig = s.vet_sol[pt];
+            for (int pos = 0; pos &lt; num_pos; pos++)
+            {
+                if (pos != pos_orig)
+                {
+                    s.vet_sol[pt] = pos;
+                    calcular_fo(s);
+                    if (s.fo &gt; melhor_fo)             // compara com o melhor visto até agora
+                    {
+                        melhor_fo = s.fo;
+                        melhor_pt = pt;
+                        melhor_pos = pos;
+                        flag = 0;
+                    }
+                }
+            }
+            s.vet_sol[pt] = pos_orig;                 // desfaz DEPOIS de testar todas as posições do ponto
+            s.fo = fo_orig;
+        }
+        if (flag)
+            break;
+        s.vet_sol[melhor_pt] = melhor_pos;            // aplica só o melhor
+        s.fo = melhor_fo;
+    }
+}</code></pre>
+<div class="code-file">codigo/prcp/estilo_professor.cpp</div>
+          <pre class="code"><code>void busca_local_melhor_melhora(Solucao&amp; s)
+{
+    calcular_fo(s);
+    while (1)
+    {
+        int melhor_ponto = -1;
+        int melhor_posicao = -1;
+        int melhor_fo = s.fo;                         // referência: o melhor visto ATÉ AGORA
+        for (int ponto = 0; ponto &lt; num_pts; ponto++)
+        {
+            int posicao_original = s.vet_sol[ponto];
+            int fo_original = s.fo;
+            for (int pos = 0; pos &lt; num_pos; pos++)
+            {
+                if (pos == posicao_original)
+                    continue;
+                s.vet_sol[ponto] = pos;
+                calcular_fo(s);
+                if (s.fo &gt; melhor_fo)                 // compara com melhor_fo, não com s.fo
+                {
+                    melhor_fo = s.fo;
+                    melhor_ponto = ponto;
+                    melhor_posicao = pos;
+                }
+                s.vet_sol[ponto] = posicao_original;  // SEMPRE desfaz: só anotamos
+                s.fo = fo_original;
+            }
+        }
+        if (melhor_ponto == -1)
+            break;                                    // nenhum vizinho melhora: ótimo local
+        s.vet_sol[melhor_ponto] = melhor_posicao;     // aplica só o melhor
+        s.fo = melhor_fo;
+    }
+}</code></pre>
+<div class="code-file">codigo/prcp/busca_local_prcp.cpp</div>
+          <div class="attn">
+            <strong>O que muda (e uma sutileza):</strong> o professor testa <em>todas as posições</em> do ponto e só depois restaura (<code>s.vet_sol[pt] = pos_orig</code> fora do laço de <code>pos</code>);
+            aqui restauramos a cada posição. Funciona nos dois porque cada teste sobrescreve <code>vet_sol[pt]</code> por completo — mas se o seu movimento <em>acumular</em> mudanças
+            (ex.: remover+inserir no PET), restaurar só no fim <strong>quebra</strong>. Na dúvida, restaure a cada movimento.
           </div>
         </div>
       </div>
