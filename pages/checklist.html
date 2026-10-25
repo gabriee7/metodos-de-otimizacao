@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Roteiro para o dia da prova: o que ler, como estruturar, o que testar e o que conferir antes de entregar.">
+  <title>Checklist de prova — Métodos de Otimização</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+  <nav>
+    <a class="brand" href="../index.html">Métodos de Otimização</a>
+    <a href="guia.html">Guia</a>
+    <a href="p1-modelagem.html">P1</a>
+    <a href="p2-construtivas.html">P2</a>
+    <a href="p3-busca-local.html">P3</a>
+    <a href="problemas.html">Problemas</a>
+    <a href="laboratorio.html">Laboratório</a>
+    <a href="checklist.html" class="active">Checklist</a>
+    <a href="teoria.html">Teoria</a>
+  </nav>
+
+  <main>
+    <h1>Checklist de prova</h1>
+    <p>Para imprimir ou ler na véspera. A ordem importa: <strong>compilar vale mais que ser esperto</strong>, porque erro de compilação é nota 0,0.</p>
+
+    <h2>1. Os primeiros 10 minutos (leitura)</h2>
+    <ul class="check">
+      <li>Li o enunciado inteiro, incluindo as <em>Observações</em> (nomes de arquivo, pasta, limites).</li>
+      <li>Anotei o objetivo do problema: <strong>MAXIMIZAR</strong> ou <strong>MINIMIZAR</strong>.</li>
+      <li>Abri o <code>.h</code>: sei o que significa cada posição da <code>Solucao</code>.</li>
+      <li>Li o <code>calcular_fo</code> e o <code>gerar_vizinha</code> que já vêm prontos.</li>
+      <li>Identifiquei o <strong>movimento</strong> (o que o <code>gerar_vizinha</code> muda).</li>
+      <li>Copiei as <strong>assinaturas exatas</strong> do <code>.h</code> (nomes e parâmetros) para os métodos pedidos.</li>
+    </ul>
+
+    <h2>2. Escrevendo cada método</h2>
+    <ul class="check">
+      <li>Escrevi em comentário <code>// MAXIMIZAR</code> ou <code>// MINIMIZAR</code> antes do primeiro <code>if</code>.</li>
+      <li>Enumerei <strong>todos</strong> os movimentos (conferi limites dos <code>for</code> e o <code>continue</code> do "mesmo valor").</li>
+      <li>Depois de aplicar o movimento: <code>calcular_fo</code>.</li>
+      <li>Se o vizinho é ruim: <strong>desfiz</strong> o movimento <em>e</em> restaurei a <code>fo</code>.</li>
+      <li>PM: ao melhorar, <em>mantém</em> e recomeça. MM: desfaz sempre, compara com <code>melhor_fo</code>, aplica no fim.</li>
+      <li>Todos <code>void</code>, solução por referência (<code>Solucao&amp; s</code>).</li>
+      <li>Nada de <code>goto</code> arriscado: usei <code>while (melhorou == 1)</code>.</li>
+    </ul>
+
+    <h2>3. Compilar e testar (nunca pular)</h2>
+    <ul class="check">
+      <li><code>#include</code> corretos (<code>string.h</code> para <code>memcpy</code>, <code>stdlib.h</code> para <code>rand</code>).</li>
+      <li><strong>Compilei sem erros</strong> (e li os avisos). Compilar de novo depois de qualquer edição, até a última.</li>
+      <li>Rodei na instância <strong>toy</strong>: a FO final é <em>melhor</em> que a inicial (e nunca piora).</li>
+      <li>Recalculei a FO do resultado e bate com <code>s.fo</code>.</li>
+      <li>Rodei numa instância grande: termina em tempo razoável (sem laço infinito).</li>
+    </ul>
+
+    <h2>4. Entrega</h2>
+    <ul class="check">
+      <li>Arquivos nomeados <code>nome_sobrenome.cpp</code> e <code>nome_sobrenome.h</code> (nome exato do enunciado).</li>
+      <li>Pasta com o <strong>nome exato</strong> pedido (<code>Prova1</code>, <code>Prova2</code>, <code>Prova3</code>...) na <strong>Área de Trabalho</strong>.</li>
+      <li>O <code>.cpp</code> inclui o <code>.h</code> com o nome novo.</li>
+      <li>Salvei tudo. A versão salva é a que compila.</li>
+    </ul>
+
+    <h2>Se o tempo estiver acabando</h2>
+    <div class="alert alert-warning">
+      <strong>Ordem de prioridade:</strong> (1) o que compila e está certo vale mais que tudo; (2) entregue a randômica e a PM corretas antes de
+      tentar uma MM sofisticada; (3) <strong>comente trecho incompleto</strong> em vez de entregar algo que não compila. Peso das questões: 0,7 / 0,8 / 1,0.
+    </div>
+
+    <h2>Perguntas para me testar</h2>
+    <div class="card">
+      <ol>
+        <li>Qual a diferença entre primeira melhora e melhor melhora, em uma frase?</li>
+        <li>Por que a MM compara com <code>melhor_fo</code> e não com <code>s.fo</code>?</li>
+        <li>Por que a randômica não garante ótimo local?</li>
+        <li>O que acontece se eu esquecer de restaurar <code>s.fo</code> ao desfazer?</li>
+        <li>Qual o tamanho da vizinhança no PRCP? E no TSP com swap? E na PET?</li>
+        <li>Por que usar <code>&gt;</code> e não <code>&gt;=</code> ao aceitar?</li>
+        <li>Se o problema for de minimização, o que muda no código? (Resposta: só o sinal.)</li>
+      </ol>
+    </div>
+
+    <div class="pagenav">
+      <a href="laboratorio.html">← Laboratório</a>
+      <a href="teoria.html">Teoria →</a>
+    </div>
+  </main>
+
+
+  <footer>
+    Material de estudo pessoal — Métodos de Otimização. Os códigos de exemplo estão em <code>codigo/</code> e foram compilados e executados.
+  </footer>
+
+  <script src="../assets/js/site.js"></script>
+</body>
+</html>

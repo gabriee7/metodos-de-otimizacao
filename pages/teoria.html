@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Conceitos da disciplina e como cada meta-heurística (SA, Tabu, GRASP, AG) nasce da busca local; roteiro da ementa.">
   <title>Teoria — Métodos de Otimização</title>
   <link rel="stylesheet" href="../assets/css/style.css">
 </head>
@@ -10,70 +11,151 @@
 
   <nav>
     <a class="brand" href="../index.html">Métodos de Otimização</a>
+    <a href="guia.html">Guia</a>
+    <a href="p1-modelagem.html">P1</a>
+    <a href="p2-construtivas.html">P2</a>
+    <a href="p3-busca-local.html">P3</a>
+    <a href="problemas.html">Problemas</a>
+    <a href="laboratorio.html">Laboratório</a>
+    <a href="checklist.html">Checklist</a>
     <a href="teoria.html" class="active">Teoria</a>
-    <a href="exercicios.html">Exercícios</a>
   </nav>
 
-  <main>
-    <h1>Teoria</h1>
-    <p>
-      Referência conceitual por unidade da ementa. Em construção — conforme as unidades forem
-      cobertas em aula, cada uma ganha aqui: conceito, algoritmo base em pseudocódigo,
-      calibração de parâmetros, quando aplicar e erros comuns.
-    </p>
+  <div class="ref-layout">
+    <aside class="ex-sidebar">
+      <div class="ex-sidebar-label">Nesta página</div>
+      <a href="#conceitos" class="active"><span>Conceitos básicos</span></a>
+      <a href="#mapa"><span>Mapa das provas</span></a>
+      <a href="#meta"><span>Das buscas às meta-heurísticas</span></a>
+      <a href="#convencoes"><span>Convenções do professor</span></a>
+      <a href="#ementa"><span>Roteiro da ementa</span></a>
+    </aside>
 
-    <div class="phase">
-      <div class="phase-head">
-        <span class="phase-tag">CONCEITO</span>
-        <span class="phase-title">Heurística × Meta-heurística</span>
-        <span class="phase-line"></span>
-      </div>
-      <div class="phase-body">
-        <p>
-          Uma <strong>heurística</strong> é um procedimento específico para um problema, que busca
-          uma solução boa (não necessariamente ótima) em tempo razoável — ex.: uma regra gulosa de
-          construção. Uma <strong>meta-heurística</strong> é um framework genérico de busca,
-          aplicável a várias classes de problemas, que orquestra heurísticas (construtivas, de
-          vizinhança) com estratégias de escape de ótimos locais — ex.: Simulated Annealing, GRASP,
-          Algoritmos Genéticos.
-        </p>
-        <div class="attn">
-          <strong>Ponto de atenção:</strong> uma busca local "melhor melhora" ou "primeira melhora"
-          sozinha é heurística, não meta-heurística — ela fica presa no primeiro ótimo local.
-          Meta-heurísticas envolvem algum mecanismo de diversificação (aceitar piora, reiniciar,
-          perturbar) para escapar disso.
+    <div class="ref-content">
+      <h1>Teoria</h1>
+
+      <div class="phase" id="conceitos">
+        <div class="phase-head"><span class="phase-tag">UN. 1</span><span class="phase-title">Conceitos básicos</span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <div class="t-outer">
+            <table class="tab">
+              <thead><tr><th>Conceito</th><th>Em uma frase</th></tr></thead>
+              <tbody>
+                <tr><td>Heurística</td><td>procedimento específico que busca uma solução boa (não necessariamente ótima) em tempo razoável. Ex.: regra gulosa.</td></tr>
+                <tr><td>Meta-heurística</td><td>framework genérico que orquestra heurísticas e tem mecanismo para <em>escapar de ótimos locais</em>. Ex.: SA, Tabu, GRASP, AG.</td></tr>
+                <tr><td>Vizinhança</td><td>conjunto de soluções alcançáveis com um movimento mínimo a partir de uma solução.</td></tr>
+                <tr><td>Ótimo local</td><td>solução sem vizinho melhor (dentro da vizinhança escolhida).</td></tr>
+                <tr><td>Ótimo global</td><td>a melhor solução de todas.</td></tr>
+                <tr><td>Relaxação por penalização</td><td>solução inviável é permitida, mas a FO soma um custo pela violação.</td></tr>
+                <tr><td>Intensificação × diversificação</td><td>explorar a fundo uma região (busca local) × visitar regiões novas (aleatoriedade, reinício, aceitar piora).</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="attn">
+            <strong>Ponto de atenção:</strong> uma busca local (RA, PM ou MM) <em>sozinha</em> é heurística, não meta-heurística: ela fica presa no primeiro
+            ótimo local. Meta-heurísticas acrescentam diversificação.
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="phase">
-      <div class="phase-head">
-        <span class="phase-tag">UNIDADES</span>
-        <span class="phase-title">Roteiro da ementa</span>
-        <span class="phase-line"></span>
+      <div class="phase" id="mapa">
+        <div class="phase-head"><span class="phase-tag">MAPA</span><span class="phase-title">A progressão das provas</span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <div class="t-outer">
+            <table class="tab">
+              <thead><tr><th>Prova</th><th>Técnica</th><th>Página</th></tr></thead>
+              <tbody>
+                <tr><td>P1</td><td>Modelagem: leitura, struct, escrita, FO</td><td><a href="p1-modelagem.html">P1</a></td></tr>
+                <tr><td>P2</td><td>Vizinha + construtivas (aleatória, gulosa, aleatória-gulosa)</td><td><a href="p2-construtivas.html">P2</a></td></tr>
+                <tr><td>P3</td><td>Busca local (randômica, primeira melhora, melhor melhora)</td><td><a href="p3-busca-local.html">P3</a></td></tr>
+                <tr><td>P4 / final</td><td>Meta-heurísticas (SA, Busca Tabu, GRASP, AG) + tudo anterior</td><td>abaixo</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>Cada prova <strong>reusa o código da anterior</strong>: a P3 usa o <code>gerar_vizinha</code> da P2 e uma construtiva da P2; a P4 usa a busca local da P3.</p>
+        </div>
       </div>
-      <div class="phase-body">
-        <table class="tab">
-          <thead><tr><th>Unidade</th><th>Tópico</th><th>Status</th></tr></thead>
-          <tbody>
-            <tr><td>1</td><td>Introdução — heurística vs. meta-heurística</td><td><span class="badge badge-blue">em construção</span></td></tr>
-            <tr><td>2</td><td>Heurísticas construtivas e busca local</td><td><span class="badge badge-blue">em construção</span></td></tr>
-            <tr><td>3</td><td>Simulated Annealing</td><td><span class="badge badge-orange">pendente</span></td></tr>
-            <tr><td>4</td><td>Busca Tabu</td><td><span class="badge badge-orange">pendente</span></td></tr>
-            <tr><td>5</td><td>GRASP</td><td><span class="badge badge-orange">pendente</span></td></tr>
-            <tr><td>6</td><td>Algoritmos Genéticos</td><td><span class="badge badge-orange">pendente</span></td></tr>
-            <tr><td>7</td><td>VNS, ILS, Scatter Search, Colônia de Formigas</td><td><span class="badge badge-orange">pendente</span></td></tr>
-            <tr><td>8</td><td>Relaxação Lagrangiana</td><td><span class="badge badge-orange">pendente</span></td></tr>
-            <tr><td>9</td><td>Decomposição Dantzig-Wolfe e Geração de Colunas</td><td><span class="badge badge-orange">pendente</span></td></tr>
-          </tbody>
-        </table>
+
+      <div class="phase" id="meta">
+        <div class="phase-head"><span class="phase-tag">UN. 4–8</span><span class="phase-title">Das buscas locais às meta-heurísticas</span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <p>
+            Todas as meta-heurísticas da P4 são <strong>variações do mesmo esqueleto</strong>: ter uma solução, gerar vizinhas e decidir quando aceitar.
+            O que muda é a regra de aceitação e como escapar do ótimo local.
+          </p>
+          <div class="grid-2">
+            <div class="card"><div class="card-title">Simulated Annealing</div>
+              <p><strong>= randômica que aceita piora com probabilidade</strong> <code>e^(−Δ/T)</code> (minimização). A temperatura <code>T</code> cai ao longo do tempo: no início explora (aceita muita piora), no fim vira busca local.
+              Parâmetros: <code>temp_ini</code>, taxa de resfriamento, <code>sa_max</code> (iterações por temperatura), <code>temp_con</code> (temperatura de parada).</p></div>
+            <div class="card"><div class="card-title">Busca Tabu</div>
+              <p><strong>= melhor melhora com memória.</strong> Sempre se move para o melhor vizinho <em>mesmo que pior</em>, mas movimentos recentes ficam proibidos (lista tabu) por alguns passos para não voltar ao ótimo local. Critério de aspiração: tabu liberado se gera a melhor solução já vista.</p></div>
+            <div class="card"><div class="card-title">GRASP</div>
+              <p><strong>= construtiva aleatória-gulosa (P2) + busca local (P3), repetidas.</strong> Cada iteração gera uma solução inicial diferente (LRC), refina com busca local e guarda a melhor. Parâmetro: tamanho/aleatoriedade da LRC.</p></div>
+            <div class="card"><div class="card-title">Algoritmo Genético</div>
+              <p><strong>= população de soluções.</strong> Seleção (os melhores reproduzem), cruzamento (mistura de duas soluções), mutação (uma vizinha aleatória). Parâmetros: tamanho da população, nº de cruzamentos, taxa de mutação. Cuidado: o cruzamento precisa gerar solução <em>viável</em> (em permutações, sem repetir cidade).</p></div>
+          </div>
+          <div class="alert alert-info">
+            <strong>Padrão de assinatura (P4):</strong> <code>(parâmetros da técnica..., float tempo_max, Solucao&amp; s, double&amp; tempo_execucao, double&amp; tempo_melhor)</code> —
+            critério de parada por <em>tempo</em>, e duas saídas: tempo total e tempo até achar a melhor solução (última melhora).
+          </div>
+          <p>Fora da P4 (Un. 8): VNS (troca de vizinhança quando trava), ILS (perturba e refaz a busca local), Scatter Search, Colônia de Formigas, Meméticos (AG + busca local), ALNS.</p>
+        </div>
+      </div>
+
+      <div class="phase" id="convencoes">
+        <div class="phase-head"><span class="phase-tag">PADRÃO</span><span class="phase-title">Convenções do professor</span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <div class="t-outer">
+            <table class="tab">
+              <thead><tr><th>Convenção</th><th>Como aparece</th></tr></thead>
+              <tbody>
+                <tr><td>Dados globais</td><td>A instância fica em variáveis globais; só a <em>solução</em> vira struct.</td></tr>
+                <tr><td>Struct de solução</td><td><code>typedef struct tSolucao { ...; int fo; } Solucao;</code></td></tr>
+                <tr><td>Referência</td><td>Funções recebem <code>Solucao&amp; s</code> e são <code>void</code> (modificam in-place).</td></tr>
+                <tr><td>Funções-base</td><td><code>ler_dados</code>, <code>testar_dados</code>, <code>calcular_fo</code>, <code>escrever_solucao</code>.</td></tr>
+                <tr><td>Saída tela/arquivo</td><td><code>""</code> → <code>stdout</code>; senão abre o arquivo.</td></tr>
+                <tr><td>Zerar a FO</td><td><code>s.fo = 0</code> antes de somar.</td></tr>
+                <tr><td>Nomes do professor</td><td><code>heu_BL_MM</code>, <code>heu_BL_PM</code>, <code>heu_BL_RA</code>, <code>heur_const_ale</code>, <code>heur_const_gul</code>, <code>vet_val_obj</code>... Aqui os exemplos usam nomes por extenso; <strong>na prova use os nomes do <code>.h</code></strong>.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="phase" id="ementa">
+        <div class="phase-head"><span class="phase-tag">EMENTA</span><span class="phase-title">Roteiro da ementa</span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <div class="t-outer">
+            <table class="tab">
+              <thead><tr><th>Un.</th><th>Tópico</th><th>Neste site</th></tr></thead>
+              <tbody>
+                <tr><td>1</td><td>Conceitos básicos (heurística, vizinhança, ótimo local...)</td><td><span class="badge badge-green">coberto</span></td></tr>
+                <tr><td>2</td><td>Relaxações (Lagrangiana, penalização, Dantzig-Wolfe, geração de colunas)</td><td><span class="badge badge-orange">penalização apenas</span></td></tr>
+                <tr><td>3</td><td>Heurísticas construtivas, refinamento e intensificação</td><td><span class="badge badge-green">P2 e P3</span></td></tr>
+                <tr><td>4</td><td>Simulated Annealing</td><td><span class="badge badge-blue">visão geral</span></td></tr>
+                <tr><td>5</td><td>Busca Tabu</td><td><span class="badge badge-blue">visão geral</span></td></tr>
+                <tr><td>6</td><td>GRASP</td><td><span class="badge badge-blue">visão geral</span></td></tr>
+                <tr><td>7</td><td>Algoritmos Genéticos</td><td><span class="badge badge-blue">visão geral</span></td></tr>
+                <tr><td>8</td><td>VNS, ILS, Scatter Search, Formigas, Meméticos, ALNS</td><td><span class="badge badge-orange">pendente</span></td></tr>
+                <tr><td>9</td><td>Métodos híbridos</td><td><span class="badge badge-orange">pendente</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="pagenav">
+        <a href="checklist.html">← Checklist</a>
+        <a href="../index.html">Início →</a>
       </div>
     </div>
-  </main>
+  </div>
+
 
   <footer>
-    Material de estudo pessoal — Métodos de Otimização.
+    Material de estudo pessoal — Métodos de Otimização. Os códigos de exemplo estão em <code>codigo/</code> e foram compilados e executados.
   </footer>
 
+  <script src="../assets/js/site.js"></script>
 </body>
 </html>

@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="As três buscas locais da P3 (randômica, primeira melhora, melhor melhora) explicadas passo a passo, com código C verificado para PRCP.">
+  <title>P3 — Busca local — Métodos de Otimização</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+  <nav>
+    <a class="brand" href="../index.html">Métodos de Otimização</a>
+    <a href="guia.html">Guia</a>
+    <a href="p1-modelagem.html">P1</a>
+    <a href="p2-construtivas.html">P2</a>
+    <a href="p3-busca-local.html" class="active">P3</a>
+    <a href="problemas.html">Problemas</a>
+    <a href="laboratorio.html">Laboratório</a>
+    <a href="checklist.html">Checklist</a>
+    <a href="teoria.html">Teoria</a>
+  </nav>
+
+  <div class="ref-layout">
+    <aside class="ex-sidebar">
+      <div class="ex-sidebar-label">Nesta página</div>
+      <a href="#visao" class="active"><span>O que a P3 pede</span></a>
+      <a href="#base"><span>O que vem pronto</span></a>
+      <a href="#q1"><span>Q1 — Randômica</span></a>
+      <a href="#q2"><span>Q2 — Primeira melhora</span></a>
+      <a href="#q3"><span>Q3 — Melhor melhora</span></a>
+      <a href="#comparar"><span>Comparando as três</span></a>
+      <a href="#variantes"><span>Variantes e bônus</span></a>
+      <a href="#testar"><span>Como testar</span></a>
+      <a href="#esqueleto"><span>Esqueleto genérico</span></a>
+    </aside>
+
+    <div class="ref-content">
+      <h1>P3 — Heurísticas de refinamento (busca local)</h1>
+      <p>
+        Leia antes o <a href="guia.html">Guia</a> (as 4 peças e as 5 perguntas). Aqui está a aplicação:
+        cada método, <em>o que pensar</em>, o código e as armadilhas. Os exemplos usam o <strong>PRCP</strong>
+        (maximização) e remetem à página <a href="problemas.html">Problemas</a> para TSP e PET (minimização).
+      </p>
+
+      <div class="phase" id="visao">
+        <div class="phase-head"><span class="phase-tag">VISÃO</span><span class="phase-title">O que a P3 pede</span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <p>Três métodos, todos <code>void</code>, todos recebendo a solução <strong>por referência</strong> (<code>Solucao&amp; s</code>) para refiná-la <em>in-place</em>:</p>
+          <div class="t-outer">
+            <table class="tab">
+              <thead><tr><th>Questão</th><th>Método</th><th>Peso (prova de referência)</th></tr></thead>
+              <tbody>
+                <tr><td>1</td><td>busca local randômica</td><td>0,7</td></tr>
+                <tr><td>2</td><td>busca local de primeira melhora</td><td>0,8</td></tr>
+                <tr><td>3</td><td>busca local de melhor melhora</td><td>1,0</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="attn">
+            <strong>Ponto de atenção:</strong> os pesos acima vêm da P3 da turma 2026-1 (PRCP). Na sua turma os
+            valores e o problema podem mudar; a técnica não. O enunciado também exige: arquivos
+            <code>nome_sobrenome.cpp/.h</code>, pasta <code>Prova3</code> na Área de Trabalho e
+            <strong>erro de compilação = 0,0</strong>.
+          </div>
+        </div>
+      </div>
+
+      <div class="phase" id="base">
+        <div class="phase-head"><span class="phase-tag">BASE</span><span class="phase-title">O que vem pronto no código da prova</span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <p>A prova entrega um código-base e você só escreve nas "áreas indicadas". Normalmente já existem:</p>
+          <ul>
+            <li>as variáveis globais da instância e a <code>struct Solucao</code>;</li>
+            <li><code>ler_dados</code>, <code>calcular_fo(Solucao&amp; s)</code>, <code>escrever_solucao</code>;</li>
+            <li><code>gerar_vizinha(Solucao&amp; s)</code> (o movimento aleatório) e uma construtiva (para criar a solução inicial);</li>
+            <li>no <code>main</code>, uma "área para teste" onde você chama seus métodos.</li>
+          </ul>
+          <div class="alert alert-warning">
+            <strong>Use os nomes e assinaturas que a prova dá.</strong> Nos exemplos deste site as funções novas têm nomes
+            por extenso (<code>busca_local_primeira_melhora</code>); na prova, o <code>.h</code> traz os nomes exatos
+            (algo como <code>heur_bl_pm</code>) — copie-os da declaração, não invente.
+            Se a randômica receber um parâmetro (<code>const int iter</code>), ele é o orçamento de tentativas.
+          </div>
+        </div>
+      </div>
+
+      <div class="phase" id="q1">
+        <div class="phase-head"><span class="phase-tag">Q1</span><span class="phase-title">Busca local randômica</span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <h3>Passo 1 — O que pensar</h3>
+          <p>
+            "Sorteio um vizinho. Se for melhor, fico com ele. Se eu falhar <code>iter</code> vezes seguidas, desisto."
+            Não preciso enumerar a vizinhança — só preciso do <code>gerar_vizinha</code> que já existe.
+          </p>
+          <h3>Passo 2 — Pseudocódigo</h3>
+<div class="math-block">repita:
+    melhorou = não
+    faça iter vezes:
+        clone = cópia de s
+        gerar_vizinha(clone); calcular_fo(clone)
+        se clone melhor que s:
+            s = clone ; melhorou = sim
+    se não melhorou: pare</div>
+          <h3>Passo 3 — Código (PRCP, maximiza)</h3>
+          <pre class="code"><code>void busca_local_randomica(Solucao&amp; s, const int iteracoes)
+{
+    Solucao vizinha;
+    int melhorou = 1;
+    calcular_fo(s);                                   // garante fo válida na entrada
+    while (melhorou == 1)
+    {
+        melhorou = 0;
+        for (int i = 0; i &lt; iteracoes; i++)
+        {
+            memcpy(&amp;vizinha, &amp;s, sizeof(Solucao));    // trabalha numa cópia
+            gerar_vizinha(vizinha);                   // 1 movimento ao acaso
+            calcular_fo(vizinha);
+            if (vizinha.fo &gt; s.fo)                    // PRCP maximiza
+            {
+                memcpy(&amp;s, &amp;vizinha, sizeof(Solucao));
+                melhorou = 1;
+            }
+        }
+    }
+}</code></pre>
+<div class="code-file">codigo/prcp/busca_local_prcp.cpp</div>
+          <h3>Passo 4 — Por que cada trecho está ali</h3>
+          <ul>
+            <li><code>calcular_fo(s)</code> no início: garante que <code>s.fo</code> é confiável mesmo que quem chamou tenha esquecido.</li>
+            <li><code>memcpy</code> para <code>vizinha</code>: o movimento é aplicado na <em>cópia</em>; se for ruim, descarta-se a cópia e <code>s</code> não foi tocada (é o "desfazer" mais simples).</li>
+            <li><code>melhorou</code> volta a 0 a cada rodada: o laço externo só termina quando <strong>uma rodada inteira de <code>iter</code> tentativas</strong> não melhora nada.</li>
+            <li>Aceitar com <code>&gt;</code> estrito (não <code>&gt;=</code>): aceitar empates pode fazer a busca andar em círculos para sempre.</li>
+          </ul>
+          <div class="attn">
+            <strong>Ponto de decisão:</strong> depois de aceitar um vizinho, esta versão <em>continua</em> a rodada de
+            <code>iter</code> tentativas (como no código de aula do professor). A alternativa é reiniciar a contagem a cada aceite.
+            Ambas estão certas; a diferença é só quanto tempo se gasta. Se a prova pedir uma, siga a prova.
+          </div>
+          <div class="attn">
+            <strong>Fraqueza que você deve saber explicar:</strong> por ser sorteio, a randômica pode terminar com um vizinho melhor
+            ainda existente (nunca foi sorteado). Ela <u>não garante</u> ótimo local; PM e MM garantem.
+          </div>
+        </div>
+      </div>
+
+      <div class="phase" id="q2">
+        <div class="phase-head"><span class="phase-tag">Q2</span><span class="phase-title">Busca local de primeira melhora</span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <h3>Passo 1 — O que pensar</h3>
+          <p>
+            "Varro <strong>todos</strong> os movimentos em ordem. No primeiro que melhora, <strong>fico com ele</strong> e recomeço a varredura do início."
+            Se uma varredura inteira não achar nada, estou num ótimo local e paro.
+          </p>
+          <h3>Passo 2 — Pseudocódigo</h3>
+<div class="math-block">repita:
+    achou = não
+    para cada movimento (em ordem fixa):
+        aplica o movimento; calcula fo
+        se melhorou:  achou = sim; saia dos laços   (o movimento FICA)
+        senão:        DESFAZ o movimento
+    se não achou: pare</div>
+          <h3>Passo 3 — Código (PRCP, maximiza)</h3>
+          <pre class="code"><code>void busca_local_primeira_melhora(Solucao&amp; s)
+{
+    int melhorou = 1;
+    calcular_fo(s);
+    while (melhorou == 1)
+    {
+        melhorou = 0;
+        for (int ponto = 0; ponto &lt; num_pts &amp;&amp; melhorou == 0; ponto++)
+        {
+            int posicao_original = s.vet_sol[ponto];
+            int fo_original = s.fo;
+            for (int pos = 0; pos &lt; num_pos &amp;&amp; melhorou == 0; pos++)
+            {
+                if (pos == posicao_original)
+                    continue;                         // não é um movimento
+                s.vet_sol[ponto] = pos;               // aplica o movimento
+                calcular_fo(s);
+                if (s.fo &gt; fo_original)
+                    melhorou = 1;                     // fica aplicado; sai dos laços
+                else
+                {
+                    s.vet_sol[ponto] = posicao_original; // desfaz
+                    s.fo = fo_original;
+                }
+            }
+        }
+    }
+}</code></pre>
+<div class="code-file">codigo/prcp/busca_local_prcp.cpp</div>
+          <h3>Passo 4 — Por que cada trecho está ali</h3>
+          <ul>
+            <li>Os dois <code>for</code> enumeram a vizinhança inteira: <em>todo ponto × toda posição</em>. O <code>continue</code> pula o "movimento" que não muda nada.</li>
+            <li><code>&amp;&amp; melhorou == 0</code> nas condições dos <code>for</code>: é a forma de "sair dos dois laços" sem <code>goto</code>.</li>
+            <li>Se melhorou, <strong>não desfaz</strong> — o movimento fica aplicado e <code>s.fo</code> já está atualizada pelo <code>calcular_fo</code>.</li>
+            <li>Se não melhorou, desfaz o vetor <em>e</em> a <code>fo</code>. Esquecer <code>s.fo = fo_original</code> é a causa clássica de <code>fo</code> errada ao final.</li>
+          </ul>
+          <div class="alert alert-danger">
+            <strong>Sobre o <code>goto INICIO</code> do professor:</strong> voltar para um rótulo anterior (como ele faz) é válido em C++.
+            O perigo é um <code>goto</code> que salte <em>para frente</em> por cima de uma declaração com inicialização
+            (<code>int x = ...;</code>): o compilador recusa, e <em>erro de compilação = nota 0</em>. A versão com
+            <code>while (melhorou == 1)</code> faz o mesmo e elimina esse risco, além de ser mais fácil de ler.
+          </div>
+          <div class="attn">
+            <strong>Ponto de decisão (6a):</strong> a <em>ordem de varredura</em> muda o resultado. Aqui: pontos de 0 a n−1, posições de 0 a m−1.
+            A variante "PM2" do professor embaralha a ordem dos pontos para não favorecer sempre os primeiros. Sem exigência na prova, a ordem fixa é a mais simples.
+          </div>
+        </div>
+      </div>
+
+      <div class="phase" id="q3">
+        <div class="phase-head"><span class="phase-tag">Q3</span><span class="phase-title">Busca local de melhor melhora</span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <h3>Passo 1 — O que pensar</h3>
+          <p>
+            "Varro <strong>todos</strong> os movimentos <strong>sem aplicar nenhum</strong>, só anotando qual daria a melhor FO.
+            No fim aplico esse único movimento e repito." Cada passo é o mais "inclinado" possível.
+          </p>
+          <h3>Passo 2 — Pseudocódigo</h3>
+<div class="math-block">repita:
+    melhor_movimento = nenhum ; melhor_fo = s.fo
+    para cada movimento:
+        aplica; calcula fo
+        se fo melhor que melhor_fo:  anota (movimento, fo)
+        DESFAZ (sempre)
+    se melhor_movimento == nenhum: pare
+    aplica melhor_movimento ; s.fo = melhor_fo</div>
+          <h3>Passo 3 — Código (PRCP, maximiza)</h3>
+          <pre class="code"><code>void busca_local_melhor_melhora(Solucao&amp; s)
+{
+    calcular_fo(s);
+    while (1)
+    {
+        int melhor_ponto = -1;
+        int melhor_posicao = -1;
+        int melhor_fo = s.fo;                         // referência: o melhor visto ATÉ AGORA
+        for (int ponto = 0; ponto &lt; num_pts; ponto++)
+        {
+            int posicao_original = s.vet_sol[ponto];
+            int fo_original = s.fo;
+            for (int pos = 0; pos &lt; num_pos; pos++)
+            {
+                if (pos == posicao_original)
+                    continue;
+                s.vet_sol[ponto] = pos;
+                calcular_fo(s);
+                if (s.fo &gt; melhor_fo)                 // compara com melhor_fo, não com s.fo
+                {
+                    melhor_fo = s.fo;
+                    melhor_ponto = ponto;
+                    melhor_posicao = pos;
+                }
+                s.vet_sol[ponto] = posicao_original;  // SEMPRE desfaz: só anotamos
+                s.fo = fo_original;
+            }
+        }
+        if (melhor_ponto == -1)
+            break;                                    // nenhum vizinho melhora: ótimo local
+        s.vet_sol[melhor_ponto] = melhor_posicao;     // aplica só o melhor
+        s.fo = melhor_fo;
+    }
+}</code></pre>
+<div class="code-file">codigo/prcp/busca_local_prcp.cpp</div>
+          <h3>Passo 4 — Por que cada trecho está ali</h3>
+          <ul>
+            <li><code>melhor_ponto = -1</code> funciona como "nenhum movimento achado". No fim, <code>-1</code> significa ótimo local → <code>break</code>.</li>
+            <li>A comparação é com <code>melhor_fo</code> (o melhor <em>visto até agora</em>), <strong>não</strong> com <code>s.fo</code>. Comparar com <code>s.fo</code> faria o método guardar o <em>último</em> vizinho melhor que a solução atual, e não o melhor de todos.</li>
+            <li>Desfaz <u>sempre</u>, ao contrário da PM: nesta busca nenhum movimento é aplicado durante a varredura.</li>
+            <li>Só depois da varredura completa é que um único movimento é aplicado, e <code>s.fo = melhor_fo</code> evita um <code>calcular_fo</code> extra.</li>
+          </ul>
+          <div class="attn">
+            <strong>Custo:</strong> cada passo paga a vizinhança <em>inteira</em> (n × (m−1) avaliações no PRCP), mesmo que o primeiro vizinho já fosse bom.
+            Por isso a MM costuma ser a mais lenta por iteração.
+          </div>
+        </div>
+      </div>
+
+      <div class="phase" id="comparar">
+        <div class="phase-head"><span class="phase-tag">COMPARAR</span><span class="phase-title">As três lado a lado</span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <div class="t-outer">
+            <table class="tab">
+              <thead><tr><th></th><th>Randômica</th><th>Primeira melhora</th><th>Melhor melhora</th></tr></thead>
+              <tbody>
+                <tr><td>Vizinhos avaliados</td><td>sorteados</td><td>em ordem, até o 1º melhor</td><td>todos, a cada passo</td></tr>
+                <tr><td>Aplica o movimento...</td><td>no 1º melhor sorteado</td><td>no 1º melhor encontrado</td><td>só no melhor da varredura</td></tr>
+                <tr><td>Custo por passo</td><td>baixo</td><td>baixo a médio</td><td>alto (vizinhança inteira)</td></tr>
+                <tr><td>Número de passos</td><td>muitos</td><td>muitos</td><td>menos (cada um é maior)</td></tr>
+                <tr><td>Garante ótimo local</td><td>não</td><td>sim</td><td>sim</td></tr>
+                <tr><td>Reprodutível?</td><td>não (depende de <code>rand</code>)</td><td>sim (ordem fixa)</td><td>sim</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3>O que medimos de verdade</h3>
+          <p>Mesma solução inicial para as três, uma execução (<code>srand(42)</code>). Servem para <em>sentir</em> o comportamento, não como ranking:</p>
+          <div class="t-outer">
+            <table class="tab">
+              <thead><tr><th>Problema / instância</th><th>FO inicial</th><th>RA</th><th>PM</th><th>MM</th></tr></thead>
+              <tbody>
+                <tr><td>PRCP 25 pts × 4 <span class="pill pill-max">máx</span></td><td>4</td><td>15</td><td>15</td><td>15</td></tr>
+                <tr><td>PRCP 500 pts × 4 <span class="pill pill-max">máx</span></td><td>263</td><td>461</td><td>461</td><td>460</td></tr>
+                <tr><td>PRCP 1000 pts × 4 <span class="pill pill-max">máx</span></td><td>293</td><td>726</td><td>725</td><td>727</td></tr>
+                <tr><td>TSP 40 cidades <span class="pill pill-min">mín</span></td><td>1927,06</td><td>797,71</td><td>630,07</td><td>823,87</td></tr>
+                <tr><td>PET 50 tarefas <span class="pill pill-min">mín</span></td><td>313602</td><td>57340</td><td>66442</td><td>61767</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="alert alert-info">
+            <strong>Lições:</strong> (1) nenhuma das três vence sempre; (2) todas melhoram muito uma solução ruim; (3) no TSP, uma
+            construtiva <em>gulosa</em> (623,11) bate qualquer busca local que partiu de uma rota ruim — a qualidade do ponto de partida
+            importa. É exatamente por isso que a P4 combina construtiva + busca local (GRASP).
+          </div>
+        </div>
+      </div>
+
+      <div class="phase" id="variantes">
+        <div class="phase-head"><span class="phase-tag">EXTRA</span><span class="phase-title">Variantes e como ganhar o bônus</span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <ul>
+            <li><b>RA2 (randômica "melhor da rodada"):</b> em vez de aceitar logo, guarda o melhor dos <code>iter</code> vizinhos sorteados e só aplica no fim da rodada — mistura MM com sorteio.</li>
+            <li><b>PM2:</b> primeira melhora com a ordem dos pontos embaralhada (evita viés pelos primeiros índices).</li>
+            <li><b>Avaliação por delta (bônus de eficiência):</b> recalcular a FO inteira por vizinho custa O(n). Quando o movimento só afeta poucos elementos (no PRCP: o ponto movido e os que conflitam com a posição antiga/nova), dá para atualizar só a diferença. Em instâncias grandes isso é a diferença entre segundos e minutos. Só vale depois que a versão simples estiver correta e compilando.</li>
+            <li><b>Empates:</b> mantenha <code>&gt;</code>/<code>&lt;</code> estrito. <code>&gt;=</code> pode ciclar entre soluções de mesma FO.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="phase" id="testar">
+        <div class="phase-head"><span class="phase-tag">TESTE</span><span class="phase-title">Como saber que está certo (segundo caminho)</span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <ol>
+            <li><strong>Compila?</strong> Sem erro de compilação a nota é 0. Compile com <code>g++ -Wall</code> e leia os avisos.</li>
+            <li><strong>Roda na instância toy primeiro</strong> (a pequena). Imprima FO antes e depois.</li>
+            <li><strong>A FO nunca pode piorar.</strong> Se piorou, suspeite do sinal ou do desfazer.</li>
+            <li><strong>Recalcule a FO do resultado:</strong> copie <code>s</code>, chame <code>calcular_fo</code> e compare com <code>s.fo</code>. Se divergirem, você deixou <code>fo</code> velha (é o que o final do <code>main</code> de exemplo faz).</li>
+            <li><strong>Reaplique a busca no resultado:</strong> PM e MM devem retornar a mesma solução (já é um ótimo local).</li>
+          </ol>
+          <p>Código executável completo: <code>codigo/prcp/busca_local_prcp.cpp</code> (compilar: <code>g++ busca_local_prcp.cpp -o busca_local_prcp</code>; rodar: <code>./busca_local_prcp instancia.txt</code>).</p>
+        </div>
+      </div>
+
+      <div class="phase" id="esqueleto">
+        <div class="phase-head"><span class="phase-tag">MOLDE</span><span class="phase-title">Esqueleto genérico (vale para qualquer problema)</span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <p>Troque só as linhas marcadas. É um <em>molde</em>, não código compilável:</p>
+<pre class="code"><code>void busca_local_primeira_melhora(Solucao&amp; s)
+{
+    int melhorou = 1;
+    calcular_fo(s);
+    while (melhorou == 1)
+    {
+        melhorou = 0;
+        for (/* TODO: laços que ENUMERAM os movimentos */ ... &amp;&amp; melhorou == 0 ...)
+        {
+            int fo_original = s.fo;
+            /* TODO: guardar o que o movimento vai mudar */
+            /* TODO: APLICAR o movimento */
+            calcular_fo(s);
+            if (s.fo /* TODO: &gt; ou &lt; */ fo_original)
+                melhorou = 1;
+            else
+            {
+                /* TODO: DESFAZER o movimento */
+                s.fo = fo_original;
+            }
+        }
+    }
+}</code></pre>
+          <p>Para a melhor melhora: troque o corpo do <code>if</code> por "anotar melhor", desfaça <u>sempre</u>, e aplique o melhor depois dos laços.</p>
+        </div>
+      </div>
+
+      <div class="pagenav">
+        <a href="p2-construtivas.html">← P2 — Construtivas</a>
+        <a href="problemas.html">Outros problemas →</a>
+      </div>
+    </div>
+  </div>
+
+
+  <footer>
+    Material de estudo pessoal — Métodos de Otimização. Os códigos de exemplo estão em <code>codigo/</code> e foram compilados e executados.
+  </footer>
+
+  <script src="../assets/js/site.js"></script>
+</body>
+</html>

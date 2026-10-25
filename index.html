@@ -3,281 +3,90 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Métodos de Otimização</title>
+  <meta name="description" content="Guia de consulta de Métodos de Otimização: o modo de pensar da busca local, construtivas e modelagem, com código C verificado e laboratório interativo.">
+  <title>Métodos de Otimização — guia de consulta</title>
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
 
   <nav>
     <a class="brand" href="index.html">Métodos de Otimização</a>
+    <a href="pages/guia.html">Guia</a>
+    <a href="pages/p1-modelagem.html">P1</a>
+    <a href="pages/p2-construtivas.html">P2</a>
+    <a href="pages/p3-busca-local.html">P3</a>
+    <a href="pages/problemas.html">Problemas</a>
+    <a href="pages/laboratorio.html">Laboratório</a>
+    <a href="pages/checklist.html">Checklist</a>
     <a href="pages/teoria.html">Teoria</a>
-    <a href="pages/exercicios.html">Exercícios</a>
   </nav>
 
   <section class="hero">
     <h1>Métodos de Otimização</h1>
-    <p>Heurísticas e meta-heurísticas. Material de estudo com teoria, código em C e provas resolvidas passo a passo.</p>
+    <p>Guia de consulta para pensar qualquer problema de heurísticas: o <strong>modelo mental</strong> primeiro, o código depois.</p>
     <div class="hero-cards">
-      <a class="hero-card" href="pages/teoria.html">
-        <span class="icon">📘</span>
-        <span>Teoria</span>
-      </a>
-      <a class="hero-card" href="pages/exercicios.html">
-        <span class="icon">🧩</span>
-        <span>Exercícios resolvidos</span>
-      </a>
-      <a class="hero-card" href="#interpretacao-p1">
-        <span class="icon">🔎</span>
-        <span>Como interpretar a P1</span>
-      </a>
+      <a class="hero-card" href="pages/guia.html"><span class="icon">🧭</span><span>Guia: comece aqui</span></a>
+      <a class="hero-card" href="pages/p3-busca-local.html"><span class="icon">🔍</span><span>P3 — Busca local</span></a>
+      <a class="hero-card" href="pages/laboratorio.html"><span class="icon">🧪</span><span>Laboratório</span></a>
+      <a class="hero-card" href="pages/checklist.html"><span class="icon">✅</span><span>Checklist de prova</span></a>
     </div>
   </section>
 
   <main>
-    <h2>Sobre a disciplina</h2>
-    <p>
-      Métodos de Otimização é a continuação natural de Otimização Linear, trocando o eixo de
-      métodos exatos (Simplex, dualidade) por métodos aproximados: heurísticas construtivas,
-      buscas locais e meta-heurísticas completas (Simulated Annealing, GRASP, Algoritmos
-      Genéticos, entre outras).
-    </p>
-
-    <div class="card">
-      <div class="card-title">Como as provas funcionam</div>
-      <p>
-        Cada prova recebe um código-base parcialmente pronto e cobre uma técnica nova aplicada
-        a um problema diferente — não é reescrever do zero, é completar métodos dentro de uma
-        estrutura já dada. Existe também uma componente competitiva: bônus de nota para a
-        melhor solução da turma.
-      </p>
+    <h2>A ideia em um minuto</h2>
+    <div class="alert alert-info">
+      Toda busca local é <strong>4 peças</strong>: uma <em>solução</em>, um <em>movimento</em> (a menor mudança possível), a
+      <em>vizinhança</em> (todos os movimentos) e um critério de <em>"melhorou?"</em> (maximizar ou minimizar).
+      Os três métodos da P3 só diferem em <strong>quais vizinhos olhar</strong> e <strong>quando aceitar</strong>.
     </div>
-
-    <div class="card">
-      <div class="card-title">Progressão de técnica</div>
+    <div class="pecas">
+      <div class="peca"><b>1. Solução</b><span>struct + <code>fo</code></span></div>
+      <div class="peca"><b>2. Movimento</b><span>menor mudança possível</span></div>
+      <div class="peca"><b>3. Vizinhança</b><span>todos os movimentos</span></div>
+      <div class="peca"><b>4. Melhorou?</b><span><code>&gt;</code> ou <code>&lt;</code></span></div>
+    </div>
+    <div class="t-outer">
       <table class="tab">
-        <thead>
-          <tr><th>Prova</th><th>Técnica</th><th>Foco</th></tr>
-        </thead>
+        <thead><tr><th>Método</th><th>Pensamento</th></tr></thead>
         <tbody>
-          <tr><td>P1</td><td>Modelagem</td><td>Struct de solução, leitura de instância, FO penalizada</td></tr>
-          <tr><td>P2</td><td>Heurísticas construtivas</td><td>Aleatória, gulosa, aleatória-gulosa (RCL)</td></tr>
-          <tr><td>P3</td><td>Busca local</td><td>Randômica, primeira melhora, melhor melhora</td></tr>
-          <tr><td>Final</td><td>Meta-heurística completa</td><td>SA, GRASP, AG com orçamento de tempo</td></tr>
+          <tr><td><b>Randômica</b></td><td>"Tento ao acaso. Se melhorar, fico. Desisto após <code>iter</code> falhas seguidas."</td></tr>
+          <tr><td><b>Primeira melhora</b></td><td>"Varro tudo em ordem. No primeiro que melhora, fico e recomeço."</td></tr>
+          <tr><td><b>Melhor melhora</b></td><td>"Varro tudo sem aplicar. Aplico só o melhor e repito."</td></tr>
         </tbody>
       </table>
     </div>
-    <h2 id="interpretacao-p1">Como interpretar a P1 (TSP) — questão a questão</h2>
-    <p>
-      Leitura do enunciado (<code>prova1.pdf</code>) cruzada com uma resolução real
-      (<code>gabriel_souza.h</code> / <code>gabriel_souza.cpp</code> / instância <code>toy.txt</code>),
-      linha do que o enunciado pede vs. o que precisa virar código, e os pontos onde é fácil perder
-      nota por interpretar errado, não por não saber a técnica.
 
-      <div class="attn" style="margin-top:.8rem">
-        <strong>Erro que mais derruba nota nessa prova:</strong> a rota é um <strong>ciclo</strong>
-        ("...retorne à cidade de origem"), não um caminho aberto. Se a FO não incluir a aresta de
-        volta da última cidade para a primeira, todas as outras respostas ficam certas e a nota some
-        assim mesmo.
-      </div>
-    </p>
-
-    <div class="phase">
-      <div class="phase-head">
-        <span class="phase-tag">Q1 · 0,5</span>
-        <span class="phase-title">Leitura da instância</span>
-        <span class="phase-line"></span>
-      </div>
-      <div class="phase-body">
-        <p>
-          <strong>O que o enunciado pede:</strong> "faça um método para leitura de uma instância...
-          deve receber o nome/diretório do arquivo como parâmetro". E logo depois: "os dados
-          necessários para o tratamento do problema devem ser armazenados em <strong>variáveis
-          globais</strong>, que também devem ser criadas."
-        </p>
-        <p>
-          <strong>Como isso vira código:</strong> duas exigências separadas, fáceis de misturar. A
-          função só recebe o caminho do arquivo (<code>char* arq</code>) e não retorna nada — quem
-          guarda os dados são as globais <code>num_cid</code> e <code>mat_custo_cid</code>, criadas
-          no <code>.h</code> fora de qualquer função:
-        </p>
-        <div class="math-block">// gabriel_souza.h
-int num_cid;
-float mat_custo_cid[MAX_CIDADES][MAX_CIDADES];
-void ler_instancia(char* arq);
-
-// gabriel_souza.cpp
-void ler_instancia(char* arq) {
-    FILE* f = fopen(arq, "r");
-    fscanf(f, "%d", &num_cid);
-    for (int i = 1; i <= num_cid; i++)
-        for (int j = 1; j <= num_cid; j++)
-            fscanf(f, "%f", &mat_custo_cid[i][j]);
-    fclose(f);
-}</div>
-        <p>
-          Formato do arquivo (ver <code>toy.txt</code>): primeira linha é <code>n</code>, depois uma
-          matriz <code>n×n</code> de custos, espaço-separada. <code>toy.txt</code> tem 5 cidades e é
-          exatamente a instância que o enunciado manda usar "para depuração do código".
-        </p>
-        <div class="attn">
-          <strong>Pontos de atenção:</strong> a assinatura tem que bater literalmente com "recebe o
-          nome do arquivo por parâmetro" — retornar uma struct de instância ou usar variável global
-          para o nome do arquivo foge do pedido. E como os dados são globais, <code>ler_instancia</code>
-          é chamada <strong>uma vez</strong> no <code>main</code>, antes de qualquer coisa que use
-          <code>num_cid</code>/<code>mat_custo_cid</code> — nesse código, isso é reforçado indexando
-          de <strong>1 a <code>num_cid</code></strong> (não de 0), então o vetor/matriz precisam ter
-          tamanho <code>MAX_CIDADES+1</code> de folga ou <code>MAX_CIDADES</code> já contar essa
-          margem.
-        </div>
-      </div>
+    <h2>Trilha de estudo</h2>
+    <div class="grid-2">
+      <a class="card card-link" href="pages/guia.html"><div class="card-title">1. Guia — o modelo mental</div><p>4 peças, 5 perguntas, os 3 métodos, maximizar × minimizar, desfazer, erros que custam nota.</p></a>
+      <a class="card card-link" href="pages/p1-modelagem.html"><div class="card-title">2. P1 — Modelagem</div><p>Leitura, struct, escrita e FO com penalização (TSP, verificado).</p></a>
+      <a class="card card-link" href="pages/p2-construtivas.html"><div class="card-title">3. P2 — Construtivas</div><p>Vizinha, aleatória, gulosa e aleatória-gulosa (LRC) no PRCP.</p></a>
+      <a class="card card-link" href="pages/p3-busca-local.html"><div class="card-title">4. P3 — Busca local</div><p>Randômica, primeira melhora e melhor melhora: pensamento, código e armadilhas.</p></a>
+      <a class="card card-link" href="pages/problemas.html"><div class="card-title">5. Problemas</div><p>PRCP, PET, TSP, PAB, DARP e hubs: o mesmo molde com outros movimentos.</p></a>
+      <a class="card card-link" href="pages/laboratorio.html"><div class="card-title">6. Laboratório</div><p>Simulador interativo: veja cada método avaliar, aceitar e desfazer.</p></a>
+      <a class="card card-link" href="pages/checklist.html"><div class="card-title">7. Checklist de prova</div><p>O que ler, escrever, testar e conferir antes de entregar.</p></a>
+      <a class="card card-link" href="pages/teoria.html"><div class="card-title">8. Teoria</div><p>Conceitos e como SA, Tabu, GRASP e AG nascem da busca local.</p></a>
     </div>
 
-    <div class="phase">
-      <div class="phase-head">
-        <span class="phase-tag">Q2 · 0,5</span>
-        <span class="phase-title">Struct de solução</span>
-        <span class="phase-line"></span>
-      </div>
-      <div class="phase-body">
-        <p>
-          <strong>O que o enunciado pede:</strong> "um tipo/estrutura de dados para armazenamento das
-          informações referentes a uma solução... <strong>todas</strong> as informações necessárias
-          devem fazer parte desse tipo." A palavra-chave é "todas" — não é só a rota.
-        </p>
-        <p>
-          <strong>Como isso vira código:</strong> uma solução do TSP precisa da sequência de visita
-          <em>e</em> do valor da função objetivo já calculado para ela, porque a Q3 (escrita) e a Q4
-          (cálculo da FO) recebem essa mesma struct por referência e leem/escrevem em ambos os campos:
-        </p>
-        <div class="math-block">typedef struct TSolucao {
-    int vet_seq_vis[MAX_CIDADES];
-    float fo;
-} Solucao;</div>
-        <div class="attn">
-          <strong>Pontos de atenção:</strong> esquecer o campo <code>fo</code> na struct (deixando o
-          valor "solto" numa variável separada) é o erro mais comum aqui — a Q4 pede explicitamente
-          para <em>calcular a função objetivo de uma solução</em>, ou seja, o resultado tem que morar
-          dentro da própria struct. <code>MAX_CIDADES</code> vem de um <code>#define 200</code>, batendo
-          com a observação do enunciado ("código deve tratar instâncias com até 200 cidades") sem
-          alocação dinâmica.
-        </div>
-      </div>
-    </div>
-
-    <div class="phase">
-      <div class="phase-head">
-        <span class="phase-tag">Q3 · 0,5</span>
-        <span class="phase-title">Escrita da solução</span>
-        <span class="phase-line"></span>
-      </div>
-      <div class="phase-body">
-        <p>
-          <strong>O que o enunciado pede:</strong> "escrever (tela <strong>e</strong> arquivo) de uma
-          solução... deve escrever o valor da FO e a rota... a solução deve ser recebida por parâmetro
-          (referência)." Duas saídas possíveis com uma função só, e passagem por referência é
-          obrigatória (não por valor, não por ponteiro para struct nesse padrão).
-        </p>
-        <div class="math-block">void escrever_solucao(Solucao &sol, char* arq) {
-    FILE* f = (strcmp(arq, "") == 0) ? stdout : fopen(arq, "w");
-    fprintf(f, "Valor da FO: %.1f\n\n", sol.fo);
-    for (int i = 1; i <= num_cid + 1; i++)
-        fprintf(f, "%d ", sol.vet_seq_vis[i]);
-    if (strcmp(arq, "") != 0) fclose(f);
-}</div>
-        <p>
-          A saída "tela e arquivo" nesse código é resolvida com um único parâmetro <code>arq</code>:
-          string vazia <code>""</code> escreve no <code>stdout</code>, qualquer outro valor abre um
-          arquivo de verdade — uma função, os dois destinos do enunciado, sem duplicar lógica.
-        </p>
-        <div class="attn">
-          <strong>Pontos de atenção:</strong> o laço vai até <code>num_cid + 1</code>, não até
-          <code>num_cid</code> — porque a rota impressa é o ciclo fechado (última posição repete a
-          cidade inicial). Se a struct guarda só a FO e a sequência "aberta", a rota impressa fica
-          sem o retorno à origem e não corresponde ao que a Q4 realmente calculou.
-        </div>
-      </div>
-    </div>
-
-    <div class="phase">
-      <div class="phase-head">
-        <span class="phase-tag">Q4 · 1,0</span>
-        <span class="phase-title">Função objetivo (com penalização)</span>
-        <span class="phase-line"></span>
-      </div>
-      <div class="phase-body">
-        <p>
-          <strong>O que o enunciado pede:</strong> "minimizar o custo total da rota... penalizando as
-          cidades <strong>não visitadas e repetidas</strong> (pode-se usar o mesmo peso para os dois
-          casos: α = 100)." E ainda: "para teste da Questão 4, pode-se criar 'à mão' uma solução" —
-          ou seja, o enunciado já avisa que o <code>main</code> vai ter uma rota escrita manualmente
-          para validar a FO, sem precisar de heurística nenhuma ainda.
-        </p>
-        <p>
-          <strong>Como isso vira código:</strong> a rota é um ciclo, então antes de calcular custo é
-          preciso garantir que a última posição feche de volta na primeira cidade — esse código isola
-          essa responsabilidade numa função separada, chamada antes de <code>calcular_fo</code>:
-        </p>
-        <div class="math-block">void verifica_ret_cid_ini(Solucao &sol) {
-    if (sol.vet_seq_vis[1] != sol.vet_seq_vis[num_cid + 1])
-        sol.vet_seq_vis[num_cid + 1] = sol.vet_seq_vis[1];
-}
-
-void calcular_fo(Solucao &sol) {
-    int vet_count_vis[num_cid + 1];
-    sol.fo = 0;
-    memset(&vet_count_vis, 0, sizeof(vet_count_vis));
-
-    for (int i = 1; i <= num_cid; i++) {
-        int origem  = sol.vet_seq_vis[i];
-        int destino = sol.vet_seq_vis[i + 1];
-        sol.fo += mat_custo_cid[origem][destino];
-        vet_count_vis[origem]++;
-    }
-
-    for (int i = 1; i <= num_cid; i++) {
-        if (i == sol.vet_seq_vis[1] && vet_count_vis[sol.vet_seq_vis[1]] == 2)
-            continue;               // cidade inicial contando 2x = fechou o ciclo certo, não é erro
-        if (vet_count_vis[i] == 0) sol.fo += ALFA;   // nunca visitada
-        if (vet_count_vis[i] > 1)  sol.fo += ALFA;   // visitada mais de uma vez
-    }
-}</div>
-        <div class="exemplo">
-          <strong>Conferindo com a instância toy (5 cidades):</strong>
-          <p>
-            No <code>main</code>, a rota de teste é <code>3 4 2 3 5</code> nas posições 1 a 5 — repare
-            que a cidade <strong>3</strong> aparece duas vezes (posição 1 e posição 4) e as cidades
-            <strong>1</strong> e <strong>4</strong> nunca aparecem. Isso é proposital: é o "à mão" que
-            o enunciado libera para a Q4, servindo também para provar que a penalização funciona —
-            uma rota assim deve custar mais caro que uma rota válida na mesma instância.
-          </p>
-        </div>
-        <div class="attn">
-          <strong>Pontos de atenção (onde a nota costuma cair):</strong>
-          <p>
-            1) <code>sol.fo = 0</code> precisa vir no <strong>início</strong> da função — se
-            <code>calcular_fo</code> for chamada mais de uma vez sobre a mesma <code>Solucao</code>
-            sem zerar, o valor acumula do cálculo anterior.
-          </p>
-          <p>
-            2) A soma de custo do laço percorre <code>i = 1..num_cid</code> usando
-            <code>vet_seq_vis[i+1]</code> como destino — só funciona porque
-            <code>verifica_ret_cid_ini</code> já garantiu que <code>vet_seq_vis[num_cid+1]</code>
-            existe e fecha o ciclo; pular essa chamada faz o laço ler posição não inicializada.
-          </p>
-          <p>
-            3) A exceção do <code>continue</code> existe porque a cidade inicial <strong>tem</strong>
-            que aparecer 2 vezes no vetor contado (início e fim do ciclo) — sem essa exceção, toda
-            solução válida seria penalizada por "repetir" a própria cidade inicial, o que é o
-            comportamento oposto ao que o enunciado pede.
-          </p>
-        </div>
-      </div>
+    <h2>Sobre a disciplina</h2>
+    <div class="card">
+      <div class="card-title">COM10393 — Métodos de Otimização</div>
+      <p>
+        Continuação de Otimização Linear. Em vez de formulações exatas (Simplex), aqui se usam métodos aproximados
+        (heurísticas e meta-heurísticas) para problemas combinatórios difíceis, implementados em código.
+        As provas seguem uma progressão: <strong>P1</strong> modelagem → <strong>P2</strong> construtivas → <strong>P3</strong> busca local → <strong>P4/final</strong> meta-heurísticas.
+        Código com erro de compilação vale <strong>zero</strong>.
+      </p>
+      <p>Todos os códigos de <code>codigo/</code> (PRCP, TSP, PET) foram compilados e executados antes de entrar aqui.
+      Acervo anterior: <a href="pages/exercicios.html">Exercícios resolvidos (P1: TSP, Mochila, Mochila Múltipla, PRVC)</a>.</p>
     </div>
   </main>
 
+
   <footer>
-    Material de estudo pessoal — Métodos de Otimização.
+    Material de estudo pessoal — Métodos de Otimização. Os códigos de exemplo estão em <code>codigo/</code> e foram compilados e executados.
   </footer>
 
+  <script src="assets/js/site.js"></script>
 </body>
 </html>

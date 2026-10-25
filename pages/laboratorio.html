@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Simulador passo a passo das três buscas locais num PRCP minúsculo: veja quais vizinhos cada método avalia, aceita e desfaz.">
+  <title>Laboratório — Métodos de Otimização</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+  <nav>
+    <a class="brand" href="../index.html">Métodos de Otimização</a>
+    <a href="guia.html">Guia</a>
+    <a href="p1-modelagem.html">P1</a>
+    <a href="p2-construtivas.html">P2</a>
+    <a href="p3-busca-local.html">P3</a>
+    <a href="problemas.html">Problemas</a>
+    <a href="laboratorio.html" class="active">Laboratório</a>
+    <a href="checklist.html">Checklist</a>
+    <a href="teoria.html">Teoria</a>
+  </nav>
+
+  <main>
+    <h1>Laboratório: veja as três buscas pensando</h1>
+    <p>
+      Um PRCP minúsculo (<strong>6 pontos × 3 posições</strong>, objetivo: <span class="pill pill-max">maximizar</span> pontos livres).
+      Escolha o método e avance <em>um vizinho de cada vez</em>. A grade mostra, para cada movimento "ponto → posição",
+      a FO que a solução teria se você o aplicasse.
+    </p>
+
+    <div class="card">
+      <div class="lab-bar">
+        <label>Método
+          <select id="lab-algoritmo">
+            <option value="pm">Primeira melhora</option>
+            <option value="mm">Melhor melhora</option>
+            <option value="ra">Randômica (12 tentativas por rodada)</option>
+          </select>
+        </label>
+        <label>Instância
+          <select id="lab-instancia">
+            <option value="A">A</option>
+            <option value="B">B</option>
+          </select>
+        </label>
+        <label>Solução inicial
+          <select id="lab-inicio">
+            <option value="zeros">tudo na posição 1</option>
+            <option value="aleatorio">aleatória (fixa)</option>
+          </select>
+        </label>
+      </div>
+      <div class="lab-bar">
+        <button class="btn btn-primary btn-sm" id="lab-passo" type="button">Próximo vizinho</button>
+        <button class="btn btn-outline btn-sm" id="lab-tudo" type="button">Executar até o fim</button>
+        <button class="btn btn-outline btn-sm" id="lab-reiniciar" type="button">Reiniciar</button>
+      </div>
+      <div class="lab-status">
+        <span>FO atual: <b id="lab-fo">–</b></span>
+        <span>Solução (posição de cada ponto): <b id="lab-solucao">–</b></span>
+        <span>Vizinhos avaliados: <b id="lab-avaliacoes">0</b></span>
+        <span>Movimentos aplicados: <b id="lab-aplicados">0</b></span>
+      </div>
+      <div class="t-outer"><table class="lab-grade" id="lab-grade"></table></div>
+      <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:.4rem">
+        <span style="background:#dbeafe;padding:1px 8px;border-radius:4px">● solução atual</span>
+        <span style="background:#fef9c3;padding:1px 8px;border-radius:4px">FO do vizinho já avaliado</span>
+        <span style="background:#bbf7d0;padding:1px 8px;border-radius:4px">movimento aplicado</span>
+        <span style="outline:2px solid var(--success);padding:1px 8px;border-radius:4px">melhor até agora (MM)</span>
+      </p>
+      <div class="lab-log" id="lab-log"></div>
+    </div>
+
+    <h2>O que observar</h2>
+    <div class="grid-3">
+      <div class="card"><div class="card-title">1. Primeira × melhor melhora</div>
+        <p>Rode a mesma instância nos dois. Na PM, olhe quantos vizinhos foram avaliados <em>antes</em> de aplicar o primeiro movimento. Na MM, ela avalia toda a grade antes de qualquer aplicação.</p></div>
+      <div class="card"><div class="card-title">2. Nenhuma vence sempre</div>
+        <p>Instância <strong>A</strong> (início "tudo na posição 1"): a melhor melhora chega a FO 6 e a primeira melhora para em 4. Na <strong>B</strong> acontece o contrário. Cada uma segue um caminho e para num ótimo local diferente.</p></div>
+      <div class="card"><div class="card-title">3. Ótimo local</div>
+        <p>Quando termina com FO &lt; 6, <em>nenhum</em> movimento isolado melhora, mas existe solução melhor. É por isso que existem as meta-heurísticas.</p></div>
+    </div>
+
+    <div class="attn">
+      <strong>Conexão com o código:</strong> o evento "desfeito" é a linha <code>s.vet_sol[ponto] = posicao_original</code>; "APLICOU" é o
+      <code>melhorou = 1</code> da PM ou o "aplica só o melhor" da MM — veja a página <a href="p3-busca-local.html">P3</a>.
+    </div>
+
+    <div class="pagenav">
+      <a href="problemas.html">← Problemas</a>
+      <a href="checklist.html">Checklist de prova →</a>
+    </div>
+  </main>
+
+  <script src="../assets/js/lab.js"></script>
+  <script src="../assets/js/lab-ui.js"></script>
+
+
+  <footer>
+    Material de estudo pessoal — Métodos de Otimização. Os códigos de exemplo estão em <code>codigo/</code> e foram compilados e executados.
+  </footer>
+
+  <script src="../assets/js/site.js"></script>
+</body>
+</html>

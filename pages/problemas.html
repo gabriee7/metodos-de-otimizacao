@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="As 4 peças aplicadas a PRCP, PET, TSP, PAB, DARP e hubs: movimento, vizinhança, sinal e como desfazer, com código verificado de PET e TSP.">
+  <title>Problemas — Métodos de Otimização</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+  <nav>
+    <a class="brand" href="../index.html">Métodos de Otimização</a>
+    <a href="guia.html">Guia</a>
+    <a href="p1-modelagem.html">P1</a>
+    <a href="p2-construtivas.html">P2</a>
+    <a href="p3-busca-local.html">P3</a>
+    <a href="problemas.html" class="active">Problemas</a>
+    <a href="laboratorio.html">Laboratório</a>
+    <a href="checklist.html">Checklist</a>
+    <a href="teoria.html">Teoria</a>
+  </nav>
+
+  <div class="ref-layout">
+    <aside class="ex-sidebar">
+      <div class="ex-sidebar-label">Nesta página</div>
+      <a href="#metodo" class="active"><span>Problema novo: como atacar</span></a>
+      <a href="#prcp"><span>PRCP</span></a>
+      <a href="#pet"><span>PET (a sua P2)</span></a>
+      <a href="#tsp"><span>TSP / sdTSP</span></a>
+      <a href="#pab"><span>PAB</span></a>
+      <a href="#darp"><span>DARP</span></a>
+      <a href="#hubs"><span>UMApHCP (hubs)</span></a>
+      <a href="#quadro"><span>Quadro-resumo</span></a>
+    </aside>
+
+    <div class="ref-content">
+      <h1>Problemas: a mesma técnica, movimentos diferentes</h1>
+      <p>
+        Cada problema é preenchimento das <a href="guia.html#pecas">4 peças</a>. Para cada um: a <strong>solução</strong>, o
+        <strong>movimento</strong>, como <strong>enumerar</strong> a vizinhança, o <strong>sinal</strong>, como <strong>desfazer</strong> e a <strong>armadilha</strong>.
+        PRCP, PET e TSP têm código executável em <code>codigo/</code>; PAB, DARP e hubs trazem o raciocínio (a descrição vem dos enunciados em <code>exercicios/</code>).
+      </p>
+
+      <div class="phase" id="metodo">
+        <div class="phase-head"><span class="phase-tag">MÉTODO</span><span class="phase-title">Problema novo no dia da prova: roteiro de 5 minutos</span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <ol>
+            <li>Leia o <code>.h</code> e identifique a <code>Solucao</code>. <em>O que cada posição do vetor/matriz significa?</em></li>
+            <li>Leia a <code>calcular_fo</code> pronta: <em>é para maximizar ou minimizar?</em> O que penaliza?</li>
+            <li>Leia o <code>gerar_vizinha</code> pronto: <strong>esse é o movimento</strong>. Sua vizinhança é "todos os movimentos desse tipo".</li>
+            <li>Escreva os laços que enumeram esses movimentos (a aplicação do movimento você já tem no <code>gerar_vizinha</code>).</li>
+            <li>Defina o desfazer, o sinal, e preencha o <a href="p3-busca-local.html#esqueleto">esqueleto</a>.</li>
+          </ol>
+          <div class="alert alert-info">O código-base quase sempre já resolve os passos 1–3. Seu trabalho original é só o 4 e o 5.</div>
+        </div>
+      </div>
+
+      <div class="phase" id="prcp">
+        <div class="phase-head"><span class="phase-tag">PRCP</span><span class="phase-title">Rotulação Cartográfica de Pontos <span class="pill pill-max">maximiza</span></span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <div class="t-outer">
+            <table class="tab">
+              <tbody>
+                <tr><td><b>Solução</b></td><td><code>vet_sol[ponto]</code> = posição candidata (0..m−1); <code>fo</code> = pontos livres</td></tr>
+                <tr><td><b>Movimento</b></td><td>mudar a posição de <em>um</em> ponto</td></tr>
+                <tr><td><b>Enumerar</b></td><td><code>for ponto</code> × <code>for pos</code> (pulando <code>pos == atual</code>) → n(m−1)</td></tr>
+                <tr><td><b>Desfazer</b></td><td>restaurar <code>vet_sol[ponto]</code> e a <code>fo</code> (1 posição mudou)</td></tr>
+                <tr><td><b>Armadilha</b></td><td>é <strong>maximização</strong> → <code>&gt;</code>. Ids de conflito vêm 1-based no arquivo. <code>get_id/get_ponto/get_posicao</code> convertem.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>Código completo: <a href="p3-busca-local.html">P3 — Busca local</a>.</p>
+        </div>
+      </div>
+
+      <div class="phase" id="pet">
+        <div class="phase-head"><span class="phase-tag">PET</span><span class="phase-title">Escalonamento de Tripulações — a sua P2 <span class="pill pill-min">minimiza</span></span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <p>
+            Tarefas (trechos de viagem com início/fim) são distribuídas entre tripulações (motorista + cobrador). A FO soma
+            ociosidade, hora extra, sobreposição e excesso de jornada (as duas últimas com peso 100).
+          </p>
+          <div class="t-outer">
+            <table class="tab">
+              <tbody>
+                <tr><td><b>Solução</b></td><td><code>matriz_sol[tripulação][k]</code> (tarefas, ordenadas por início) + <code>quantidade[tripulação]</code></td></tr>
+                <tr><td><b>Movimento</b></td><td>tirar <em>1 tarefa</em> de uma tripulação e inseri-la em <em>outra</em></td></tr>
+                <tr><td><b>Enumerar</b></td><td>3 laços: <code>origem</code> × <code>posição na origem</code> × <code>destino</code> (≠ origem)</td></tr>
+                <tr><td><b>Desfazer</b></td><td>restaurar as <strong>duas</strong> linhas mexidas (origem e destino) e a <code>fo</code></td></tr>
+                <tr><td><b>Armadilha</b></td><td>minimização → <code>&lt;</code>. Inserção <em>ordenada</em> por início: se inserir no fim, a ociosidade/sobreposição sai errada.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>Primeira melhora do PET (verificada). Repare nos 3 laços e no desfazer das duas linhas:</p>
+          <pre class="code"><code>void busca_local_primeira_melhora(Solucao&amp; s)
+{
+    LinhaSalva salva_origem, salva_destino;
+    int melhorou = 1;
+    calcular_fo(s);
+    while (melhorou == 1)
+    {
+        melhorou = 0;
+        for (int origem = 0; origem &lt; num_tripulacoes &amp;&amp; melhorou == 0; origem++)
+        {
+            for (int posicao = 0; posicao &lt; s.quantidade[origem] &amp;&amp; melhorou == 0; posicao++)
+            {
+                int tarefa = s.matriz_sol[origem][posicao];
+                for (int destino = 0; destino &lt; num_tripulacoes &amp;&amp; melhorou == 0; destino++)
+                {
+                    if (destino == origem)
+                        continue;
+                    int fo_original = s.fo;
+                    salvar_linha(s, origem, salva_origem);
+                    salvar_linha(s, destino, salva_destino);
+                    remover_tarefa(s, origem, posicao);   // aplica o movimento
+                    inserir_tarefa(s, destino, tarefa);
+                    calcular_fo(s);
+                    if (s.fo &lt; fo_original)
+                        melhorou = 1;                     // fica aplicado
+                    else
+                    {
+                        restaurar_linha(s, origem, salva_origem);   // desfaz
+                        restaurar_linha(s, destino, salva_destino);
+                        s.fo = fo_original;
+                    }
+                }
+            }
+        }
+    }
+}</code></pre>
+<div class="code-file">codigo/pet/busca_local_pet.cpp</div>
+          <div class="alert alert-warning">
+            <strong>Modelo didático:</strong> a FO de <code>codigo/pet/</code> é uma versão simplificada (ociosidade entre tarefas, extra, sobreposição, excesso).
+            A FO oficial da sua prova pode ter outros termos — o que vale a pena aprender aqui é a <em>estrutura</em> (3 laços + desfazer de 2 linhas), não os números.
+          </div>
+          <div class="attn">
+            <strong>Bugs comuns neste problema (vistos em códigos de turmas anteriores):</strong>
+            comparar o índice da tripulação de destino com o <em>índice da tarefa</em> (<code>if (k != i)</code> em vez de <code>k != j</code>);
+            usar <code>h_termino_tarefa[i]</code> com <code>i</code> = tripulação (em vez da tarefa); e implementar "melhor melhora" aplicando o primeiro vizinho que melhora
+            (isso é <em>primeira</em> melhora). Confira os índices dos três laços.
+          </div>
+        </div>
+      </div>
+
+      <div class="phase" id="tsp">
+        <div class="phase-head"><span class="phase-tag">TSP</span><span class="phase-title">Caixeiro Viajante / sdTSP <span class="pill pill-min">minimiza</span></span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <div class="t-outer">
+            <table class="tab">
+              <tbody>
+                <tr><td><b>Solução</b></td><td><code>vet_rota[n]</code> — permutação das cidades; <code>fo</code> = custo do ciclo</td></tr>
+                <tr><td><b>Movimento</b></td><td><strong>swap</strong>: trocar as cidades das posições <code>i</code> e <code>j</code></td></tr>
+                <tr><td><b>Enumerar</b></td><td><code>for i</code> × <code>for j &gt; i</code> → n(n−1)/2 pares</td></tr>
+                <tr><td><b>Desfazer</b></td><td>repetir o mesmo swap (é o próprio inverso)</td></tr>
+                <tr><td><b>Armadilha</b></td><td>minimização → <code>&lt;</code>. No <strong>sdTSP</strong> o depósito é implícito: não aparece no vetor e a FO soma depósito→primeira e última→depósito.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>Melhor melhora do TSP (verificada) — compare com a do PRCP: mudam o movimento e o sinal, o resto é igual:</p>
+          <pre class="code"><code>void busca_local_melhor_melhora(Solucao&amp; s)
+{
+    calcular_fo(s);
+    while (1)
+    {
+        int melhor_i = -1;
+        int melhor_j = -1;
+        double melhor_fo = s.fo;
+        for (int i = 0; i &lt; num_cidades - 1; i++)
+        {
+            for (int j = i + 1; j &lt; num_cidades; j++)
+            {
+                double fo_original = s.fo;
+                trocar(s, i, j);
+                calcular_fo(s);
+                if (s.fo &lt; melhor_fo)
+                {
+                    melhor_fo = s.fo;
+                    melhor_i = i;
+                    melhor_j = j;
+                }
+                trocar(s, i, j);                      // sempre desfaz
+                s.fo = fo_original;
+            }
+        }
+        if (melhor_i == -1)
+            break;
+        trocar(s, melhor_i, melhor_j);
+        s.fo = melhor_fo;
+    }
+}</code></pre>
+<div class="code-file">codigo/tsp/busca_local_tsp.cpp</div>
+        </div>
+      </div>
+
+      <div class="phase" id="pab">
+        <div class="phase-head"><span class="phase-tag">PAB</span><span class="phase-title">Alocação de Berços <span class="pill pill-min">minimiza</span></span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <p>
+            Cada navio vai para um berço e tem um horário de atracação. FO = soma dos tempos de serviço
+            (espera + atendimento) de todos os navios; as restrições (janela do navio, abertura/fechamento do berço, <code>t = 0</code> = berço incompatível) entram como penalização.
+          </p>
+          <div class="t-outer">
+            <table class="tab">
+              <tbody>
+                <tr><td><b>Solução (típica)</b></td><td>para cada berço, a <em>sequência</em> de navios; os horários de atracação saem da FO (cada navio atraca quando chega e o berço está livre)</td></tr>
+                <tr><td><b>Movimentos candidatos</b></td><td>(a) mover 1 navio para outro berço; (b) trocar a ordem de 2 navios no mesmo berço</td></tr>
+                <tr><td><b>Enumerar</b></td><td>navio × berço destino (× posição de inserção)</td></tr>
+                <tr><td><b>Desfazer</b></td><td>restaurar as linhas dos berços mexidos</td></tr>
+                <tr><td><b>Armadilha</b></td><td>mover um navio para berço em que <code>t = 0</code> → inviável (penalizar forte); horários dependem da <em>ordem</em>: recalcule todos a partir da sequência.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="attn">
+            <strong>Ponto de decisão:</strong> o enunciado deixa a representação livre ("tratadas na modelagem e/ou penalização").
+            Na prova o <code>.h</code> trará a struct; <strong>aceite a dela</strong> e derive o movimento do <code>gerar_vizinha</code> fornecido.
+          </div>
+        </div>
+      </div>
+
+      <div class="phase" id="darp">
+        <div class="phase-head"><span class="phase-tag">DARP</span><span class="phase-title">Dial-a-Ride (transporte de PPNEs) <span class="pill pill-min">minimiza</span></span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <p>
+            Vans atendem requisições (embarque + desembarque, com janelas de tempo e capacidade). FO = ponderação de nº de veículos, distância, duração das rotas, tempo de viagem e espera. As restrições (janela, capacidade, tempo máximo) viram penalização.
+          </p>
+          <div class="t-outer">
+            <table class="tab">
+              <tbody>
+                <tr><td><b>Solução (típica)</b></td><td>para cada veículo, a sequência de locais visitados (embarque da requisição <code>r</code> antes do desembarque dela)</td></tr>
+                <tr><td><b>Movimento</b></td><td>remover <em>uma requisição inteira</em> (os dois locais) de um veículo e reinseri-la em outro</td></tr>
+                <tr><td><b>Enumerar</b></td><td>requisição × veículo destino (× posições de inserção)</td></tr>
+                <tr><td><b>Desfazer</b></td><td>restaurar as rotas dos dois veículos</td></tr>
+                <tr><td><b>Armadilha</b></td><td>mover só <em>um</em> dos dois locais da requisição quebra a precedência (embarque antes do desembarque) e a "1 requisição = 1 veículo". Mova o par.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="phase" id="hubs">
+        <div class="phase-head"><span class="phase-tag">HUBS</span><span class="phase-title">UMApHCP — p-hub centro <span class="pill pill-min">minimiza</span></span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <div class="t-outer">
+            <table class="tab">
+              <tbody>
+                <tr><td><b>Solução</b></td><td><code>vet_sol[n]</code>: as <em>p</em> primeiras posições são os hubs; as outras, os não-hubs</td></tr>
+                <tr><td><b>Movimento</b></td><td>trocar um hub (posição &lt; p) por um não-hub (posição ≥ p)</td></tr>
+                <tr><td><b>Enumerar</b></td><td><code>for h &lt; p</code> × <code>for v ≥ p</code> → p(n−p)</td></tr>
+                <tr><td><b>Desfazer</b></td><td>repetir a troca</td></tr>
+                <tr><td><b>Armadilha</b></td><td>a FO é o <em>máximo</em> entre todos os pares (e custa O(n²) ou mais por avaliação): a busca é cara — evite avaliações desnecessárias. Minimização → <code>&lt;</code>.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>Observação: aqui o movimento é uma troca <em>entre dois blocos</em> do vetor, não entre quaisquer duas posições (trocar dois hubs entre si não muda a solução).</p>
+        </div>
+      </div>
+
+      <div class="phase" id="quadro">
+        <div class="phase-head"><span class="phase-tag">QUADRO</span><span class="phase-title">Quadro-resumo</span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <div class="t-outer">
+            <table class="tab">
+              <thead><tr><th>Problema</th><th>Movimento</th><th>Laços</th><th>Sinal</th><th>Desfaz</th></tr></thead>
+              <tbody>
+                <tr><td>PRCP</td><td>shift de 1 ponto</td><td>ponto × pos</td><td><span class="pill pill-max">&gt;</span></td><td>1 valor</td></tr>
+                <tr><td>PET</td><td>mover 1 tarefa</td><td>origem × pos × destino</td><td><span class="pill pill-min">&lt;</span></td><td>2 linhas</td></tr>
+                <tr><td>TSP</td><td>swap de 2 cidades</td><td>i × j&gt;i</td><td><span class="pill pill-min">&lt;</span></td><td>swap de novo</td></tr>
+                <tr><td>PAB</td><td>mover/trocar navios</td><td>navio × berço</td><td><span class="pill pill-min">&lt;</span></td><td>linhas dos berços</td></tr>
+                <tr><td>DARP</td><td>mover 1 requisição (par)</td><td>req × veículo</td><td><span class="pill pill-min">&lt;</span></td><td>rotas dos 2 veículos</td></tr>
+                <tr><td>Hubs</td><td>trocar hub × não-hub</td><td>h × v</td><td><span class="pill pill-min">&lt;</span></td><td>troca de novo</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="pagenav">
+        <a href="p3-busca-local.html">← P3 — Busca local</a>
+        <a href="laboratorio.html">Laboratório →</a>
+      </div>
+    </div>
+  </div>
+
+
+  <footer>
+    Material de estudo pessoal — Métodos de Otimização. Os códigos de exemplo estão em <code>codigo/</code> e foram compilados e executados.
+  </footer>
+
+  <script src="../assets/js/site.js"></script>
+</body>
+</html>

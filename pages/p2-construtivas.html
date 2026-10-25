@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Vizinha, construtiva aleatória, gulosa e aleatória-gulosa (LRC): o modo de pensar e o código C verificado.">
+  <title>P2 — Construtivas e vizinhança — Métodos de Otimização</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+  <nav>
+    <a class="brand" href="../index.html">Métodos de Otimização</a>
+    <a href="guia.html">Guia</a>
+    <a href="p1-modelagem.html">P1</a>
+    <a href="p2-construtivas.html" class="active">P2</a>
+    <a href="p3-busca-local.html">P3</a>
+    <a href="problemas.html">Problemas</a>
+    <a href="laboratorio.html">Laboratório</a>
+    <a href="checklist.html">Checklist</a>
+    <a href="teoria.html">Teoria</a>
+  </nav>
+
+  <div class="ref-layout">
+    <aside class="ex-sidebar">
+      <div class="ex-sidebar-label">Nesta página</div>
+      <a href="#visao" class="active"><span>O que a P2 pede</span></a>
+      <a href="#pensar"><span>Como pensar</span></a>
+      <a href="#q1"><span>Q1 — Vizinha</span></a>
+      <a href="#q2"><span>Q2 — Aleatória</span></a>
+      <a href="#q3"><span>Q3 — Gulosa</span></a>
+      <a href="#q4"><span>Q4 — Aleatória-gulosa</span></a>
+      <a href="#outros"><span>Em outros problemas</span></a>
+    </aside>
+
+    <div class="ref-content">
+      <h1>P2 — Heurísticas construtivas e vizinhança</h1>
+      <p>
+        A P2 é a base da P3: o <code>gerar_vizinha</code> que você escreve aqui <em>é o movimento</em> da busca local,
+        e as construtivas fornecem a solução inicial que a busca refina.
+      </p>
+
+      <div class="phase" id="visao">
+        <div class="phase-head"><span class="phase-tag">VISÃO</span><span class="phase-title">O que a P2 pede</span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <div class="t-outer">
+            <table class="tab">
+              <thead><tr><th>Q</th><th>Método</th><th>Ideia</th></tr></thead>
+              <tbody>
+                <tr><td>1</td><td>gerar solução vizinha</td><td>de uma solução pronta, muda <em>uma</em> decisão</td></tr>
+                <tr><td>2</td><td>construtiva aleatória</td><td>monta do zero, <em>toda</em> decisão é sorteio</td></tr>
+                <tr><td>3</td><td>construtiva gulosa</td><td>monta do zero, cada decisão é a de menor custo <em>imediato</em></td></tr>
+                <tr><td>4</td><td>construtiva aleatória-gulosa</td><td>guloso com sorteio entre as "boas o bastante" (LRC)</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>Regra do enunciado: todos recebem a solução por referência (<code>Solucao&amp; s</code>) e são <code>void</code>.
+          Na turma de referência, a gulosa de <strong>melhor FO</strong> da turma ganhava <strong>+1,0 ponto</strong> (desempate pela média de 3 execuções da aleatória-gulosa).</p>
+        </div>
+      </div>
+
+      <div class="phase" id="pensar">
+        <div class="phase-head"><span class="phase-tag">MODELO</span><span class="phase-title">Como pensar uma construtiva</span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <p>Uma construtiva <strong>começa vazia e toma decisões em sequência</strong>. Três perguntas resolvem qualquer uma:</p>
+          <div class="step"><div class="step-num">1</div><div><strong>O que é uma "decisão"?</strong><br>PRCP: escolher a posição de um ponto. TSP: escolher a próxima cidade. PET: escolher a tripulação de uma tarefa.</div></div>
+          <div class="step"><div class="step-num">2</div><div><strong>Como medir o custo imediato de uma decisão?</strong><br>Só com o que já foi decidido. PRCP: conflitos com pontos <em>já rotulados</em>. TSP: distância até a próxima cidade. Esta é a "inteligência" do guloso — e a parte que dá o bônus.</div></div>
+          <div class="step"><div class="step-num">3</div><div><strong>Em que ordem decido?</strong><br>Em ordem de índice (mais simples) ou por algum critério (ex.: tarefas por horário de início). A ordem também faz parte da qualidade.</div></div>
+          <div class="attn">
+            <strong>Pegadinha clássica:</strong> ao medir o custo parcial, os elementos ainda não decididos têm <em>lixo</em> no vetor.
+            Só considere os já decididos (no PRCP: <code>outro_ponto &lt; pt</code>). Esquecer isso gera uma "gulosa" que decide com base em ruído.
+          </div>
+        </div>
+      </div>
+
+      <div class="phase" id="q1">
+        <div class="phase-head"><span class="phase-tag">Q1</span><span class="phase-title">Gerar solução vizinha</span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <p><strong>Pensamento:</strong> sorteio <em>um</em> elemento e mudo sua decisão para <em>outra diferente</em>. Este é o movimento (peça 2 do <a href="guia.html#pecas">Guia</a>).</p>
+          <pre class="code"><code>// Q1 — vizinha: parte de uma solução COMPLETA e muda UMA decisão.
+void gerar_vizinha(Solucao&amp; s)
+{
+    int pt = rand() % num_pts;
+    int pos;
+    do
+        pos = rand() % num_pos;
+    while (pos == s.vet_sol[pt]);
+    s.vet_sol[pt] = pos;
+    calcular_fo(s);                                   // sem isso a fo fica velha
+}</code></pre>
+<div class="code-file">codigo/prcp/construtivas_prcp.cpp</div>
+          <ul>
+            <li>O <code>do ... while (pos == s.vet_sol[pt])</code> garante que a vizinha seja <em>de fato diferente</em>.</li>
+            <li><code>calcular_fo(s)</code> no final: sem isso a <code>fo</code> fica desatualizada e o método falha na correção.</li>
+          </ul>
+          <div class="attn">
+            <strong>Ponto de atenção:</strong> se <code>num_pos == 1</code> o laço do-while nunca termina (não existe "outra"
+            posição). Em instâncias com <code>m ≥ 2</code> (como as da prova) não ocorre; vale saber como cai.
+          </div>
+        </div>
+      </div>
+
+      <div class="phase" id="q2">
+        <div class="phase-head"><span class="phase-tag">Q2</span><span class="phase-title">Construtiva aleatória</span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <p><strong>Pensamento:</strong> toda decisão é sorteio. Serve de linha de base (e de ponto de partida diverso para a busca local).</p>
+          <pre class="code"><code>// Q2 — construtiva aleatória: toda decisão é sorteio.
+void heuristica_construtiva_aleatoria(Solucao&amp; s)
+{
+    for (int i = 0; i &lt; num_pts; i++)
+        s.vet_sol[i] = rand() % num_pos;
+    calcular_fo(s);
+}</code></pre>
+<div class="code-file">codigo/prcp/construtivas_prcp.cpp</div>
+          <div class="attn">
+            <strong>Em problemas de permutação</strong> (TSP, sdTSP) "aleatória" não é <code>rand() % n</code> por posição — isso repete cidades.
+            Parte-se da permutação <code>0,1,2,...</code> e embaralha-se (Fisher–Yates): para cada <code>i</code>, troca com um <code>j</code> sorteado em <code>[i, n−1]</code>.
+          </div>
+        </div>
+      </div>
+
+      <div class="phase" id="q3">
+        <div class="phase-head"><span class="phase-tag">Q3</span><span class="phase-title">Construtiva gulosa</span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <p><strong>Pensamento:</strong> para cada elemento, avalio todas as opções e escolho a de menor custo imediato. "Míope": não vê o futuro.</p>
+          <h3>Passo 1 — A função de custo parcial</h3>
+          <pre class="code"><code>// Quantos conflitos a posição 'pos' do ponto 'pt' cria com os pontos JÁ decididos (índice &lt; pt).
+// Os pontos de índice &gt;= pt ainda têm lixo em vet_sol — não podem entrar na conta.
+int contar_conflitos_parciais(const Solucao&amp; s, int pt, int pos)
+{
+    int id = get_id(pt, pos);
+    int conflitos = 0;
+    for (int j = 0; j &lt; vet_qtd_conf[id]; j++)
+    {
+        int outro_ponto = get_ponto(mat_conflitos[id][j]);
+        int outra_posicao = get_posicao(mat_conflitos[id][j]);
+        if (outro_ponto &lt; pt &amp;&amp; s.vet_sol[outro_ponto] == outra_posicao)
+            conflitos++;
+    }
+    return conflitos;
+}</code></pre>
+<div class="code-file">codigo/prcp/construtivas_prcp.cpp</div>
+          <h3>Passo 2 — A gulosa</h3>
+          <pre class="code"><code>// Q3 — construtiva gulosa: em cada decisão, escolhe a de menor custo imediato.
+void heuristica_construtiva_gulosa(Solucao&amp; s)
+{
+    for (int i = 0; i &lt; num_pts; i++)
+    {
+        int melhor_posicao = 0;
+        int menor_custo = contar_conflitos_parciais(s, i, 0);
+        for (int pos = 1; pos &lt; num_pos; pos++)
+        {
+            int custo = contar_conflitos_parciais(s, i, pos);
+            if (custo &lt; menor_custo)                  // empate: fica com a primeira
+            {
+                menor_custo = custo;
+                melhor_posicao = pos;
+            }
+        }
+        s.vet_sol[i] = melhor_posicao;
+    }
+    calcular_fo(s);
+}</code></pre>
+<div class="code-file">codigo/prcp/construtivas_prcp.cpp</div>
+          <div class="attn">
+            <strong>Ponto de decisão (empate):</strong> quando duas posições empatam em custo, este código fica com a <em>primeira</em>
+            (<code>&lt;</code> estrito). Outro critério (a última, ou sorteio) muda a solução final. Para o bônus, pense em critérios de desempate
+            e em contar também conflitos "futuros" (posições que bloqueiam muitas opções dos pontos seguintes).
+          </div>
+          <div class="alert alert-info">
+            <strong>Resultados medidos (PRCP, <code>srand(42)</code>):</strong> 25 pts: aleatória 4 → gulosa 17; 500 pts: 263 → 404; 1000 pts: 293 → 575.
+            Uma boa construtiva já vale muito — e depois a busca local ainda melhora (ex.: 1000 pts chega a ~727).
+          </div>
+        </div>
+      </div>
+
+      <div class="phase" id="q4">
+        <div class="phase-head"><span class="phase-tag">Q4</span><span class="phase-title">Construtiva aleatória-gulosa (LRC)</span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <p>
+            <strong>Pensamento:</strong> a gulosa sempre produz <em>a mesma</em> solução (presa). Em vez de só o 1º colocado, monto uma
+            <strong>Lista Restrita de Candidatos (LRC)</strong> com os "bons o bastante" e sorteio um deles. Cada execução gera uma solução
+            diferente e boa — a base do GRASP.
+          </p>
+          <pre class="code"><code>// Q4 — aleatória-gulosa (LRC): sorteia entre as posições "boas o bastante".
+// per_ale = 0 =&gt; 100% gulosa;  per_ale = 1 =&gt; 100% aleatória.
+void heuristica_construtiva_aleatoria_gulosa(Solucao&amp; s, float per_ale)
+{
+    int custo[MAX_POS];
+    int lista_restrita[MAX_POS];
+    for (int i = 0; i &lt; num_pts; i++)
+    {
+        int custo_minimo = 1000000000;
+        int custo_maximo = -1;
+        for (int pos = 0; pos &lt; num_pos; pos++)
+        {
+            custo[pos] = contar_conflitos_parciais(s, i, pos);
+            if (custo[pos] &lt; custo_minimo) custo_minimo = custo[pos];
+            if (custo[pos] &gt; custo_maximo) custo_maximo = custo[pos];
+        }
+        float limite = custo_minimo + per_ale * (custo_maximo - custo_minimo);
+        int tamanho = 0;
+        for (int pos = 0; pos &lt; num_pos; pos++)
+            if (custo[pos] &lt;= limite)                 // quem passa na nota de corte entra na LRC
+                lista_restrita[tamanho++] = pos;
+        s.vet_sol[i] = lista_restrita[rand() % tamanho];   // tamanho &gt;= 1 sempre (o mínimo passa)
+    }
+    calcular_fo(s);
+}</code></pre>
+<div class="code-file">codigo/prcp/construtivas_prcp.cpp</div>
+          <h3>O parâmetro <code>per_ale</code></h3>
+          <div class="t-outer">
+            <table class="tab">
+              <thead><tr><th>per_ale</th><th>limite</th><th>Comportamento</th></tr></thead>
+              <tbody>
+                <tr><td>0</td><td>= custo mínimo</td><td>só os melhores entram: 100% gulosa</td></tr>
+                <tr><td>0,3</td><td>mínimo + 30% da faixa</td><td>mistura: guloso com variação</td></tr>
+                <tr><td>1</td><td>= custo máximo</td><td>todos entram: 100% aleatória</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="attn">
+            <strong>Por que a LRC nunca fica vazia:</strong> o próprio candidato de custo mínimo sempre passa no limite
+            (<code>mín ≤ mín + α·faixa</code>), então <code>tamanho ≥ 1</code> e o <code>rand() % tamanho</code> é seguro. Se o enunciado der <code>per_ale</code> em
+            <strong>porcentagem</strong> (0–100), divida por 100; em outros problemas ele define <em>quantas</em> decisões são aleatórias (ver o sdTSP do professor).
+          </div>
+        </div>
+      </div>
+
+      <div class="phase" id="outros">
+        <div class="phase-head"><span class="phase-tag">OUTROS</span><span class="phase-title">A mesma construção em outros problemas</span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <div class="t-outer">
+            <table class="tab">
+              <thead><tr><th>Problema</th><th>Decisão</th><th>Custo imediato (guloso)</th></tr></thead>
+              <tbody>
+                <tr><td>PRCP</td><td>posição do ponto <code>i</code></td><td>conflitos com os pontos já rotulados</td></tr>
+                <tr><td>TSP / sdTSP</td><td>próxima cidade</td><td>custo da cidade atual até a candidata (vizinho mais próximo)</td></tr>
+                <tr><td>PET</td><td>tripulação da tarefa</td><td>aumento de ociosidade/sobreposição/jornada ao inserir</td></tr>
+                <tr><td>Mochila (PM/PMM)</td><td>objeto entra ou não / em qual mochila</td><td>valor/peso (objetos ordenados por razão)</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>Gulosa para TSP (vizinho mais próximo), verificada:</p>
+          <pre class="code"><code>// Construtiva gulosa (vizinho mais próximo): a cada parada, vai para a cidade ainda não visitada mais barata.
+void heuristica_construtiva_gulosa(Solucao&amp; s)
+{
+    int visitada[MAX_CIDADES];
+    memset(visitada, 0, sizeof(visitada));
+    s.vet_rota[0] = 0;                                // começa na cidade 0
+    visitada[0] = 1;
+    for (int parada = 1; parada &lt; num_cidades; parada++)
+    {
+        int atual = s.vet_rota[parada - 1];
+        int melhor_cidade = -1;
+        for (int c = 0; c &lt; num_cidades; c++)
+        {
+            if (visitada[c] == 1)
+                continue;
+            if (melhor_cidade == -1 || matriz_custo[atual][c] &lt; matriz_custo[atual][melhor_cidade])
+                melhor_cidade = c;
+        }
+        s.vet_rota[parada] = melhor_cidade;
+        visitada[melhor_cidade] = 1;
+    }
+    calcular_fo(s);
+}</code></pre>
+<div class="code-file">codigo/tsp/busca_local_tsp.cpp</div>
+          <p>No TSP de 40 cidades de teste, essa gulosa deu <strong>623,11</strong> contra <strong>1927,06</strong> de uma rota na ordem <code>0,1,2,...</code>.</p>
+        </div>
+      </div>
+
+      <div class="pagenav">
+        <a href="p1-modelagem.html">← P1 — Modelagem</a>
+        <a href="p3-busca-local.html">P3 — Busca local →</a>
+      </div>
+    </div>
+  </div>
+
+
+  <footer>
+    Material de estudo pessoal — Métodos de Otimização. Os códigos de exemplo estão em <code>codigo/</code> e foram compilados e executados.
+  </footer>
+
+  <script src="../assets/js/site.js"></script>
+</body>
+</html>

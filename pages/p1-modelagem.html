@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Modelagem em código: ler instância, struct de solução, escrever solução e calcular a função objetivo (com penalização), com exemplo de TSP verificado.">
+  <title>P1 — Modelagem — Métodos de Otimização</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+  <nav>
+    <a class="brand" href="../index.html">Métodos de Otimização</a>
+    <a href="guia.html">Guia</a>
+    <a href="p1-modelagem.html" class="active">P1</a>
+    <a href="p2-construtivas.html">P2</a>
+    <a href="p3-busca-local.html">P3</a>
+    <a href="problemas.html">Problemas</a>
+    <a href="laboratorio.html">Laboratório</a>
+    <a href="checklist.html">Checklist</a>
+    <a href="teoria.html">Teoria</a>
+  </nav>
+
+  <div class="ref-layout">
+    <aside class="ex-sidebar">
+      <div class="ex-sidebar-label">Nesta página</div>
+      <a href="#visao" class="active"><span>O que a P1 pede</span></a>
+      <a href="#modelo"><span>Como pensar</span></a>
+      <a href="#q1"><span>Q1 — Leitura</span></a>
+      <a href="#q2"><span>Q2 — Struct</span></a>
+      <a href="#q3"><span>Q3 — Escrita</span></a>
+      <a href="#q4"><span>Q4 — Função objetivo</span></a>
+      <a href="#teste"><span>Como testar</span></a>
+    </aside>
+
+    <div class="ref-content">
+      <h1>P1 — Modelagem do problema</h1>
+      <p>
+        A P1 não tem algoritmo: é <strong>traduzir o enunciado em código</strong>. Tudo que vem depois (construtivas, busca local,
+        meta-heurísticas) usa exatamente estas quatro peças. Se a <code>calcular_fo</code> estiver errada, <em>tudo</em> que você
+        construir em cima otimiza a coisa errada.
+      </p>
+
+      <div class="phase" id="visao">
+        <div class="phase-head"><span class="phase-tag">VISÃO</span><span class="phase-title">O que a P1 pede</span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <div class="t-outer">
+            <table class="tab">
+              <thead><tr><th>Q</th><th>Entrega</th><th>Peso (TSP, turma de referência)</th></tr></thead>
+              <tbody>
+                <tr><td>1</td><td>método de <strong>leitura</strong> da instância (recebe o nome do arquivo)</td><td>0,5</td></tr>
+                <tr><td>2</td><td><strong>struct</strong> da solução (todas as informações necessárias)</td><td>0,5</td></tr>
+                <tr><td>3</td><td>método de <strong>escrita</strong> (tela e arquivo) da solução</td><td>0,5</td></tr>
+                <tr><td>4</td><td>método que <strong>calcula a FO</strong> (com penalização)</td><td>1,0</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="attn">
+            <strong>Antes de codar, releia o enunciado procurando:</strong> o <em>formato exato</em> da instância (a ordem dos números!),
+            o <em>limite de tamanho</em> (ex.: até 200 cidades → <code>#define</code> e vetores estáticos), a <em>penalização</em>
+            (peso e o que penalizar) e o nome da pasta/arquivos. Não presuma — confira.
+          </div>
+        </div>
+      </div>
+
+      <div class="phase" id="modelo">
+        <div class="phase-head"><span class="phase-tag">MODELO</span><span class="phase-title">Como pensar a modelagem</span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <div class="step"><div class="step-num">1</div><div><strong>Dados da instância → variáveis globais.</strong><br><em>Por quê:</em> são fixos e todos os métodos precisam deles; passar por parâmetro é ruído. O enunciado exige variáveis globais.</div></div>
+          <div class="step"><div class="step-num">2</div><div><strong>Solução → struct com o mínimo que a identifica + a <code>fo</code>.</strong><br><em>Por quê:</em> você vai ter várias soluções ao mesmo tempo (atual, vizinha, melhor). Por isso a solução é uma <em>struct</em>, e não globais.</div></div>
+          <div class="step"><div class="step-num">3</div><div><strong>FO = "quanto custa/vale" uma struct.</strong><br><em>Por quê:</em> é a única fonte de verdade para comparar soluções. Restrições que a representação não impede viram <strong>penalização</strong> na FO (relaxação por penalização).</div></div>
+          <div class="step"><div class="step-num">4</div><div><strong>Escrita = para você conferir.</strong><br><em>Por quê:</em> é a ferramenta de depuração. Escreva a FO e algo que permita <em>reconstruir</em> a solução real (a rota, as posições).</div></div>
+          <div class="alert alert-info">
+            <strong>Penalizar em vez de proibir:</strong> uma rota com cidade repetida ou esquecida é uma solução <em>inviável</em>,
+            mas ainda assim representável. Em vez de rejeitá-la, a FO soma <code>peso × violações</code> — assim a busca consegue passar por soluções
+            temporariamente inviáveis e é empurrada de volta para a viabilidade.
+          </div>
+        </div>
+      </div>
+
+      <div class="phase" id="q1">
+        <div class="phase-head"><span class="phase-tag">Q1</span><span class="phase-title">Leitura da instância</span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <p>Exemplo TSP, assumindo "n na 1ª linha e depois a matriz n×n" (confira o formato do seu enunciado):</p>
+          <pre class="code"><code>int num_cidades;
+double matriz_custo[MAX_CIDADES][MAX_CIDADES];
+
+typedef struct tSolucao
+{
+    int vet_rota[MAX_CIDADES]; // rota: vet_rota[i] = cidade visitada na i-ésima parada (0-based)
+    double fo;
+} Solucao;</code></pre>
+<div class="code-file">codigo/tsp/modelagem_tsp.cpp</div>
+          <pre class="code"><code>void ler_dados(const char* arq)
+{
+    FILE* f = fopen(arq, "r");
+    if (f == NULL)
+    {
+        printf("Erro ao abrir %s\n", arq);
+        exit(1);
+    }
+    fscanf(f, "%d", &amp;num_cidades);
+    for (int i = 0; i &lt; num_cidades; i++)
+        for (int j = 0; j &lt; num_cidades; j++)
+            fscanf(f, "%lf", &amp;matriz_custo[i][j]);
+    fclose(f);
+}</code></pre>
+<div class="code-file">codigo/tsp/modelagem_tsp.cpp</div>
+          <ul>
+            <li>Recebe o <strong>nome do arquivo</strong> como parâmetro (exigência do enunciado) e preenche as globais.</li>
+            <li>O formato manda: se o arquivo traz só a parte triangular, ou o depósito separado (sdTSP), a leitura muda — o <code>fscanf</code> precisa seguir a ordem exata do arquivo.</li>
+            <li>Ponto de atenção: se o enunciado indexa de 1 e você usa 0-based, converta na leitura (como nos ids do PRCP: <code>-- </code>após ler).</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="phase" id="q2">
+        <div class="phase-head"><span class="phase-tag">Q2</span><span class="phase-title">Struct de solução</span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <p>Já está no bloco acima (<code>Solucao</code>). Regra prática: <strong>o que identifica a solução + a <code>fo</code></strong>.</p>
+          <div class="t-outer">
+            <table class="tab">
+              <thead><tr><th>Problema</th><th>Representação</th></tr></thead>
+              <tbody>
+                <tr><td>TSP</td><td><code>vet_rota[n]</code> (ordem de visita)</td></tr>
+                <tr><td>PRCP</td><td><code>vet_sol[n]</code> (posição de cada ponto)</td></tr>
+                <tr><td>Mochila</td><td><code>vet_sol[objeto]</code> (mochila de cada objeto, −1 = fora)</td></tr>
+                <tr><td>PET</td><td><code>matriz_sol[tripulação][k]</code> + <code>quantidade[tripulação]</code></td></tr>
+                <tr><td>PRVC</td><td><code>matriz_rotas[veículo][k]</code> + tamanho de cada rota</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="attn">
+            <strong>Pegadinha:</strong> se a struct tem uma matriz grande, copiá-la por <code>memcpy</code> custa caro — e a busca local copia muito.
+            Dimensione pelos limites do enunciado, não por "um número grande qualquer".
+          </div>
+        </div>
+      </div>
+
+      <div class="phase" id="q3">
+        <div class="phase-head"><span class="phase-tag">Q3</span><span class="phase-title">Escrita da solução (tela e arquivo)</span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <pre class="code"><code>void escrever_solucao(const Solucao&amp; s, const char* arq)
+{
+    FILE* f;
+    if (strcmp(arq, "") == 0)
+        f = stdout;                                    // "" = escrever na tela
+    else
+        f = fopen(arq, "w");
+    fprintf(f, "FO: %.2f\nRota: ", s.fo);
+    for (int i = 0; i &lt; num_cidades; i++)
+        fprintf(f, "%d -&gt; ", s.vet_rota[i] + 1);       // mostra 1-based
+    fprintf(f, "%d\n", s.vet_rota[0] + 1);             // volta à origem
+    if (strcmp(arq, "") != 0)
+        fclose(f);
+}</code></pre>
+<div class="code-file">codigo/tsp/modelagem_tsp.cpp</div>
+          <ul>
+            <li>Uma única função serve para tela e arquivo: <code>""</code> significa <code>stdout</code>.</li>
+            <li>Recebe a solução por <strong>referência</strong> (aqui <code>const</code>, pois só lê).</li>
+            <li>Escreve a FO <em>e</em> a rota — "outras informações que permitam compreender a solução real".</li>
+            <li>Só fecha o arquivo se o abriu (nunca <code>fclose(stdout)</code>).</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="phase" id="q4">
+        <div class="phase-head"><span class="phase-tag">Q4</span><span class="phase-title">Função objetivo</span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <pre class="code"><code>void calcular_fo(Solucao&amp; s)
+{
+    int vezes_visitada[MAX_CIDADES];
+    memset(vezes_visitada, 0, sizeof(vezes_visitada));
+    s.fo = 0;                                          // zerar ANTES de somar
+    for (int i = 0; i &lt; num_cidades; i++)
+    {
+        vezes_visitada[s.vet_rota[i]]++;
+        int proxima = s.vet_rota[(i + 1) % num_cidades]; // a última volta para a primeira
+        s.fo += matriz_custo[s.vet_rota[i]][proxima];
+    }
+    for (int c = 0; c &lt; num_cidades; c++)
+    {
+        if (vezes_visitada[c] == 0)                    // cidade esquecida
+            s.fo += PENALIDADE;
+        if (vezes_visitada[c] &gt; 1)                     // cidade repetida
+            s.fo += PENALIDADE * (vezes_visitada[c] - 1);
+    }
+}</code></pre>
+<div class="code-file">codigo/tsp/modelagem_tsp.cpp</div>
+          <ul>
+            <li><code>s.fo = 0</code> <strong>antes</strong> de somar — senão acumula lixo/valor antigo a cada chamada.</li>
+            <li><code>(i + 1) % num_cidades</code> faz a última cidade voltar para a primeira (ciclo fechado).</li>
+            <li>Contagem de visitas: <code>0</code> vezes = cidade esquecida; <code>&gt; 1</code> = repetida. Cada falta custa <code>PENALIDADE</code> (100, como no enunciado).</li>
+          </ul>
+          <div class="attn">
+            <strong>Ponto de decisão:</strong> o enunciado deu "pode-se usar o mesmo peso para os dois casos". Se pedir pesos diferentes,
+            separe em duas constantes. Calibração: a penalidade deve ser <em>grande o bastante</em> para que violar nunca compense (maior que o maior custo de aresta).
+          </div>
+        </div>
+      </div>
+
+      <div class="phase" id="teste">
+        <div class="phase-head"><span class="phase-tag">TESTE</span><span class="phase-title">Como verificar</span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <p>No <code>toy_tsp.txt</code> (4 cidades), a rota <code>1→2→3→4→1</code> deve dar <strong>10 + 35 + 30 + 20 = 95</strong>. Confira à mão:</p>
+          <div class="exemplo">
+            <strong>Saída real do programa:</strong><br>
+            <code>FO: 95.00</code> · <code>Rota: 1 -&gt; 2 -&gt; 3 -&gt; 4 -&gt; 1</code><br>
+            Rota inválida <code>1→2→3→1</code> (repete a 1, esquece a 4): custo 10+35+15+0 = 60, mais 2 penalidades = <strong>260</strong> ✔
+          </div>
+          <p>Resoluções completas e antigas (TSP, Mochila, Mochila Múltipla e PRVC) estão em <a href="exercicios.html">Exercícios (arquivo)</a>.</p>
+        </div>
+      </div>
+
+      <div class="pagenav">
+        <a href="guia.html">← Guia</a>
+        <a href="p2-construtivas.html">P2 — Construtivas →</a>
+      </div>
+    </div>
+  </div>
+
+
+  <footer>
+    Material de estudo pessoal — Métodos de Otimização. Os códigos de exemplo estão em <code>codigo/</code> e foram compilados e executados.
+  </footer>
+
+  <script src="../assets/js/site.js"></script>
+</body>
+</html>

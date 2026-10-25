@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="O modo de pensar de qualquer busca local: as 4 peças, as 5 perguntas e os 3 métodos (randômica, primeira melhora, melhor melhora).">
+  <title>Guia: o modelo mental — Métodos de Otimização</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+  <nav>
+    <a class="brand" href="../index.html">Métodos de Otimização</a>
+    <a href="guia.html" class="active">Guia</a>
+    <a href="p1-modelagem.html">P1</a>
+    <a href="p2-construtivas.html">P2</a>
+    <a href="p3-busca-local.html">P3</a>
+    <a href="problemas.html">Problemas</a>
+    <a href="laboratorio.html">Laboratório</a>
+    <a href="checklist.html">Checklist</a>
+    <a href="teoria.html">Teoria</a>
+  </nav>
+
+  <div class="ref-layout">
+    <aside class="ex-sidebar">
+      <div class="ex-sidebar-label">Nesta página</div>
+      <a href="#ideia" class="active"><span>A ideia em 1 frase</span></a>
+      <a href="#funciona"><span>Por que funciona</span></a>
+      <a href="#pecas"><span>As 4 peças</span></a>
+      <a href="#perguntas"><span>As 5 perguntas</span></a>
+      <a href="#metodos"><span>Os 3 métodos</span></a>
+      <a href="#sinal"><span>Maximizar × minimizar</span></a>
+      <a href="#desfazer"><span>Desfazer o movimento</span></a>
+      <a href="#erros"><span>Erros que custam nota</span></a>
+      <a href="#enxuta"><span>Versão enxuta</span></a>
+    </aside>
+
+    <div class="ref-content">
+      <h1>Guia: como pensar uma busca local</h1>
+      <p>
+        Esta página é o <strong>modelo mental</strong> que vale para qualquer problema da disciplina
+        (PRCP, PET, TSP, PAB, DARP, hubs...). Se você entender estas 4 peças e 5 perguntas, o
+        enunciado novo deixa de ser um susto: o problema muda, a <em>estrutura</em> do raciocínio não.
+      </p>
+
+      <div class="phase" id="ideia">
+        <div class="phase-head"><span class="phase-tag">1</span><span class="phase-title">A ideia em uma frase</span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <div class="alert alert-info">
+            Você já tem uma solução <strong>completa e viável</strong> (a construtiva da P2 gerou uma).
+            A busca local tenta <strong>melhorá-la mexendo um pouquinho de cada vez</strong>:
+            se o mexer melhorou, fica; se não melhorou, descarta.
+          </div>
+          <p>
+            Compare com as provas anteriores. Na <strong>P2</strong> (construtivas) você <em>monta</em> uma
+            solução do zero, decisão por decisão. Na <strong>P3</strong> (busca local) você <em>parte de uma
+            solução pronta</em> e a refina. Por isso o código da prova já entrega uma construtiva e
+            você só escreve o "refinador".
+          </p>
+        </div>
+      </div>
+
+      <div class="phase" id="funciona">
+        <div class="phase-head"><span class="phase-tag">2</span><span class="phase-title">Por que funciona — e onde trava</span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <p>
+            Soluções parecidas têm FO parecida. Um movimento pequeno raramente destrói uma solução
+            boa e às vezes a melhora. Repetir isso é uma <strong>escalada de morro</strong>: só se dão passos que
+            sobem (ou descem, se for minimização).
+          </p>
+          <div class="math-block">FO
+ ^                 ótimo global
+ |        .-.         ^
+ |   .-. /   \   .-.  |
+ |  /   X     \ /   \_|_
+ | /  ótimo    X
+ |/   local
+ +-------------------------> soluções (ordenadas por vizinhança)</div>
+          <p>
+            A busca <strong>para</strong> quando nenhum vizinho melhora: isso é um <strong>ótimo local</strong> — o melhor
+            ponto <em>da sua vizinhança</em>, não necessariamente o melhor do problema. Por isso depois vêm as
+            meta-heurísticas (SA, Tabu, GRASP, AG), que existem justamente para <em>escapar</em> de ótimos locais.
+          </p>
+          <div class="attn">
+            <strong>Ponto de atenção:</strong> "ótimo local" depende da vizinhança escolhida. Se você
+            trocar o movimento (shift → swap), o conjunto de vizinhos muda e uma solução presa
+            pode voltar a ter vizinho melhor. Vizinhança é <em>decisão de projeto</em>, não verdade do problema.
+          </div>
+        </div>
+      </div>
+
+      <div class="phase" id="pecas">
+        <div class="phase-head"><span class="phase-tag">3</span><span class="phase-title">As 4 peças de toda busca local</span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <div class="pecas">
+            <div class="peca"><b>1. Solução</b><span>O que eu guardo? (a struct + a <code>fo</code>)</span></div>
+            <div class="peca"><b>2. Movimento</b><span>Qual a <em>menor</em> mudança possível numa solução?</span></div>
+            <div class="peca"><b>3. Vizinhança</b><span>O conjunto de <em>todos</em> os movimentos possíveis.</span></div>
+            <div class="peca"><b>4. "Melhorou?"</b><span>Maximizo ou minimizo? Qual comparação?</span></div>
+          </div>
+          <div class="t-outer">
+            <table class="tab">
+              <thead><tr><th>Problema</th><th>Solução</th><th>Movimento</th><th>Tamanho da vizinhança</th><th>FO</th></tr></thead>
+              <tbody>
+                <tr><td>PRCP</td><td><code>vet_sol[ponto] = posição</code></td><td>mudar a posição de 1 ponto</td><td>n × (m−1)</td><td><span class="pill pill-max">maximiza</span></td></tr>
+                <tr><td>PET</td><td>tarefas de cada tripulação</td><td>mover 1 tarefa p/ outra tripulação</td><td>tarefas × (tripulações−1)</td><td><span class="pill pill-min">minimiza</span></td></tr>
+                <tr><td>TSP / sdTSP</td><td>ordem das cidades</td><td>trocar (swap) 2 cidades</td><td>n(n−1)/2</td><td><span class="pill pill-min">minimiza</span></td></tr>
+                <tr><td>PAB (berços)</td><td>berço + ordem de cada navio</td><td>mudar o berço de 1 navio / trocar 2 navios</td><td>navios × berços</td><td><span class="pill pill-min">minimiza</span></td></tr>
+                <tr><td>DARP</td><td>rota de cada veículo</td><td>mover 1 requisição p/ outro veículo</td><td>requisições × veículos</td><td><span class="pill pill-min">minimiza</span></td></tr>
+                <tr><td>UMApHCP (hubs)</td><td>quais nós são hubs</td><td>trocar 1 hub por 1 não-hub</td><td>p × (n−p)</td><td><span class="pill pill-min">minimiza</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="attn">
+            <strong>Ponto de decisão:</strong> para o mesmo problema há mais de um movimento válido (TSP: swap,
+            inserção, 2-opt). Use o <strong>mesmo movimento do <code>gerar_vizinha</code> da P2</strong> — o código-base
+            da prova já assume esse movimento, e a randômica depende dele. Se a prova pedir outro, siga a prova.
+          </div>
+        </div>
+      </div>
+
+      <div class="phase" id="perguntas">
+        <div class="phase-head"><span class="phase-tag">4</span><span class="phase-title">As 5 perguntas (problema novo? faça nesta ordem)</span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <div class="step"><div class="step-num">1</div><div><strong>O que muda entre duas soluções vizinhas?</strong><br>Defina o movimento: 1 ponto, 1 tarefa, 2 cidades. <em>Por quê:</em> sem isso não há vizinhança, e sem vizinhança não há busca.</div></div>
+          <div class="step"><div class="step-num">2</div><div><strong>Como eu enumero todos os movimentos?</strong><br>São os laços <code>for</code> da primeira/melhor melhora. A randômica usa o <code>gerar_vizinha</code> (sorteio). <em>Por quê:</em> PM e MM precisam <u>varrer</u> a vizinhança inteira, em ordem, sem esquecer nenhum.</div></div>
+          <div class="step"><div class="step-num">3</div><div><strong>Maximizo ou minimizo?</strong><br>Escolha <code>&gt;</code> ou <code>&lt;</code> e escreva um comentário ao lado. <em>Por quê:</em> errar o sinal compila e roda — e piora a solução em silêncio.</div></div>
+          <div class="step"><div class="step-num">4</div><div><strong>Como eu desfaço o movimento?</strong><br>Guarde o valor antigo e restaure (ou use cópia/<code>memcpy</code>). <em>Por quê:</em> ao testar um vizinho ruim, a solução <code>s</code> precisa voltar ao que era.</div></div>
+          <div class="step"><div class="step-num">5</div><div><strong>Chamei <code>calcular_fo</code> depois de cada movimento?</strong><br><em>Por quê:</em> sem recalcular, você compara a FO velha com a FO velha e nunca "melhora".</div></div>
+        </div>
+      </div>
+
+      <div class="phase" id="metodos">
+        <div class="phase-head"><span class="phase-tag">5</span><span class="phase-title">Os 3 métodos: só diferem em quais vizinhos olhar e quando aceitar</span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <div class="grid-3">
+            <div class="card"><div class="card-title">Randômica (RA)</div><p><em>"Tento ao acaso."</em> Sorteia <code>iter</code> vizinhos; aceita os que melhoram; repete até uma rodada sem melhora.</p></div>
+            <div class="card"><div class="card-title">Primeira melhora (PM)</div><p><em>"Aceito o primeiro que presta."</em> Varre a vizinhança em ordem e aplica o primeiro melhor; recomeça a varredura.</p></div>
+            <div class="card"><div class="card-title">Melhor melhora (MM)</div><p><em>"Olho tudo, escolho o melhor."</em> Varre tudo sem aplicar, guarda o melhor; só então aplica esse.</p></div>
+          </div>
+          <div class="t-outer">
+            <table class="tab">
+              <thead><tr><th></th><th>Quais vizinhos vê</th><th>Quando aceita</th><th>Para quando</th><th>Garante ótimo local?</th></tr></thead>
+              <tbody>
+                <tr><td><b>RA</b></td><td>sorteados</td><td>no primeiro melhor</td><td><code>iter</code> tentativas sem melhora</td><td>não (pode deixar passar um)</td></tr>
+                <tr><td><b>PM</b></td><td>todos, em ordem</td><td>no primeiro melhor</td><td>varredura inteira sem melhora</td><td>sim</td></tr>
+                <tr><td><b>MM</b></td><td>todos</td><td>só no melhor da varredura</td><td>varredura sem nenhum melhor</td><td>sim</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>Código completo e passo a passo: página <a href="p3-busca-local.html">P3 — Busca local</a>.</p>
+          <div class="attn">
+            <strong>Ponto de atenção:</strong> "melhor melhora" <u>não</u> é garantidamente melhor que "primeira melhora" no
+            resultado final. Cada uma segue um caminho diferente e termina num ótimo local diferente.
+            Nas medições da página P3, MM ganhou em algumas instâncias e perdeu em outras.
+          </div>
+        </div>
+      </div>
+
+      <div class="phase" id="sinal">
+        <div class="phase-head"><span class="phase-tag">6</span><span class="phase-title">Maximizar × minimizar (a pegadinha nº 1)</span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <div class="t-outer">
+            <table class="tab">
+              <thead><tr><th>Problema</th><th>Objetivo</th><th>"Melhorou" é...</th></tr></thead>
+              <tbody>
+                <tr><td>PRCP (pontos livres)</td><td><span class="pill pill-max">maximizar</span></td><td><code>vizinha.fo &gt; s.fo</code></td></tr>
+                <tr><td>PMM / Mochila (valor)</td><td><span class="pill pill-max">maximizar</span></td><td><code>vizinha.fo &gt; s.fo</code></td></tr>
+                <tr><td>TSP, PET, PAB, DARP, hubs, PRVC (custo/tempo)</td><td><span class="pill pill-min">minimizar</span></td><td><code>vizinha.fo &lt; s.fo</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="alert alert-danger">
+            <strong>Como se proteger:</strong> antes de escrever o primeiro <code>if</code>, escreva em comentário
+            <code>// objetivo: MAXIMIZAR</code> (ou MINIMIZAR). Depois do código pronto, rode uma vez e confira
+            que a FO final é <em>melhor</em> que a inicial. Se piorou, é o sinal.
+          </div>
+        </div>
+      </div>
+
+      <div class="phase" id="desfazer">
+        <div class="phase-head"><span class="phase-tag">7</span><span class="phase-title">Desfazer o movimento (3 jeitos)</span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <div class="t-outer">
+            <table class="tab">
+              <thead><tr><th>Jeito</th><th>Como</th><th>Quando usar</th></tr></thead>
+              <tbody>
+                <tr><td><b>Cópia</b></td><td><code>memcpy(&amp;vizinha, &amp;s, sizeof(Solucao))</code>, mexe na cópia, descarta se ruim</td><td>mais simples e seguro; lento se a struct é grande. Padrão da randômica.</td></tr>
+                <tr><td><b>Restaurar valor</b></td><td>guarda <code>posicao_original</code>, muda, se ruim restaura</td><td>movimento mexe em 1 posição (PRCP, mochila)</td></tr>
+                <tr><td><b>Movimento inverso</b></td><td>refaz o swap (swap é inverso de si mesmo)</td><td>TSP e outros com movimentos reversíveis</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="attn">
+            <strong>Pegadinha dupla:</strong> ao desfazer, restaure também a <code>fo</code> (<code>s.fo = fo_original</code>) —
+            ou chame <code>calcular_fo</code> de novo. Restaurar só o vetor deixa a <code>fo</code> do vizinho ruim dentro de <code>s</code>.
+          </div>
+        </div>
+      </div>
+
+      <div class="phase" id="erros">
+        <div class="phase-head"><span class="phase-tag">8</span><span class="phase-title">Erros que custam nota</span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <div class="t-outer">
+            <table class="tab">
+              <thead><tr><th>Erro</th><th>Sintoma</th><th>Correção</th></tr></thead>
+              <tbody>
+                <tr><td>Sinal invertido</td><td>FO final pior que a inicial</td><td>comentário <code>// MAXIMIZAR</code>/<code>// MINIMIZAR</code> + teste</td></tr>
+                <tr><td>Esquecer <code>calcular_fo</code> após mover</td><td>nunca melhora, ou comparações absurdas</td><td>uma linha logo após aplicar o movimento</td></tr>
+                <tr><td>Não desfazer movimento ruim</td><td><code>s</code> vira outra solução, FO desce</td><td>restaurar valor <em>e</em> <code>fo</code></td></tr>
+                <tr><td>MM comparando com <code>s.fo</code></td><td>aplica o <em>último</em> melhor, não o melhor</td><td>comparar com <code>melhor_fo</code> (melhor visto até agora)</td></tr>
+                <tr><td>Vizinhança incompleta</td><td>para cedo, FO fraca</td><td>conferir limites dos <code>for</code> e o <code>continue</code> do "mesmo valor"</td></tr>
+                <tr><td>Contar "vizinho" que é a própria solução</td><td>laço infinito ou aceita sem mudar</td><td>pular <code>pos == posicao_original</code></td></tr>
+                <tr><td><code>goto</code> pulando declaração (C++)</td><td><strong>erro de compilação = nota 0</strong></td><td>usar <code>while (melhorou)</code> em vez de <code>goto</code></td></tr>
+                <tr><td>Faltar <code>#include &lt;string.h&gt;</code></td><td><code>memcpy</code> não declarado → <strong>nota 0</strong></td><td>conferir os includes e compilar</td></tr>
+                <tr><td>Retornar a solução / não ser <code>void</code></td><td>contra o enunciado</td><td><code>void f(Solucao&amp; s)</code> — modifica <code>s</code> in-place</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="phase" id="enxuta">
+        <div class="phase-head"><span class="phase-tag">9</span><span class="phase-title">Versão enxuta (para revisar na véspera)</span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <ul class="check">
+            <li>Movimento → vizinhança → sinal (<code>&gt;</code>/<code>&lt;</code>) → desfazer → <code>calcular_fo</code>.</li>
+            <li><b>RA:</b> copia <code>s</code>, <code>gerar_vizinha</code>, <code>calcular_fo</code>, aceita se melhor; repete <code>iter</code> vezes; roda até uma rodada sem melhora.</li>
+            <li><b>PM:</b> varre tudo; no primeiro melhor <em>mantém</em> e recomeça; senão desfaz. Para sem achar.</li>
+            <li><b>MM:</b> varre tudo; desfaz sempre; anota o melhor (vs. <code>melhor_fo</code>); aplica só esse. Para sem achar.</li>
+            <li>Sem <code>goto</code>. Com <code>#include &lt;string.h&gt;</code>. <strong>Compilar antes de entregar.</strong></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="pagenav">
+        <a href="../index.html">← Início</a>
+        <a href="p1-modelagem.html">P1 — Modelagem →</a>
+      </div>
+    </div>
+  </div>
+
+
+  <footer>
+    Material de estudo pessoal — Métodos de Otimização. Os códigos de exemplo estão em <code>codigo/</code> e foram compilados e executados.
+  </footer>
+
+  <script src="../assets/js/site.js"></script>
+</body>
+</html>

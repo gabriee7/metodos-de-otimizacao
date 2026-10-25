@@ -439,3 +439,99 @@ footer {
   .btn { padding: .48rem 1rem; font-size: .9rem; }
   .btn-group { gap: .4rem; }
 }
+
+/* ============================================================
+   Componentes da versão "guia de consulta" (busca local)
+   ============================================================ */
+
+/* ── Código C (bloco com rolagem horizontal e botão copiar) ── */
+.code-wrap { position: relative; margin: .8rem 0 1.2rem; }
+pre.code {
+  background: #f1f5f9;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--primary);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  padding: .9rem 1.1rem;
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: .86rem;
+  line-height: 1.5;
+  overflow-x: auto;
+  white-space: pre;
+  tab-size: 4;
+}
+.code-copy {
+  position: absolute; top: 6px; right: 8px;
+  font: inherit; font-size: .72rem; font-weight: 600;
+  padding: 2px 9px; border-radius: 5px;
+  border: 1px solid var(--border); background: var(--surface);
+  color: var(--text-muted); cursor: pointer;
+}
+.code-copy:hover { color: var(--primary); border-color: var(--primary); }
+code { font-family: 'Consolas', 'Courier New', monospace; font-size: .88em; background: #eef2f7; padding: 1px 5px; border-radius: 4px; }
+pre.code code { background: none; padding: 0; font-size: inherit; }
+.code-file { font-size: .75rem; color: var(--text-muted); font-family: 'Consolas','Courier New',monospace; margin-top: .6rem; }
+
+/* ── Grades de cards ── */
+.grid-2, .grid-3 { display: grid; gap: 1rem; margin: 1rem 0; }
+.grid-2 { grid-template-columns: repeat(2, 1fr); }
+.grid-3 { grid-template-columns: repeat(3, 1fr); }
+.grid-2 .card, .grid-3 .card { margin-bottom: 0; }
+.card-link { text-decoration: none; color: inherit; display: block; transition: transform .15s, border-color .15s; }
+.card-link:hover { transform: translateY(-2px); border-color: var(--primary); }
+.card-link .card-title { margin-bottom: .35rem; }
+.card-link p { font-size: .9rem; color: var(--text-muted); margin: 0; }
+
+/* ── Sinal da FO: maximiza / minimiza ── */
+.pill { display: inline-block; padding: 1px 9px; border-radius: 999px; font-size: .75rem; font-weight: 700; }
+.pill-max { background: #dcfce7; color: #15803d; }
+.pill-min { background: #fee2e2; color: #b91c1c; }
+
+/* ── As 4 peças (faixa numerada) ── */
+.pecas { display: grid; grid-template-columns: repeat(4, 1fr); gap: .8rem; margin: 1rem 0; }
+.peca { background: var(--surface); border: 1px solid var(--border); border-top: 4px solid var(--primary); border-radius: var(--radius); padding: .9rem 1rem; box-shadow: var(--shadow); }
+.peca b { display: block; color: var(--primary); margin-bottom: .2rem; }
+.peca span { font-size: .85rem; color: var(--text-muted); }
+
+/* ── Alerta de erro (pegadinha grave) ── */
+.alert-danger { background: #fef2f2; border-left: 4px solid var(--danger); }
+
+/* ── Verificação (checklist) ── */
+ul.check { list-style: none; padding-left: 0; }
+ul.check li { padding: .35rem 0 .35rem 1.9rem; position: relative; border-bottom: 1px dashed var(--border); }
+ul.check li::before { content: "☐"; position: absolute; left: .3rem; color: var(--primary); font-size: 1.05rem; }
+
+/* ── Navegação anterior / próxima ── */
+.pagenav { display: flex; justify-content: space-between; gap: 1rem; margin: 2.5rem 0 0; flex-wrap: wrap; }
+.pagenav a { text-decoration: none; color: var(--primary); font-weight: 600; font-size: .92rem; padding: .5rem 1rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
+.pagenav a:hover { background: #eff6ff; }
+
+/* ── Layout de página de consulta (sidebar de seções + conteúdo) ── */
+.ref-layout { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 2rem; max-width: 1080px; margin: 2rem auto; padding: 0 1.2rem 3rem; }
+.ref-layout > .ref-content > h1 { margin-top: 0; }
+.ref-content h2 { scroll-margin-top: 80px; }
+.ref-content .phase { scroll-margin-top: 80px; }
+
+/* ── Laboratório interativo ── */
+.lab-bar { display: flex; gap: .6rem; flex-wrap: wrap; align-items: center; margin: .8rem 0; }
+.lab-bar select { padding: .45rem .7rem; border: 1px solid var(--border); border-radius: var(--radius); font: inherit; background: var(--surface); }
+.lab-status { display: flex; gap: 1.2rem; flex-wrap: wrap; font-weight: 600; margin: .6rem 0; }
+.lab-status span b { color: var(--primary); }
+table.lab-grade { border-collapse: collapse; margin: .6rem 0; font-size: .9rem; }
+table.lab-grade th, table.lab-grade td { border: 1px solid var(--border); padding: .35rem .7rem; text-align: center; min-width: 54px; }
+table.lab-grade th { background: #f1f5f9; }
+td.lab-atual { background: #dbeafe; font-weight: 700; }
+td.lab-testado { background: #fef9c3; }
+td.lab-aceito { background: #bbf7d0; font-weight: 700; }
+td.lab-melhor { outline: 2px solid var(--success); outline-offset: -2px; }
+.lab-log { background: #0f172a; color: #e2e8f0; border-radius: var(--radius); padding: .8rem 1rem; font-family: 'Consolas','Courier New',monospace; font-size: .82rem; max-height: 260px; overflow-y: auto; white-space: pre-wrap; }
+
+@media (max-width: 900px) {
+  .pecas { grid-template-columns: repeat(2, 1fr); }
+  .grid-3 { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 640px) {
+  .ref-layout { grid-template-columns: 1fr; padding: 0 .7rem 2rem; gap: 0; }
+  .ref-layout > .ex-sidebar { display: none; }
+  .grid-2, .grid-3, .pecas { grid-template-columns: 1fr; }
+  pre.code { font-size: .76rem; padding: .7rem .8rem; }
+}
