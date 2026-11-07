@@ -31,11 +31,20 @@
       <a href="#pab"><span>PAB</span></a>
       <a href="#darp"><span>DARP</span></a>
       <a href="#hubs"><span>UMApHCP (hubs)</span></a>
+      <a href="#inedito"><span>Problema inédito (treino)</span></a>
       <a href="#quadro"><span>Quadro-resumo</span></a>
     </aside>
 
     <div class="ref-content">
       <h1>Problemas: a mesma técnica, movimentos diferentes</h1>
+      <div class="alert alert-danger">
+        <strong>Ponto de atenção permanente:</strong> o problema que cair na prova <u>pode ser qualquer um</u> — não presuma que repete o de outra turma ou o dos exemplos
+        deste site. PRCP, TSP e PET aparecem aqui como <em>treino</em>. O que se repete é o <strong>modo de pensar</strong>
+        (as 4 peças e as 5 perguntas). Se você sabe derivar o movimento, a vizinhança, o sinal e o desfazer de um problema <em>novo</em>, está preparado.
+        Treine isso na seção <a href="#inedito">Problema inédito</a>.
+      </div>
+
+      
       <p>
         Cada problema é preenchimento das <a href="guia.html#pecas">4 peças</a>. Para cada um: a <strong>solução</strong>, o
         <strong>movimento</strong>, como <strong>enumerar</strong> a vizinhança, o <strong>sinal</strong>, como <strong>desfazer</strong> e a <strong>armadilha</strong>.
@@ -253,6 +262,108 @@
             </table>
           </div>
           <p>Observação: aqui o movimento é uma troca <em>entre dois blocos</em> do vetor, não entre quaisquer duas posições (trocar dois hubs entre si não muda a solução).</p>
+        </div>
+      </div>
+
+      <div class="phase" id="inedito">
+        <div class="phase-head"><span class="phase-tag">INÉDITO</span><span class="phase-title">Um problema que você nunca viu: derive do zero <span class="pill pill-min">minimiza</span></span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <div class="alert alert-info">
+            <strong>Enunciado (inventado para treino):</strong> <em>n</em> tarefas, cada uma com um tempo <em>t<sub>i</sub></em>; <em>m</em> máquinas idênticas.
+            Cada tarefa vai para <strong>uma</strong> máquina. Minimizar a <strong>maior carga</strong> entre as máquinas (o makespan).
+          </div>
+          <p>Em uma prova real você receberia o código-base. Aqui, responda as 5 perguntas do <a href="guia.html#perguntas">Guia</a> como se fosse chegando ao problema:</p>
+          <div class="t-outer"><table class="tab">
+            <thead><tr><th>Pergunta</th><th>Resposta para este problema</th></tr></thead>
+            <tbody>
+              <tr><td>Solução</td><td><code>vet_maquina[tarefa]</code> = máquina (0..m−1); <code>fo</code> = maior carga</td></tr>
+              <tr><td>1. O que muda entre vizinhas?</td><td>a máquina de <em>uma</em> tarefa</td></tr>
+              <tr><td>2. Como enumero?</td><td><code>for tarefa</code> × <code>for maquina</code> (≠ atual) → n(m−1)</td></tr>
+              <tr><td>3. Maximizo ou minimizo?</td><td>minimiza → <code>&lt;</code></td></tr>
+              <tr><td>4. Como desfaço?</td><td>restaurar <code>vet_maquina[tarefa]</code> e a <code>fo</code> (1 valor mudou)</td></tr>
+              <tr><td>5. Recalculo a FO?</td><td>sim, depois de cada movimento</td></tr>
+            </tbody>
+          </table></div>
+          <p>Com as respostas, o código é o <strong>mesmo molde</strong> do PRCP. A primeira melhora (verificada):</p>
+          <pre class="code"><code>void busca_local_primeira_melhora(Solucao&amp; s)
+{
+    int melhorou = 1;
+    calcular_fo(s);
+    while (melhorou == 1)
+    {
+        melhorou = 0;
+        for (int tarefa = 0; tarefa &lt; num_tarefas &amp;&amp; melhorou == 0; tarefa++)
+        {
+            int maquina_original = s.vet_maquina[tarefa];
+            int fo_original = s.fo;
+            for (int maquina = 0; maquina &lt; num_maquinas &amp;&amp; melhorou == 0; maquina++)
+            {
+                if (maquina == maquina_original)
+                    continue;
+                s.vet_maquina[tarefa] = maquina;      // aplica
+                calcular_fo(s);
+                if (s.fo &lt; fo_original)               // MINIMIZA
+                    melhorou = 1;
+                else
+                {
+                    s.vet_maquina[tarefa] = maquina_original;   // desfaz
+                    s.fo = fo_original;
+                }
+            }
+        }
+    }
+}</code></pre>
+<div class="code-file">codigo/inedito/busca_local_makespan.cpp</div>
+          <div class="attn">
+            <strong>O que mudou em relação ao PRCP:</strong> só os nomes dos laços, o que o movimento altera (<code>vet_maquina</code>) e o sinal (<code>&lt;</code>).
+            O esqueleto — aplicar, <code>calcular_fo</code>, aceitar ou desfazer — é idêntico.
+          </div>
+          <h3>Resultado real (10 tarefas, 3 máquinas, todas começando na máquina 0)</h3>
+          <div class="t-outer"><table class="tab">
+            <thead><tr><th>Método</th><th>FO final</th><th>Cargas das máquinas</th></tr></thead>
+            <tbody>
+              <tr><td>inicial</td><td>56</td><td>56 · 0 · 0</td></tr>
+              <tr><td>randômica</td><td>20</td><td>18 · 20 · 18</td></tr>
+              <tr><td>primeira melhora</td><td>22</td><td>19 · 22 · 15</td></tr>
+              <tr><td>melhor melhora</td><td>20</td><td>19 · 17 · 20</td></tr>
+            </tbody>
+          </table></div>
+          <div class="alert alert-warning">
+            <strong>A armadilha deste problema: platôs.</strong> A soma dos tempos é 56, então o melhor possível é pelo menos ⌈56/3⌉ = 19, mas todas as buscas pararam acima disso.
+            Como a FO é o <em>máximo</em>, mover uma tarefa de uma máquina que <u>não</u> é a mais carregada não altera a FO — o vizinho é <em>igual</em>, não melhor, e o <code>&lt;</code> estrito o rejeita.
+            Na solução da primeira melhora a máquina de 22 tem as tarefas 8, 7 e 7: mover um 7 para a máquina de 15 dá 22 de novo (empate) e as outras opções dão mais que 22 — nenhum movimento isolado baixa o máximo. Remédios (ideias, não implementadas aqui): desempatar com um critério secundário (ex.: soma dos quadrados das cargas),
+            ou usar outro movimento (trocar duas tarefas de máquinas diferentes). Quando a FO é um <code>max</code>, <strong>desconfie de platôs</strong>.
+          </div>
+          <h3>Agora é com você: derive sem olhar</h3>
+          <p>Para cada problema abaixo (também inventados), responda: solução, movimento, quantos vizinhos, sinal, como desfaz. Depois abra a resposta.</p>
+          <details class="card">
+            <summary><strong>A. Coloração de vértices</strong> — grafo com <em>n</em> vértices e <em>k</em> cores; minimizar o número de arestas cujas pontas têm a mesma cor.</summary>
+            <ul>
+              <li>Solução: <code>vet_cor[vertice]</code> (0..k−1).</li>
+              <li>Movimento: mudar a cor de <em>um</em> vértice → n(k−1) vizinhos.</li>
+              <li>Sinal: minimiza (<code>&lt;</code>). Desfaz: restaurar a cor.</li>
+              <li>Ponto de atenção: ao mover um vértice, só as arestas <em>incidentes a ele</em> mudam — dá para calcular a variação sem refazer a FO inteira (bônus de eficiência).</li>
+            </ul>
+          </details>
+          <details class="card">
+            <summary><strong>B. Partição em 2 grupos</strong> — dividir <em>n</em> números em dois grupos minimizando |soma do grupo 0 − soma do grupo 1|.</summary>
+            <ul>
+              <li>Solução: <code>vet_grupo[i]</code> ∈ {0, 1}.</li>
+              <li>Movimento: trocar o grupo de <em>um</em> número → só n vizinhos (com 2 grupos, "outro valor" é <code>1 − atual</code>; não precisa do sorteio com <code>do/while</code>).</li>
+              <li>Sinal: minimiza. Desfaz: inverter de novo (o movimento é o seu próprio inverso).</li>
+              <li>Ponto de atenção: o valor absoluto na FO — esquecer o <code>abs</code> faz a busca "melhorar" produzindo diferença negativa enorme.</li>
+            </ul>
+          </details>
+          <details class="card">
+            <summary><strong>C. Selecionar exatamente k itens</strong> — escolher exatamente <em>k</em> de <em>n</em> itens para <strong>maximizar</strong> a soma dos valores.</summary>
+            <ul>
+              <li>Solução: <code>vet_escolhido[i]</code> ∈ {0, 1}, com exatamente k uns.</li>
+              <li>Movimento: <strong>virar um único bit quebraria a restrição</strong> (ficaria com k±1). O movimento correto é <em>trocar</em>: tirar um item escolhido e pôr um não escolhido → k(n−k) vizinhos.</li>
+              <li>Sinal: maximiza (<code>&gt;</code>). Desfaz: repetir a troca.</li>
+              <li>Ponto de atenção: <u>a restrição do problema pode mudar o movimento</u>. Quando o movimento "óbvio" gera solução inviável, procure um movimento que preserve a viabilidade (ou penalize na FO).</li>
+            </ul>
+          </details>
+          <p>Código executável do exemplo inédito: <code>codigo/inedito/busca_local_makespan.cpp</code>.</p>
         </div>
       </div>
 
