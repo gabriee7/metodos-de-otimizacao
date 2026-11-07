@@ -32,6 +32,7 @@
       <a href="#darp"><span>DARP</span></a>
       <a href="#hubs"><span>UMApHCP (hubs)</span></a>
       <a href="#inedito"><span>Problema inédito (treino)</span></a>
+      <a href="#ex-c"><span>Exercício C resolvido</span></a>
       <a href="#quadro"><span>Quadro-resumo</span></a>
     </aside>
 
@@ -361,9 +362,335 @@
               <li>Movimento: <strong>virar um único bit quebraria a restrição</strong> (ficaria com k±1). O movimento correto é <em>trocar</em>: tirar um item escolhido e pôr um não escolhido → k(n−k) vizinhos.</li>
               <li>Sinal: maximiza (<code>&gt;</code>). Desfaz: repetir a troca.</li>
               <li>Ponto de atenção: <u>a restrição do problema pode mudar o movimento</u>. Quando o movimento "óbvio" gera solução inviável, procure um movimento que preserve a viabilidade (ou penalize na FO).</li>
+              <li><strong>Resolução completa, passo a passo, com código:</strong> <a href="#ex-c">Exercício C resolvido</a>.</li>
             </ul>
           </details>
           <p>Código executável do exemplo inédito: <code>codigo/inedito/busca_local_makespan.cpp</code>.</p>
+        </div>
+      </div>
+
+      <div class="phase" id="ex-c">
+        <div class="phase-head"><span class="phase-tag">EXERCÍCIO C</span><span class="phase-title">Selecionar exatamente k itens — resolvido do zero <span class="pill pill-max">maximiza</span></span><span class="phase-line"></span></div>
+        <div class="phase-body">
+          <div class="alert alert-danger">
+            <strong>Ponto de atenção permanente:</strong> este problema é <u>treino</u>. O da prova pode ser outro. O que vale levar é o caminho:
+            enunciado → solução → movimento → vizinhança → sinal → desfazer → código → teste.
+          </div>
+
+          <h3>Parte 1 — Entender o enunciado</h3>
+          <div class="alert alert-info">
+            <strong>Enunciado:</strong> escolher <u>exatamente</u> <em>k</em> de <em>n</em> itens para <strong>maximizar</strong> a soma dos valores.
+          </div>
+          <p>Antes de qualquer código, separe o enunciado em quatro caixas:</p>
+          <div class="t-outer"><table class="tab">
+            <thead><tr><th>Caixa</th><th>Neste problema</th><th>Por que importa</th></tr></thead>
+            <tbody>
+              <tr><td>Dados</td><td><code>n</code>, <code>k</code>, <code>vet_valor[i]</code></td><td>viram variáveis globais</td></tr>
+              <tr><td>Decisão</td><td>cada item entra ou não</td><td>define a struct de solução</td></tr>
+              <tr><td><strong>Restrição</strong></td><td><strong>exatamente k escolhidos</strong></td><td><strong>muda o movimento</strong> (Passo 3)</td></tr>
+              <tr><td>Objetivo</td><td>maximizar a soma</td><td>define o sinal <code>&gt;</code></td></tr>
+            </tbody>
+          </table></div>
+          <div class="attn">
+            <strong>Onde o enunciado pode ser diferente:</strong>
+            "<em>exatamente</em> k" não é "<em>até</em> k" nem "<em>pelo menos</em> k" — com "até k", virar um único bit passa a ser válido. Releia essa palavra.
+            Se os itens tivessem pesos e uma capacidade, seria uma mochila (a restrição vira soma, não contagem). Se o objetivo fosse minimizar, o sinal inverte.
+          </div>
+
+          <h3>Parte 2 — Plano do que fazer</h3>
+          <ol>
+            <li>Definir a solução (o que o vetor guarda).</li>
+            <li>Escrever <code>calcular_fo</code>.</li>
+            <li><strong>Decidir o movimento</strong>, respeitando a restrição.</li>
+            <li>Contar a vizinhança (custo e forma dos laços).</li>
+            <li>Escrever <code>gerar_vizinha</code> e uma construtiva aleatória.</li>
+            <li>Escrever as 3 buscas.</li>
+            <li>Testar por um <strong>segundo caminho</strong>.</li>
+            <li>Compilar de novo no final.</li>
+          </ol>
+          <p>Em prova real, 1, 2 e 5 costumam vir prontos. Treine tudo, porque o enunciado pode pedir qualquer parte.</p>
+
+          <h3>Parte 3 — Resolvendo, passo a passo</h3>
+
+          <h4>Passo 1 — Representação da solução</h4>
+          <pre class="code"><code>int vet_escolhido[MAX_ITENS];   // 1 = escolhido, 0 = fora. Sempre com exatamente k uns.
+int fo;</code></pre>
+          <p>O vetor binário responde "este item está dentro?" em O(1), e tem o tamanho de <code>n</code>.</p>
+          <div class="attn">
+            <strong>Ponto de decisão:</strong> existe outra representação válida, um vetor de <em>k índices</em> (<code>vet_indice[0..k-1]</code>).
+            Ela garante por construção que há k itens, mas exige cuidado para não repetir índice, e perguntar "o item i está dentro?" custa O(k).
+            Usei o binário por ser mais simples. Se a prova der a struct, use a dela.
+          </div>
+
+          <h4>Passo 2 — Função objetivo</h4>
+          <pre class="code"><code>void calcular_fo(Solucao&amp; s)
+{
+    s.fo = 0;                                         // zerar antes de somar
+    for (int i = 0; i &lt; num_itens; i++)
+        if (s.vet_escolhido[i] == 1)
+            s.fo += vet_valor[i];
+}</code></pre>
+<div class="code-file">codigo/inedito/selecao_k_itens.cpp</div>
+          <div class="attn">
+            <strong>Pontos de atenção:</strong> esquecer <code>s.fo = 0</code> acumula a FO antiga a cada chamada.
+            Se o enunciado dissesse "maximizar valor <em>menos</em> um custo", é aqui que o custo entra.
+          </div>
+
+          <h4>Passo 3 — O movimento (o passo mais importante deste exercício)</h4>
+          <p>A ideia óbvia é "virar um bit", mas ela falha:</p>
+          <pre class="code"><code>escolhidos = 4 (k = 4)
+virar item 5 de 0 para 1  →  5 escolhidos   ✗ viola "exatamente k"
+virar item 3 de 1 para 0  →  3 escolhidos   ✗ viola</code></pre>
+          <p>
+            Qualquer virada isolada quebra a restrição. O movimento que <strong>preserva</strong> a restrição é a <strong>troca</strong>:
+            um item sai (1→0) e outro entra (0→1). Os dois mudam juntos e o total continua k.
+            O movimento tem que levar uma solução <em>viável</em> a outra <em>viável</em>.
+          </p>
+          <div class="t-outer"><table class="tab">
+            <thead><tr><th>Alternativa</th><th>O que muda</th></tr></thead>
+            <tbody>
+              <tr><td>Virar 1 bit + penalizar na FO (<code>− peso × |escolhidos − k|</code>)</td><td>vizinhança maior (n), mas passa por soluções inviáveis; o peso precisa ser grande o bastante para violar nunca compensar</td></tr>
+              <tr><td><strong>Troca (a usada aqui)</strong></td><td>só soluções viáveis; vizinhança k(n−k)</td></tr>
+              <tr><td>Restrição "até k"</td><td>virar 1 bit já serve (respeitando o teto)</td></tr>
+            </tbody>
+          </table></div>
+
+          <h4>Passo 4 — Tamanho da vizinhança</h4>
+          <p>
+            Escolhe-se quem sai (k opções) e quem entra (n−k opções): <strong>k × (n−k)</strong>. No exemplo, 4 × 8 = <strong>32 vizinhos</strong>.
+            Esse número vira o parâmetro <code>iteracoes</code> da randômica.
+          </p>
+          <div class="attn">
+            <strong>Ponto de atenção:</strong> enumere "todos os pares (saindo, entrando)" e filtre com <code>if</code>/<code>continue</code>. Não tente adivinhar índices.
+          </div>
+
+          <h4>Passo 5 — <code>gerar_vizinha</code> e construtiva aleatória</h4>
+          <pre class="code"><code>// O movimento NÃO pode ser "virar um bit": isso deixaria k+1 ou k-1 itens (solução inviável).
+// O movimento certo é TROCAR: tira um item escolhido e coloca um não escolhido.
+void gerar_vizinha(Solucao&amp; s)
+{
+    int saindo, entrando;
+    do
+        saindo = rand() % num_itens;
+    while (s.vet_escolhido[saindo] == 0);             // precisa ser um item hoje escolhido
+    do
+        entrando = rand() % num_itens;
+    while (s.vet_escolhido[entrando] == 1);           // precisa ser um item hoje fora
+    s.vet_escolhido[saindo] = 0;
+    s.vet_escolhido[entrando] = 1;
+}</code></pre>
+<div class="code-file">codigo/inedito/selecao_k_itens.cpp</div>
+          <div class="attn">
+            <strong>Pontos de atenção:</strong> se <code>k = 0</code> ou <code>k = n</code>, um dos dois <code>do/while</code> nunca termina (não existe item escolhido, ou fora).
+            Em instâncias normais não acontece, mas é isso que causaria um travamento. Os dois sorteios são independentes.
+          </div>
+          <p>A construtiva aleatória sorteia itens e só <strong>conta</strong> quando o item estava livre:</p>
+          <pre class="code"><code>// Escolhe k itens DIFERENTES ao acaso. Sortear "k vezes" poderia repetir o mesmo item e
+// gerar menos de k escolhidos; por isso só conta quando o item sorteado ainda estava livre.
+void heuristica_construtiva_aleatoria(Solucao&amp; s)
+{
+    memset(s.vet_escolhido, 0, sizeof(s.vet_escolhido));
+    int escolhidos = 0;
+    while (escolhidos &lt; num_escolhas)
+    {
+        int item = rand() % num_itens;
+        if (s.vet_escolhido[item] == 0)
+        {
+            s.vet_escolhido[item] = 1;
+            escolhidos++;
+        }
+    }
+    calcular_fo(s);
+}</code></pre>
+<div class="code-file">codigo/inedito/selecao_k_itens.cpp</div>
+          <div class="alert alert-warning">
+            <strong>Erro comum:</strong> "sortear k vezes" (<code>for k vezes: vet[rand()] = 1</code>) pode repetir o mesmo item e terminar com <em>menos</em> de k escolhidos.
+          </div>
+
+          <h4>Passo 6 — As três buscas (mesmo molde de sempre)</h4>
+          <p><strong>Randômica</strong> — a que menos muda entre problemas:</p>
+          <pre class="code"><code>void busca_local_randomica(Solucao&amp; s, const int iteracoes)
+{
+    Solucao vizinha;
+    int melhorou = 1;
+    calcular_fo(s);
+    while (melhorou == 1)
+    {
+        melhorou = 0;
+        for (int i = 0; i &lt; iteracoes; i++)
+        {
+            memcpy(&amp;vizinha, &amp;s, sizeof(Solucao));
+            gerar_vizinha(vizinha);
+            calcular_fo(vizinha);
+            if (vizinha.fo &gt; s.fo)                    // MAXIMIZA
+            {
+                memcpy(&amp;s, &amp;vizinha, sizeof(Solucao));
+                melhorou = 1;
+            }
+        }
+    }
+}</code></pre>
+<div class="code-file">codigo/inedito/selecao_k_itens.cpp</div>
+          <p><strong>Primeira melhora:</strong></p>
+          <pre class="code"><code>void busca_local_primeira_melhora(Solucao&amp; s)
+{
+    int melhorou = 1;
+    calcular_fo(s);
+    while (melhorou == 1)
+    {
+        melhorou = 0;
+        for (int saindo = 0; saindo &lt; num_itens &amp;&amp; melhorou == 0; saindo++)
+        {
+            if (s.vet_escolhido[saindo] == 0)
+                continue;                             // só sai quem está escolhido
+            for (int entrando = 0; entrando &lt; num_itens &amp;&amp; melhorou == 0; entrando++)
+            {
+                if (s.vet_escolhido[entrando] == 1)
+                    continue;                         // só entra quem está fora
+                int fo_original = s.fo;
+                s.vet_escolhido[saindo] = 0;          // aplica a troca
+                s.vet_escolhido[entrando] = 1;
+                calcular_fo(s);
+                if (s.fo &gt; fo_original)               // MAXIMIZA
+                    melhorou = 1;                     // fica aplicada
+                else
+                {
+                    s.vet_escolhido[saindo] = 1;      // desfaz (repete a troca ao contrário)
+                    s.vet_escolhido[entrando] = 0;
+                    s.fo = fo_original;
+                }
+            }
+        }
+    }
+}</code></pre>
+<div class="code-file">codigo/inedito/selecao_k_itens.cpp</div>
+          <p><strong>Melhor melhora:</strong> igual, mas guarda <code>melhor_saindo</code> e <code>melhor_entrando</code>, desfaz sempre e aplica só a melhor no final.</p>
+          <pre class="code"><code>void busca_local_melhor_melhora(Solucao&amp; s)
+{
+    calcular_fo(s);
+    while (1)
+    {
+        int melhor_saindo = -1;
+        int melhor_entrando = -1;
+        int melhor_fo = s.fo;
+        for (int saindo = 0; saindo &lt; num_itens; saindo++)
+        {
+            if (s.vet_escolhido[saindo] == 0)
+                continue;
+            for (int entrando = 0; entrando &lt; num_itens; entrando++)
+            {
+                if (s.vet_escolhido[entrando] == 1)
+                    continue;
+                int fo_original = s.fo;
+                s.vet_escolhido[saindo] = 0;
+                s.vet_escolhido[entrando] = 1;
+                calcular_fo(s);
+                if (s.fo &gt; melhor_fo)                 // compara com o melhor visto até agora
+                {
+                    melhor_fo = s.fo;
+                    melhor_saindo = saindo;
+                    melhor_entrando = entrando;
+                }
+                s.vet_escolhido[saindo] = 1;          // sempre desfaz
+                s.vet_escolhido[entrando] = 0;
+                s.fo = fo_original;
+            }
+        }
+        if (melhor_saindo == -1)
+            break;                                    // nenhuma troca melhora: ótimo local
+        s.vet_escolhido[melhor_saindo] = 0;           // aplica só a melhor
+        s.vet_escolhido[melhor_entrando] = 1;
+        s.fo = melhor_fo;
+    }
+}</code></pre>
+<div class="code-file">codigo/inedito/selecao_k_itens.cpp</div>
+          <div class="attn">
+            <strong>O que muda em relação ao PRCP e ao makespan:</strong>
+            <ul>
+              <li><strong>Laços:</strong> em vez de <code>ponto × posição</code>, são <code>saindo × entrando</code>, com dois <code>continue</code> para filtrar os pares válidos.</li>
+              <li><strong>Aplicar:</strong> dois bits mudam, não um.</li>
+              <li><strong>Desfazer:</strong> os dois bits voltam, e a <code>fo</code> também. Esquecer <u>um</u> deles deixa a solução com k±1 itens, e o erro só aparece depois.</li>
+              <li><strong>Melhor melhora:</strong> <u>duas</u> variáveis <code>melhor_*</code>, porque o movimento tem dois elementos.</li>
+              <li><strong>Sinal:</strong> <code>&gt;</code>, como no PRCP.</li>
+            </ul>
+          </div>
+
+          <h3>Parte 4 — Testar por um segundo caminho</h3>
+          <p>
+            Neste problema existe um caminho independente: o ótimo é a <strong>soma dos k maiores valores</strong>.
+            Com os valores <code>15 3 22 8 19 5 30 11 2 27 9 14</code>: 30 + 27 + 22 + 19 = <strong>98</strong>.
+            O programa calcula isso por fora e compara. Outras conferências: <code>fo</code> recalculada do zero = <code>fo</code> da solução; itens escolhidos = k
+            (a restrição foi preservada pela busca inteira).
+          </p>
+          <h3>Resultado real (n = 12, k = 4, início aleatório)</h3>
+          <div class="t-outer"><table class="tab">
+            <thead><tr><th>Método</th><th>FO</th><th>Itens escolhidos</th></tr></thead>
+            <tbody>
+              <tr><td>inicial (aleatória)</td><td>83</td><td>1, 3, 5, 10</td></tr>
+              <tr><td>randômica</td><td><strong>94</strong></td><td>1, 3, 7, 10</td></tr>
+              <tr><td>primeira melhora</td><td>98</td><td>3, 5, 7, 10</td></tr>
+              <tr><td>melhor melhora</td><td>98</td><td>3, 5, 7, 10</td></tr>
+            </tbody>
+          </table></div>
+          <p>Conferência final: FO 98 recalculada, 4 itens (= k). Ótimo conhecido: 98.</p>
+
+          <h3>Parte 5 — Três coisas que este resultado ensina</h3>
+          <ol>
+            <li>
+              <strong>A randômica não garante ótimo local.</strong> Parou em 94, mas existia uma troca que dava 98 (tirar o item 1, de valor 15, e pôr o item 5, de valor 19).
+              Dos 32 vizinhos, <strong>só 1</strong> melhorava. A randômica sorteou 32 vezes e errou esse único vizinho; a chance disso é (31/32)<sup>32</sup> ≈ <strong>36%</strong>.
+              A primeira e a melhor melhora varrem tudo e não têm esse problema.
+            </li>
+            <li>
+              <strong>Pergunte se existe solução exata trivial.</strong> Aqui, pegar os k maiores já é ótimo, e uma gulosa resolveria sem busca local.
+              Na prova isso raramente acontece, porque a FO não é uma soma simples. Mesmo assim, serve de prova de que o código está certo.
+            </li>
+            <li>
+              <strong>A restrição ditou o movimento.</strong> Com bit-flip, a busca "melhoraria" escolhendo mais itens (mais itens, mais soma) e quebraria o "exatamente k" sem avisar.
+            </li>
+          </ol>
+
+          <h3>Parte 6 — Onde o problema da prova pode ser diferente</h3>
+          <div class="t-outer"><table class="tab">
+            <thead><tr><th>Se o enunciado mudar para...</th><th>O que muda no seu raciocínio</th></tr></thead>
+            <tbody>
+              <tr><td>minimizar custo (menor soma)</td><td>sinal vira <code>&lt;</code>; o teste passa a ser a soma dos k <strong>menores</strong></td></tr>
+              <tr><td>"até k" itens</td><td>bit-flip volta a valer; cuidado ao adicionar quando já há k</td></tr>
+              <tr><td>itens com peso e capacidade (mochila)</td><td>restrição vira soma de pesos; movimentos: adicionar, remover, trocar; penalizar excesso</td></tr>
+              <tr><td>pares incompatíveis ou sinergia</td><td>FO deixa de ser soma simples; a gulosa <strong>não</strong> é ótima e a busca local passa a importar de verdade; dá para atualizar só os pares dos dois itens trocados</td></tr>
+              <tr><td>vetor de k índices</td><td>o movimento troca um índice por outro; garantir que o novo não esteja na lista</td></tr>
+              <tr><td>entrada 1-based</td><td>converter na leitura</td></tr>
+              <tr><td>valores negativos</td><td>a ideia continua, mas o "ótimo trivial" muda</td></tr>
+            </tbody>
+          </table></div>
+
+          <h3>Versão enxuta (o que você escreveria no papel)</h3>
+          <pre class="code"><code>solução:    vet_escolhido[i] ∈ {0,1}, soma = k
+FO:         soma dos valores com bit = 1            (MAXIMIZA, &gt;)
+movimento:  TROCA (1 sai, 1 entra); bit-flip quebraria o "exatamente k"
+vizinhança: k × (n−k)
+laços:      saindo (só os escolhidos) × entrando (só os de fora)
+desfazer:   voltar OS DOIS bits + restaurar a fo
+teste:      soma dos k maiores; fo recalculada; escolhidos == k</code></pre>
+
+          <h3>Teste-se (sem olhar o código)</h3>
+          <details class="card">
+            <summary><strong>1.</strong> Se o exercício pedisse <strong>minimizar</strong> o custo total de k itens, o que mudaria no código e no teste do ótimo?</summary>
+            <p>Só o sinal da comparação (<code>&gt;</code> vira <code>&lt;</code>, nas três buscas) e, no melhor-melhora, o raciocínio de "melhor" (menor FO).
+            O teste do ótimo passa a ser a soma dos k <strong>menores</strong> valores. A troca continua sendo o movimento, porque a restrição não mudou.</p>
+          </details>
+          <details class="card">
+            <summary><strong>2.</strong> Na melhor melhora, por que são <strong>duas</strong> variáveis <code>melhor_*</code> e não uma?</summary>
+            <p>Porque o movimento é identificado por <u>dois</u> elementos: quem sai e quem entra. Guardar só um deixaria impossível reaplicar a melhor troca no fim.</p>
+          </details>
+          <details class="card">
+            <summary><strong>3.</strong> O que acontece se, ao desfazer, você restaurar só <code>vet_escolhido[saindo]</code> e esquecer o <code>entrando</code>?</summary>
+            <p>O item <code>entrando</code> fica com 1 sem ninguém ter saído: a solução passa a ter k+1 itens. A FO recalculada soma um item a mais e a busca "melhora" de forma falsa,
+            quebrando o "exatamente k" sem nenhum aviso. Por isso o teste final confere <code>escolhidos == k</code>.</p>
+          </details>
+
+          <p>Código executável: <code>codigo/inedito/selecao_k_itens.cpp</code> (instância <code>codigo/inedito/toy_selecao.txt</code>).
+          Compilar: <code>g++ selecao_k_itens.cpp -o selecao_k_itens</code>.</p>
         </div>
       </div>
 
