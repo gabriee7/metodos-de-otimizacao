@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Quiz em fases para treinar o modo de pensar da busca local, com correção imediata e lista de reforço.">
+  <title>Quiz — Métodos de Otimização</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+  <nav>
+    <a class="brand" href="../index.html">Métodos de Otimização</a>
+    <a href="guia.html">Guia</a>
+    <a href="p1-modelagem.html">P1</a>
+    <a href="p2-construtivas.html">P2</a>
+    <a href="p3-busca-local.html">P3</a>
+    <a href="problemas.html">Problemas</a>
+    <a href="laboratorio.html">Laboratório</a>
+    <a href="quiz.html" class="active">Quiz</a>
+    <a href="checklist.html">Checklist</a>
+    <a href="teoria.html">Teoria</a>
+  </nav>
+
+  <main>
+    <h1>Quiz: treine o modo de pensar</h1>
+    <p>
+      Perguntas em fases, na ordem da jornada de estudo. Cada resposta vem com o <strong>porquê</strong>.
+      O que você errar fica marcado com um código (como <code>F2.2</code>): <strong>traga o código ao chat com o Claude</strong> e ele reforça.
+    </p>
+    <div class="alert alert-danger">
+      <strong>Ponto de atenção permanente:</strong> o problema da prova <u>pode ser qualquer um</u>. Por isso o quiz cobra o <em>raciocínio</em> (movimento, vizinhança, sinal, desfazer),
+      não a memorização de um problema específico. A Fase 3 usa problemas que você nunca viu.
+    </div>
+
+    <div id="quiz-stats" class="quiz-stats"></div>
+    <div id="quiz-menu" class="quiz-menu"></div>
+    <div id="quiz-palco" class="quiz-palco"></div>
+
+    <p class="quiz-rodape"><button id="quiz-zerar" class="qbtn" type="button">Apagar meu progresso</button></p>
+
+    <noscript><div class="alert alert-warning">O quiz precisa de JavaScript ligado no navegador.</div></noscript>
+
+    <div class="pagenav">
+      <a href="laboratorio.html">← Laboratório</a>
+      <a href="checklist.html">Checklist →</a>
+    </div>
+  </main>
+
+  <footer>
+    Material de estudo pessoal — Métodos de Otimização. O progresso do quiz fica salvo só neste navegador.
+  </footer>
+
+  <script src="../assets/js/site.js"></script>
+  <script src="../assets/js/quiz.js"></script>
+</body>
+</html>
