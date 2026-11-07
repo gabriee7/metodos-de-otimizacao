@@ -586,3 +586,29 @@ td.lab-melhor { outline: 2px solid var(--success); outline-offset: -2px; }
 .qlista { margin: .5rem 0 1rem 1.2rem; }
 .qdica { font-size: .85rem; color: var(--text-muted); }
 .quiz-rodape { margin-top: 1.25rem; text-align: right; }
+
+/* ── Playground ── */
+.pg-etapas { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1rem; }
+.pg-chip { display: inline-flex; align-items: center; gap: .45rem; font: inherit; font-size: .9rem; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: .3rem .85rem .3rem .4rem; cursor: pointer; }
+.pg-chip:hover { border-color: var(--primary); }
+.pg-chip.ativa { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(26,86,219,.25); }
+.pg-chip.feita { border-color: var(--success); }
+.pg-n { width: 1.5rem; height: 1.5rem; border-radius: 50%; background: var(--border); display: inline-flex; align-items: center; justify-content: center; font-size: .78rem; font-weight: 700; }
+.pg-chip.feita .pg-n { background: var(--success); color: #fff; }
+.pg-det { margin: .6rem 0; }
+.pg-det summary { cursor: pointer; font-weight: 600; color: var(--primary-dk); }
+.pg-pistas .qexp { margin: .6rem 0; }
+.pg-rot { font-weight: 600; margin: 1rem 0 .35rem; }
+.pg-editor { width: 100%; font-family: Consolas, 'Courier New', monospace; font-size: .88rem; line-height: 1.45; tab-size: 4; background: #0f172a; color: #e2e8f0; border: 1px solid var(--border); border-radius: var(--radius); padding: .7rem .85rem; resize: vertical; white-space: pre; overflow: auto; }
+.pg-resultado { margin-top: .75rem; }
+.pg-testes { list-style: none; margin: .5rem 0; padding: 0; }
+.pg-testes li { display: flex; gap: .6rem; padding: .3rem .1rem; border-bottom: 1px solid var(--border); }
+.pg-testes li.ok .pg-ico { color: var(--success); font-weight: 700; }
+.pg-testes li.ruim .pg-ico { color: var(--danger); font-weight: 700; }
+.pg-dica { display: block; font-size: .85rem; color: var(--text-muted); }
+.pg-avisos summary { cursor: pointer; font-size: .85rem; color: var(--text-muted); }
+.pg-bloco { margin-top: 1rem; }
+.pg-erro { border-top: 1px solid var(--border); padding-top: .85rem; margin-top: .85rem; }
+.pg-erro-t { font-weight: 700; color: var(--danger); }
+.pg-pega { font-size: .88rem; margin: .4rem 0; }
+.pg-oculto { margin-top: .6rem; }

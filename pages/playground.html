@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Playground de C++: escreva cada função da busca local, rode testes automáticos e compare com o código certo e os erros comuns.">
+  <title>Playground — Métodos de Otimização</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+  <nav>
+    <a class="brand" href="../index.html">Métodos de Otimização</a>
+    <a href="guia.html">Guia</a>
+    <a href="p1-modelagem.html">P1</a>
+    <a href="p2-construtivas.html">P2</a>
+    <a href="p3-busca-local.html">P3</a>
+    <a href="problemas.html">Problemas</a>
+    <a href="laboratorio.html">Laboratório</a>
+    <a href="quiz.html">Quiz</a>
+    <a href="playground.html" class="active">Playground</a>
+    <a href="checklist.html">Checklist</a>
+    <a href="teoria.html">Teoria</a>
+  </nav>
+
+  <main>
+    <h1>Playground: escreva, teste e compare</h1>
+    <p>
+      Para cada etapa você <strong>escreve a função em C++</strong>, roda <strong>testes automáticos</strong> (que dizem o que falhou e dão uma dica)
+      e depois compara com o <strong>jeito certo</strong> e com os <strong>erros comuns</strong>, que você também pode rodar para ver como o teste reage.
+    </p>
+    <div class="alert alert-danger">
+      <strong>Ponto de atenção permanente:</strong> o problema da prova <u>pode ser qualquer um</u>. Por isso há <strong>dois problemas com características opostas</strong>
+      (um minimiza e move 1 elemento; o outro maximiza e exige uma troca por causa de uma restrição). As etapas são as mesmas: o que muda é o movimento, o sinal e o desfazer.
+    </div>
+
+    <div id="pg-servidor" class="alert alert-info">Verificando o executor local…</div>
+
+    <div id="pg-problemas" class="quiz-menu"></div>
+    <div id="pg-etapas" class="pg-etapas"></div>
+    <div id="pg-painel"></div>
+
+    <p class="quiz-rodape"><button id="pg-zerar" class="qbtn" type="button">Apagar meus códigos e progresso</button></p>
+
+    <noscript><div class="alert alert-warning">O playground precisa de JavaScript ligado no navegador.</div></noscript>
+
+    <div class="pagenav">
+      <a href="quiz.html">← Quiz</a>
+      <a href="checklist.html">Checklist →</a>
+    </div>
+  </main>
+
+  <footer>
+    Material de estudo pessoal — Métodos de Otimização. Os testes são compilados com o g++ do seu computador (<code>tools/servidor_local.py</code>); seu código fica salvo só neste navegador.
+  </footer>
+
+  <script src="../assets/js/site.js"></script>
+  <script src="../assets/js/playground-data.js"></script>
+  <script src="../assets/js/playground.js"></script>
+</body>
+</html>
