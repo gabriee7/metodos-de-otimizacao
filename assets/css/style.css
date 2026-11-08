@@ -691,3 +691,11 @@ td.lab-melhor { outline: 2px solid var(--success); outline-offset: -2px; }
 .ft-var-mud { background: #fef08a; }
 .ft-debug .ft-vars { font-size: .8rem; }
 @media (max-width: 560px) { .ft-vgrade { grid-template-columns: 1fr; } }
+
+/* ── Fitas: entrar nas funções (step into) ── */
+.ft-fnbtn { display: none; }
+.ft-debug .ft-fnbtn { display: inline-block; }
+.ft-pilha { display: none; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: .3rem .6rem; margin-bottom: .4rem; font-size: .8rem; }
+.ft-pilha code { background: #dbeafe; padding: 0 .25rem; border-radius: 3px; }
+.ft-dentro { box-shadow: 0 0 0 2px #38bdf8; }
+.ft-fnhint { display: block; margin-top: .3rem; font-size: .84rem; color: var(--text-muted); }

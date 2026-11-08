@@ -347,6 +347,28 @@
     '    }',
     '}'
   ];
+
+  var FUNCOES = {
+    calcular_fo: [
+      'void calcular_fo(Solucao& s)',
+      '{',
+      '  int carga[2] = {0, 0};',
+      '  for (int t = 0; t < n; t++)',
+      '    carga[s.vet_maquina[t]] += tempo[t];   // soma o tempo na máquina da tarefa',
+      '  s.fo = 0;',
+      '  for (int m = 0; m < 2; m++)',
+      '    if (carga[m] > s.fo)                   // procura a máquina mais carregada',
+      '      s.fo = carga[m];',
+      '}'
+    ],
+    gerar_vizinha: [
+      'void gerar_vizinha(Solucao& s)',
+      '{',
+      '  int t = rand() % n;                      // sorteia uma tarefa',
+      '  s.vet_maquina[t] = 1 - s.vet_maquina[t]; // move para a outra máquina',
+      '}'
+    ]
+  };
   var CODIGOS = { pm: PM, mm: MM, ra: RA, bug: BUG };
   var LINHAS_ERRO = { bug: [18, 19] };
 
@@ -430,11 +452,12 @@
   }
 
   /* ---------- Debug linha a linha: executa o código de verdade, uma linha por passo ---------- */
-  var ORDEM_VARS = ['s.vet_maquina', 's.fo', 'viz.vet_maquina', 'viz.fo', 'melhorou', 'k', 't', 'orig', 'm', 'fo_orig', 'melhor_t', 'melhor_fo'];
+  var ORDEM_VARS = ['s.vet_maquina', 's.fo', 'viz.vet_maquina', 'viz.fo', 'melhorou', 'k', 't', 'orig', 'm', 'fo_orig', 'melhor_t', 'melhor_fo', 'carga', 'tempo'];
   var TOKENS = {
     's.vet_maquina[melhor_t]': 1, 's.vet_maquina[t]': 1, 'viz.vet_maquina': 1, 's.vet_maquina': 1,
     'viz.fo': 1, 's.fo': 1, 'melhor_fo': 1, 'melhor_t': 1, 'fo_orig': 1, 'melhorou': 1,
-    'orig': 1, 'viz': 1, 'ITER': 1, 'n': 1, 't': 1, 'm': 1, 'k': 1, 's': 1
+    'orig': 1, 'viz': 1, 'ITER': 1, 'n': 1, 't': 1, 'm': 1, 'k': 1, 's': 1,
+    'carga': 1, 'carga[m]': 1, 'tempo': 1, 'tempo[t]': 1
   };
 
   function fmt(v) {
@@ -508,7 +531,7 @@
       }
       var dv = copiarVars(V);
       q.push({ tipo: tipo, sol: mostrada.slice(), mov: mov, fo: o.fo, fov: o.fov, ref: refv, ln: [ln],
-        msg: '<b>Linha ' + (ln + 1) + ':</b> ' + msg, log: o.log, dv: dv, vars: htmlVars(dv, prev) });
+        msg: '<b>Linha ' + (ln + 1) + ':</b> ' + msg, log: o.log, dv: dv, vars: htmlVars(dv, prev), nivel: 0, cod: 'main' });
       prev = dv;
     }
     function limparFor() {
@@ -517,7 +540,100 @@
       delete V['m'];
       delete V['fo_orig'];
     }
+
     var T = function (t) { return '<b>' + t + '</b>'; };
+    var NOME_MAIN = { pm: 'primeira_melhora', bug: 'primeira_melhora_ERRADA', mm: 'melhor_melhora', ra: 'randomica' };
+    var DICA_ENTRAR = ' <span class="ft-fnhint">⤵ <b>Entrar na função</b> mostra o código dela por dentro; <b>Próximo</b> executa ela inteira de uma vez.</span>';
+    var prevFn = {};
+
+    /* um passo dentro de uma função chamada (nível 1). L = variáveis locais; ctx = onde ela foi chamada */
+    function emitFn(cod, ln, msg, L, ctx) {
+      var dv = copiarVars(L);
+      q.push({ tipo: ctx.tipo, sol: L['s.vet_maquina'].slice(), mov: ctx.mov, fo: undefined, fov: '-', ref: ctx.ref, ln: [ln],
+        msg: '<b>Linha ' + (ln + 1) + ' de <code>' + cod + '</code>:</b> ' + msg, log: undefined, dv: dv, vars: htmlVars(dv, prevFn),
+        nivel: 1, cod: cod, chamada: { fn: cod, de: NOME_MAIN[modo], linha: ctx.linha, passado: ctx.passado } });
+      prevFn = dv;
+    }
+
+    /* calcular_fo por dentro: devolve a nota calculada */
+    function traceCalc(vet, passado, foAnt, ctx) {
+      prevFn = {};
+      var C = 'calcular_fo';
+      var L = { 's.vet_maquina': vet.slice(), 'tempo': tp.slice() };
+      if (foAnt !== undefined) { L['s.fo'] = foAnt; }
+      var nota = '';
+      if (passado === 'viz') { nota = ' (aqui <code>s</code> é a cópia <code>viz</code> que o chamador passou)'; }
+      emitFn(C, 0, 'Entrei na função. O parâmetro <code>s</code> é a solução que me passaram' + nota + '. Vou ler <code>s.vet_maquina</code> e gravar o resultado em <code>s.fo</code>.', L, ctx);
+      L['carga'] = [0, 0];
+      emitFn(C, 2, 'Crio o vetor <code>carga</code> com a carga de cada máquina, tudo zerado: ' + T(fmt(L['carga'])) + '.', L, ctx);
+      L['t'] = 0;
+      var primeiro = true;
+      for (;;) {
+        var txt;
+        if (primeiro) {
+          txt = 'O <code>for</code> começa com <code>t = 0</code>. ';
+        } else {
+          L['t']++;
+          txt = '<code>t++</code> faz t valer ' + L['t'] + '. ';
+        }
+        primeiro = false;
+        var ok = (L['t'] < n);
+        txt += 'Testo <code>t &lt; n</code> (n = ' + n + '): ';
+        if (ok) { txt += 'continua.'; } else { txt += 'acabaram as tarefas.'; }
+        emitFn(C, 3, txt, L, ctx);
+        if (!ok) { break; }
+        var maq = L['s.vet_maquina'][L['t']];
+        L['carga'][maq] += tp[L['t']];
+        emitFn(C, 4, 'A tarefa ' + L['t'] + ' está na máquina ' + maq + ', então somo o tempo dela (' + tp[L['t']] + ') em <code>carga[' + maq + ']</code>. Agora <code>carga</code> = ' + T(fmt(L['carga'])) + '.', L, ctx);
+      }
+      delete L['t'];
+      L['s.fo'] = 0;
+      emitFn(C, 5, 'Zero a nota: <code>s.fo = 0</code> (vou procurar a maior carga).', L, ctx);
+      L['m'] = 0;
+      var primeiroM = true;
+      for (;;) {
+        var txtM;
+        if (primeiroM) {
+          txtM = 'O segundo <code>for</code> começa com <code>m = 0</code>. ';
+        } else {
+          L['m']++;
+          txtM = '<code>m++</code> faz m valer ' + L['m'] + '. ';
+        }
+        primeiroM = false;
+        var okM = (L['m'] < 2);
+        txtM += 'Testo <code>m &lt; 2</code>: ';
+        if (okM) { txtM += 'continua.'; } else { txtM += 'as duas máquinas já foram vistas.'; }
+        emitFn(C, 6, txtM, L, ctx);
+        if (!okM) { break; }
+        var maior = (L['carga'][L['m']] > L['s.fo']);
+        var resp = 'não';
+        if (maior) { resp = 'sim'; }
+        emitFn(C, 7, 'Pergunto <code>carga[m] &gt; s.fo</code>: ' + L['carga'][L['m']] + ' &gt; ' + L['s.fo'] + '? ' + T(resp) + '.', L, ctx);
+        if (maior) {
+          L['s.fo'] = L['carga'][L['m']];
+          emitFn(C, 8, 'Essa máquina é a mais carregada até agora: <code>s.fo</code> = ' + T(L['s.fo']) + '.', L, ctx);
+        }
+      }
+      delete L['m'];
+      emitFn(C, 9, 'Fim da função: <code>s.fo</code> = ' + T(L['s.fo']) + '. Devolvo o controle para a linha que me chamou.', L, ctx);
+      return L['s.fo'];
+    }
+
+    /* gerar_vizinha por dentro: ts já foi sorteada (mesma sequência de antes) */
+    function traceGerar(vet, ts, ctx) {
+      prevFn = {};
+      var G = 'gerar_vizinha';
+      var L = { 's.vet_maquina': vet.slice() };
+      emitFn(G, 0, 'Entrei na função. O parâmetro <code>s</code> aqui é a cópia <code>viz</code> que o chamador passou: só ela será alterada.', L, ctx);
+      L['t'] = ts;
+      emitFn(G, 2, '<b>Sorteio</b> uma tarefa: <code>t = rand() % n</code> deu ' + T(ts) + '.', L, ctx);
+      var antes = L['s.vet_maquina'][ts];
+      L['s.vet_maquina'][ts] = 1 - antes;
+      emitFn(G, 3, 'Movo a tarefa ' + ts + ' da máquina ' + antes + ' para a máquina ' + (1 - antes) + '. Agora <code>s.vet_maquina</code> = ' + T(fmt(L['s.vet_maquina'])) + '.', L, ctx);
+      emitFn(G, 4, 'Fim da função. A cópia <code>viz</code> já está alterada; <code>s</code> (a original) não foi tocada.', L, ctx);
+      return L['s.vet_maquina'];
+    }
+
 
     V['s.vet_maquina'] = zeros(n);
 
@@ -528,8 +644,8 @@
       emit(0, 'Entrei na função. A solução <code>s</code> chegou <b>por referência</b>: o que eu mudar aqui muda a original.', 'inicio', -1);
       V['melhorou'] = 1;
       emit(2, 'Crio <code>melhorou</code> com valor 1 ("ainda estou melhorando"), só para o <code>while</code> entrar.', 'inicio', -1);
-      V['s.fo'] = fo(V['s.vet_maquina'], tp);
-      emit(3, '<code>calcular_fo(s)</code> calcula a nota da solução e guarda em <code>s.fo</code> = ' + T(V['s.fo']) + '.', 'inicio', -1);
+      emit(3, 'Chamo <code>calcular_fo(s)</code>, que calcula a nota da solução e guarda em <code>s.fo</code>.' + DICA_ENTRAR, 'inicio', -1);
+      V['s.fo'] = traceCalc(V['s.vet_maquina'], 's', undefined, { tipo: 'inicio', mov: -1, ref: fo(V['s.vet_maquina'], tp), linha: 4, passado: 's' });
       for (;;) {
         var entra = (V['melhorou'] === 1);
         var txtW = 'Testo <code>while (melhorou == 1)</code>: melhorou vale ' + V['melhorou'] + ', então ';
@@ -564,8 +680,8 @@
           emit(11, 'A "outra máquina" é <code>1 - orig</code>: <code>m</code> = ' + T(V['m']) + '.', 'rodada', -1);
           V['s.vet_maquina'][tt] = V['m'];
           emit(12, '<b>APLICO o movimento</b>: a tarefa ' + tt + ' vai para a máquina ' + V['m'] + '. A nota ainda é a velha (' + V['s.fo'] + ').', 'teste', tt, { ref: V['fo_orig'], fov: '-' });
-          V['s.fo'] = fo(V['s.vet_maquina'], tp);
-          emit(13, '<code>calcular_fo(s)</code> recalcula: <code>s.fo</code> = ' + T(V['s.fo']) + ' (nota da vizinha).', 'teste', tt, { ref: V['fo_orig'], fo: V['s.fo'] });
+          emit(13, 'Chamo <code>calcular_fo(s)</code> para recalcular a nota da vizinha. A nota ainda é a velha (' + V['s.fo'] + ').' + DICA_ENTRAR, 'teste', tt, { ref: V['fo_orig'], fov: '-' });
+          V['s.fo'] = traceCalc(V['s.vet_maquina'], 's', V['s.fo'], { tipo: 'teste', mov: tt, ref: V['fo_orig'], linha: 14, passado: 's' });
           testes++;
           var melhor = (V['s.fo'] < V['fo_orig']);
           var resp = 'não';
@@ -604,8 +720,8 @@
       emit(0, 'Entrei na função. A solução <code>s</code> chegou <b>por referência</b>.', 'inicio', -1);
       V['melhorou'] = 1;
       emit(2, 'Crio <code>melhorou</code> = 1 só para o <code>while</code> entrar.', 'inicio', -1);
-      V['s.fo'] = fo(V['s.vet_maquina'], tp);
-      emit(3, '<code>calcular_fo(s)</code>: <code>s.fo</code> = ' + T(V['s.fo']) + '.', 'inicio', -1);
+      emit(3, 'Chamo <code>calcular_fo(s)</code> para calcular a nota inicial.' + DICA_ENTRAR, 'inicio', -1);
+      V['s.fo'] = traceCalc(V['s.vet_maquina'], 's', undefined, { tipo: 'inicio', mov: -1, ref: fo(V['s.vet_maquina'], tp), linha: 4, passado: 's' });
       for (;;) {
         var entraM = (V['melhorou'] === 1);
         var txtWM = 'Testo <code>while (melhorou == 1)</code>: melhorou vale ' + V['melhorou'] + ', então ';
@@ -641,8 +757,8 @@
           emit(11, 'Guardo a máquina atual da tarefa ' + tm + ': <code>orig</code> = ' + T(V['orig']) + '.', 'rodada', -1);
           V['s.vet_maquina'][tm] = 1 - V['orig'];
           emit(12, '<b>APLICO</b> o movimento: a tarefa ' + tm + ' vai para a máquina ' + V['s.vet_maquina'][tm] + '.', 'teste', tm, { ref: V['fo_orig'], fov: '-' });
-          V['s.fo'] = fo(V['s.vet_maquina'], tp);
-          emit(13, '<code>calcular_fo(s)</code>: <code>s.fo</code> = ' + T(V['s.fo']) + ' (nota da vizinha).', 'teste', tm, { ref: V['fo_orig'], fo: V['s.fo'] });
+          emit(13, 'Chamo <code>calcular_fo(s)</code> para recalcular a nota da vizinha. A nota ainda é a velha (' + V['s.fo'] + ').' + DICA_ENTRAR, 'teste', tm, { ref: V['fo_orig'], fov: '-' });
+          V['s.fo'] = traceCalc(V['s.vet_maquina'], 's', V['s.fo'], { tipo: 'teste', mov: tm, ref: V['fo_orig'], linha: 14, passado: 's' });
           var melhorM = (V['s.fo'] < V['melhor_fo']);
           var logM = 'Rodada ' + rod + ' · tarefa ' + tm + ' → FO ' + V['s.fo'];
           if (melhorM) { logM += ' · <b style="color:#16a34a">novo melhor</b>'; }
@@ -670,8 +786,8 @@
           var bt = V['melhor_t'];
           V['s.vet_maquina'][bt] = 1 - V['s.vet_maquina'][bt];
           emit(24, 'Agora aplico <b>só a melhor</b>: a tarefa ' + bt + ' muda de máquina.', 'aceita', bt, { ref: V['fo_orig'], fov: '-' });
-          V['s.fo'] = fo(V['s.vet_maquina'], tp);
-          emit(25, '<code>calcular_fo(s)</code>: <code>s.fo</code> = ' + T(V['s.fo']) + '.', 'aceita', bt, { ref: V['s.fo'] });
+          emit(25, 'Chamo <code>calcular_fo(s)</code> para recalcular a nota da solução que ficou.' + DICA_ENTRAR, 'aceita', bt, { ref: V['fo_orig'], fov: '-' });
+          V['s.fo'] = traceCalc(V['s.vet_maquina'], 's', V['s.fo'], { tipo: 'aceita', mov: bt, ref: V['fo_orig'], linha: 26, passado: 's' });
           V['melhorou'] = 1;
           emit(26, '<code>melhorou = 1</code>: houve melhora, então o <code>while</code> vai rodar de novo.', 'aceita', bt, { ref: V['s.fo'] });
         }
@@ -687,8 +803,8 @@
     emit(0, 'Entrei na função. A solução <code>s</code> chegou <b>por referência</b>.', 'inicio', -1);
     V['melhorou'] = 1;
     emit(2, 'Crio <code>melhorou</code> = 1 só para o <code>while</code> entrar.', 'inicio', -1);
-    V['s.fo'] = fo(V['s.vet_maquina'], tp);
-    emit(3, '<code>calcular_fo(s)</code>: <code>s.fo</code> = ' + T(V['s.fo']) + '.', 'inicio', -1);
+    emit(3, 'Chamo <code>calcular_fo(s)</code> para calcular a nota inicial.' + DICA_ENTRAR, 'inicio', -1);
+    V['s.fo'] = traceCalc(V['s.vet_maquina'], 's', undefined, { tipo: 'inicio', mov: -1, ref: fo(V['s.vet_maquina'], tp), linha: 4, passado: 's' });
     for (;;) {
       var entraR = (V['melhorou'] === 1);
       var txtWR = 'Testo <code>while (melhorou == 1)</code>: melhorou vale ' + V['melhorou'] + ', então ';
@@ -720,10 +836,10 @@
         V['viz.fo'] = V['s.fo'];
         emit(9, 'Faço uma <b>CÓPIA</b> de <code>s</code> em <code>viz</code>. Daqui em diante mexo só na cópia; <code>s</code> fica protegida.', 'rodada', -1);
         var ts = sorteio();
-        V['viz.vet_maquina'][ts] = 1 - V['viz.vet_maquina'][ts];
-        emit(10, '<code>gerar_vizinha(viz)</code> <b>sorteou</b> a tarefa ' + ts + ' e a moveu para a máquina ' + V['viz.vet_maquina'][ts] + ' (só na cópia).', 'teste', ts, { ref: V['s.fo'], fov: '-' });
-        V['viz.fo'] = fo(V['viz.vet_maquina'], tp);
-        emit(11, '<code>calcular_fo(viz)</code>: <code>viz.fo</code> = ' + T(V['viz.fo']) + '.', 'teste', ts, { ref: V['s.fo'], fo: V['viz.fo'] });
+        emit(10, 'Chamo <code>gerar_vizinha(viz)</code>: ela vai <b>sortear</b> uma tarefa e movê-la para a outra máquina, só na cópia.' + DICA_ENTRAR, 'rodada', -1, { ref: V['s.fo'], fov: '-' });
+        V['viz.vet_maquina'] = traceGerar(V['viz.vet_maquina'], ts, { tipo: 'teste', mov: ts, ref: V['s.fo'], linha: 11, passado: 'viz' });
+        emit(11, 'Chamo <code>calcular_fo(viz)</code> para calcular a nota da cópia (a tarefa ' + ts + ' já está na máquina ' + V['viz.vet_maquina'][ts] + ').' + DICA_ENTRAR, 'teste', ts, { ref: V['s.fo'], fov: '-' });
+        V['viz.fo'] = traceCalc(V['viz.vet_maquina'], 'viz', V['viz.fo'], { tipo: 'teste', mov: ts, ref: V['s.fo'], linha: 12, passado: 'viz' });
         var melhorR = (V['viz.fo'] < V['s.fo']);
         var respR = 'não';
         if (melhorR) { respR = 'sim'; }
@@ -747,7 +863,7 @@
   }
 
   function montar(raiz) {
-    var estado = { modo: 'pm', ex: 'a', visao: 'jogada', bps: {}, frames: [], i: 0, timer: null, custom: [7, 3, 5, 2, 6] };
+    var estado = { modo: 'pm', ex: 'a', visao: 'jogada', bps: { main: {}, calcular_fo: {}, gerar_vizinha: {} }, codAtual: 'main', vis: [], pos: [], frames: [], i: 0, timer: null, custom: [7, 3, 5, 2, 6] };
     var modoIni = raiz.getAttribute('data-modo');
     if (modoIni === 'pm' || modoIni === 'mm' || modoIni === 'ra' || modoIni === 'bug') { estado.modo = modoIni; }
     if (raiz.getAttribute('data-visao') === 'debug') { estado.visao = 'debug'; }
@@ -783,12 +899,15 @@
       '</div><div class="ft-col-cod">' +
         '<div class="ft-cod-t">Código executando (a linha amarela é a que está rodando agora)</div>' +
         '<div class="ft-dbg-dica">Visão Debug: passe o mouse sobre uma variável para ver o valor dela neste passo. Clique no número da linha para criar um breakpoint ●.</div>' +
+        '<div class="ft-pilha js-pilha"></div>' +
         '<div class="ft-codigo js-cod"></div>' +
         '<div class="ft-vars js-vars"></div>' +
       '</div></div>' +
       '<div class="ft-botoes">' +
         '<button type="button" class="js-volta">◀ Voltar</button>' +
         '<button type="button" class="js-prox ft-prim">Próximo ▶</button>' +
+        '<button type="button" class="js-entra ft-fnbtn" title="Entra no código da função chamada nesta linha">⤵ Entrar na função</button>' +
+        '<button type="button" class="js-sai ft-fnbtn" title="Executa o resto da função e volta para quem a chamou">⤴ Sair da função</button>' +
         '<button type="button" class="js-bp">⏩ Continuar até o breakpoint</button>' +
         '<button type="button" class="js-auto">▶▶ Automático</button>' +
         '<button type="button" class="js-reset">↺ Reiniciar</button>' +
@@ -796,7 +915,7 @@
         '<span class="ft-cont js-cont"></span>' +
       '</div>' +
       '<input type="range" class="ft-barra-passos js-passos" min="0" max="0" value="0" aria-label="Passo">' +
-      '<div class="ft-dica">Dica: arraste a barra para ir e voltar. Com o foco aqui dentro, as setas ← → do teclado também funcionam.</div>' +
+      '<div class="ft-dica">Dica: arraste a barra para ir e voltar. Com o foco aqui dentro, as setas do teclado também funcionam: ← → andam, ↓ entra na função, ↑ sai dela.</div>' +
       '<div class="ft-tip js-tip" style="display:none"></div>';
     raiz.setAttribute('tabindex', '0');
 
@@ -804,6 +923,10 @@
     var elEx = raiz.querySelector('.js-ex');
     var elVisao = raiz.querySelector('.js-visao');
     var elTip = raiz.querySelector('.js-tip');
+    var elPilha = raiz.querySelector('.js-pilha');
+    var elEntra = raiz.querySelector('.js-entra');
+    var elSai = raiz.querySelector('.js-sai');
+    var elCodT = raiz.querySelector('.ft-cod-t');
     var elCustom = raiz.querySelector('.js-custom');
     var elIn = raiz.querySelector('.js-in');
     var elErro = raiz.querySelector('.js-erro');
@@ -842,6 +965,10 @@
     function montarCodigo() {
       var cod = CODIGOS[estado.modo];
       var erro = LINHAS_ERRO[estado.modo] || [];
+      if (estado.codAtual !== 'main') {
+        cod = FUNCOES[estado.codAtual];
+        erro = [];
+      }
       var h = '';
       for (var i = 0; i < cod.length; i++) {
         var linha = cod[i].replace(/^( {4})+/, function (m) { return m.slice(0, m.length / 2); });
@@ -965,6 +1092,24 @@
         elFoV.textContent = '-';
       }
       elMsg.innerHTML = q.msg;
+      var codQ = q.cod || 'main';
+      if (codQ !== estado.codAtual) {
+        estado.codAtual = codQ;
+        montarCodigo();
+      }
+      var bpsC = estado.bps[codQ] || {};
+      var nivelQ = q.nivel || 0;
+      if (nivelQ > 0) {
+        elCodT.innerHTML = 'Código de <b>' + codQ + '</b> (você está dentro da função)';
+        elCod.className = 'ft-codigo js-cod ft-dentro';
+        elPilha.innerHTML = '<b>Pilha de chamadas:</b> ' + q.chamada.de + ' (linha ' + q.chamada.linha + ') → <b>' + codQ + '</b>' +
+          '. Aqui, <code>s</code> é a ' + (q.chamada.passado === 'viz' ? 'cópia <code>viz</code>' : 'solução <code>s</code> do chamador') + '.';
+        elPilha.style.display = 'block';
+      } else {
+        elCodT.innerHTML = 'Código executando (a linha amarela é a que está rodando agora)';
+        elCod.className = 'ft-codigo js-cod';
+        elPilha.style.display = 'none';
+      }
       elVars.innerHTML = q.vars;
       elTip.style.display = 'none';
       if (estado.visao === 'debug') {
@@ -976,7 +1121,7 @@
         var ativa = (q.ln.indexOf(li) >= 0);
         linhasEl[li].className = linhasEl[li].className.replace(' ft-on', '').replace(' ft-bp', '');
         if (ativa) { linhasEl[li].className += ' ft-on'; }
-        if (estado.bps[li]) { linhasEl[li].className += ' ft-bp'; }
+        if (bpsC[li]) { linhasEl[li].className += ' ft-bp'; }
         var seta = linhasEl[li].querySelector('.ft-seta');
         if (ativa && li === q.ln[q.ln.length - 1]) {
           seta.textContent = '▶';
@@ -989,11 +1134,18 @@
         if (alvo < 0) { alvo = 0; }
         elCod.scrollTop = alvo;
       }
-      elCont.textContent = 'Passo ' + (estado.i + 1) + ' de ' + estado.frames.length;
-      elBarra.max = estado.frames.length - 1;
-      elBarra.value = estado.i;
+      var posQ = estado.pos[estado.i];
+      if (nivelQ > 0) {
+        elCont.textContent = 'Dentro de ' + codQ + ' · passo interno ' + q.k + ' de ' + q.totalInterno + ' (chamada no passo ' + (posQ + 1) + ' de ' + estado.vis.length + ')';
+      } else {
+        elCont.textContent = 'Passo ' + (posQ + 1) + ' de ' + estado.vis.length;
+      }
+      elBarra.max = estado.vis.length - 1;
+      elBarra.value = posQ;
       elVolta.disabled = (estado.i === 0);
-      elProx.disabled = (estado.i === estado.frames.length - 1);
+      elProx.disabled = (idxProx(estado.i) === estado.i);
+      elEntra.disabled = !(nivelQ === 0 && estado.i + 1 < estado.frames.length && (estado.frames[estado.i + 1].nivel || 0) > 0);
+      elSai.disabled = (nivelQ === 0);
 
       var html = '';
       for (var j = 0; j <= estado.i; j++) {
@@ -1025,19 +1177,75 @@
         anotar(estado.frames, estado.modo, tempos());
       }
       estado.i = 0;
+      estado.codAtual = 'main';
+      indexar();
       montarPalco();
       montarCodigo();
       desenhar();
     }
 
+    /* Passo "por cima" (F10): no código principal pula o corpo das funções; dentro de uma função anda linha a linha. */
+    function idxProx(i) {
+      var ult = estado.frames.length - 1;
+      if (i >= ult) { return ult; }
+      if ((estado.frames[i].nivel || 0) > 0) { return i + 1; }
+      var j = i + 1;
+      while (j < ult && (estado.frames[j].nivel || 0) > 0) { j++; }
+      return j;
+    }
+    function idxAnt(i) {
+      if (i <= 0) { return 0; }
+      if ((estado.frames[i].nivel || 0) > 0) { return i - 1; }
+      var j = i - 1;
+      while (j > 0 && (estado.frames[j].nivel || 0) > 0) { j--; }
+      return j;
+    }
+    function idxSai(i) {
+      var ult = estado.frames.length - 1;
+      var j = i + 1;
+      while (j < ult && (estado.frames[j].nivel || 0) > 0) { j++; }
+      return j;
+    }
     function avancar() {
-      if (estado.i < estado.frames.length - 1) { estado.i++; desenhar(); }
+      var j = idxProx(estado.i);
+      if (j !== estado.i) { estado.i = j; desenhar(); }
     }
     function recuar() {
-      if (estado.i > 0) { estado.i--; desenhar(); }
+      var j = idxAnt(estado.i);
+      if (j !== estado.i) { estado.i = j; desenhar(); }
+    }
+    function entrar() {
+      if (!elEntra.disabled) { estado.i = estado.i + 1; desenhar(); } else { avancar(); }
+    }
+    function sair() {
+      if ((estado.frames[estado.i].nivel || 0) > 0) { estado.i = idxSai(estado.i); desenhar(); } else { avancar(); }
+    }
+    /* guarda, para cada passo, em que posição da lista "principal" ele está e quantos passos internos tem a chamada */
+    function indexar() {
+      estado.vis = [];
+      estado.pos = [];
+      var ultimaPos = -1;
+      var cont = {};
+      var i;
+      for (i = 0; i < estado.frames.length; i++) {
+        var f = estado.frames[i];
+        if ((f.nivel || 0) === 0) {
+          estado.vis.push(i);
+          ultimaPos = estado.vis.length - 1;
+          estado.pos.push(ultimaPos);
+        } else {
+          estado.pos.push(ultimaPos);
+          if (cont[ultimaPos] === undefined) { cont[ultimaPos] = 0; }
+          cont[ultimaPos]++;
+          f.k = cont[ultimaPos];
+        }
+      }
+      for (i = 0; i < estado.frames.length; i++) {
+        if ((estado.frames[i].nivel || 0) > 0) { estado.frames[i].totalInterno = cont[estado.pos[i]]; }
+      }
     }
 
-    elModo.addEventListener('change', function (e) { estado.modo = e.target.value; estado.bps = {}; recomecar(); });
+    elModo.addEventListener('change', function (e) { estado.modo = e.target.value; estado.bps = { main: {}, calcular_fo: {}, gerar_vizinha: {} }; recomecar(); });
     elVisao.addEventListener('change', function (e) { estado.visao = e.target.value; recomecar(); });
     elEx.addEventListener('change', function (e) {
       estado.ex = e.target.value;
@@ -1071,17 +1279,20 @@
     raiz.querySelector('.js-reset').addEventListener('click', recomecar);
     elProx.addEventListener('click', function () { parar(); avancar(); });
     elVolta.addEventListener('click', function () { parar(); recuar(); });
+    elEntra.addEventListener('click', function () { parar(); entrar(); });
+    elSai.addEventListener('click', function () { parar(); sair(); });
     elBarra.addEventListener('input', function () {
       parar();
-      estado.i = Number(elBarra.value);
+      estado.i = estado.vis[Number(elBarra.value)];
       desenhar();
     });
     function ligarAuto() {
       if (estado.i === estado.frames.length - 1) { estado.i = 0; desenhar(); }
       elAuto.textContent = '⏸ Pausar';
       estado.timer = setInterval(function () {
-        if (estado.i < estado.frames.length - 1) {
-          estado.i++;
+        var j = idxProx(estado.i);
+        if (j !== estado.i) {
+          estado.i = j;
           desenhar();
         } else {
           parar();
@@ -1102,10 +1313,13 @@
       if (alvo === 'INPUT' || alvo === 'SELECT' || alvo === 'TEXTAREA') { return; }
       if (e.key === 'ArrowRight') { parar(); avancar(); e.preventDefault(); }
       if (e.key === 'ArrowLeft') { parar(); recuar(); e.preventDefault(); }
+      if (e.key === 'ArrowDown') { parar(); entrar(); e.preventDefault(); }
+      if (e.key === 'ArrowUp') { parar(); sair(); e.preventDefault(); }
     });
     function temBreakpoint(q) {
       for (var z = 0; z < q.ln.length; z++) {
-        if (estado.bps[q.ln[z]]) { return true; }
+        var bc = estado.bps[q.cod || 'main'];
+        if (bc && bc[q.ln[z]]) { return true; }
       }
       return false;
     }
@@ -1121,7 +1335,8 @@
       var alvo = e.target;
       if (alvo.tagName === 'I' && alvo.getAttribute('data-l') !== null) {
         var l = Number(alvo.getAttribute('data-l'));
-        if (estado.bps[l]) { delete estado.bps[l]; } else { estado.bps[l] = true; }
+        var bc2 = estado.bps[estado.codAtual];
+        if (bc2[l]) { delete bc2[l]; } else { bc2[l] = true; }
         desenhar();
       }
     });
