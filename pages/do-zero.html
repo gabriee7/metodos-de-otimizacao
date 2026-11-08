@@ -103,6 +103,18 @@
     <h2>Parte 2: fazendo na mão (o ponto-chave)</h2>
     <p><strong>Solução inicial:</strong> <code>[0,0,0,0]</code>. Tudo na máquina 0: carga 5+4+3+2 = 14. <strong>FO = 14</strong>.</p>
 
+    <h3>Veja acontecendo: as duas fitas</h3>
+    <p>
+      Cada <strong>fita</strong> é uma máquina. Cada <strong>bloco</strong> é uma tarefa, e quanto maior o bloco, maior o tempo.
+      A nota (FO) é a carga da fita mais comprida, então o objetivo é deixar as duas fitas com tamanhos parecidos.
+      Clique em <strong>Próximo</strong> e acompanhe: <span style="background:#facc15;padding:0 .3rem;border-radius:3px">amarelo</span> = bloco sendo testado,
+      <span style="background:#86efac;padding:0 .3rem;border-radius:3px">verde</span> = aceito,
+      <span style="background:#fca5a5;padding:0 .3rem;border-radius:3px">vermelho</span> = desfeito.
+      Troque entre <em>primeira melhora</em> e <em>melhor melhora</em> para ver a diferença com os mesmos dados.
+    </p>
+    <div class="card" id="fitas"></div>
+    <p style="margin-top:.75rem">As tabelas abaixo mostram os mesmos números por escrito, para você conferir.</p>
+
     <h3>Passo 1: todas as vizinhas dela</h3>
     <p>Movo uma tarefa por vez para a máquina 1:</p>
     <div class="t-outer"><table class="tab">
@@ -286,5 +298,6 @@
   </footer>
 
   <script src="../assets/js/site.js"></script>
+  <script src="../assets/js/fitas.js"></script>
 </body>
 </html>
