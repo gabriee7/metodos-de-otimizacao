@@ -112,7 +112,7 @@
       <span style="background:#fca5a5;padding:0 .3rem;border-radius:3px">vermelho</span> = desfeito.
       Troque entre <em>primeira melhora</em> e <em>melhor melhora</em> para ver a diferença com os mesmos dados.
     </p>
-    <div class="card" id="fitas"></div>
+    <div class="card fitas" data-modo="pm"></div>
     <p style="margin-top:.75rem">As tabelas abaixo mostram os mesmos números por escrito, para você conferir.</p>
 
     <h3>Passo 1: todas as vizinhas dela</h3>
@@ -153,7 +153,7 @@
       <strong>A lição:</strong> os dois métodos param quando <em>nenhuma vizinha melhora</em>. Isso se chama <strong>ótimo local</strong>. Ele nem sempre é o melhor de todos:
       aqui a melhor melhora acertou e a primeira melhora parou em 8. Em outros problemas pode ser ao contrário. Por isso nenhuma é "sempre melhor".
     </div>
-    <p>E a <strong>randômica</strong>? Em vez de olhar em ordem ou tudo, ela <strong>sorteia</strong> uma vizinha, testa, aceita se melhorar e repete várias vezes.</p>
+    <p>E a <strong>randômica</strong>? Em vez de olhar em ordem ou tudo, ela <strong>sorteia</strong> uma vizinha, testa, aceita se melhorar e repete várias vezes. Para ver, troque o <strong>Método</strong> da animação acima para <em>Randômica</em>: repare que ela pode parar com uma vizinha melhor ainda existindo, porque só testa o que sorteia.</p>
 
     <h2>Parte 3: o que você recebe na prova e onde olhar</h2>
     <p>O professor entrega um código com várias coisas prontas. Olhe <strong>nesta ordem</strong>:</p>
@@ -225,6 +225,10 @@
       Não gostou? <u>Tira e devolve ao cabide</u> (desfaz). Esquecer de devolver é o erro clássico: você sai da loja vestindo a camisa ruim sem perceber.
       E a <code>fo_original</code> é a <u>foto</u> que você tirou de como estava antes, para poder comparar e voltar.
     </div>
+
+    <h3>Veja o desfazer (e o que acontece sem ele)</h3>
+    <p>Esta animação já começa no modo <strong>Erro: esqueci de desfazer</strong>. Acompanhe como a solução anda sozinha e a nota perde o sentido. Depois troque para <em>Primeira melhora</em> e compare.</p>
+    <div class="card fitas" data-modo="bug"></div>
 
     <h3>Por que cada coisa existe</h3>
     <div class="t-outer"><table class="tab">

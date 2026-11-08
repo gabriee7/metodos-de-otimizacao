@@ -152,6 +152,10 @@
             <code>iter</code> tentativas (como no código de aula do professor). A alternativa é reiniciar a contagem a cada aceite.
             Ambas estão certas; a diferença é só quanto tempo se gasta. Se a prova pedir uma, siga a prova.
           </div>
+          <h3>Veja a randômica acontecendo</h3>
+          <p>Mini-exemplo (tarefas em 2 máquinas): os sorteios são fixos para a animação ser sempre igual. Use Próximo, a barra ou o Automático.</p>
+          <div class="card fitas" data-modo="ra"></div>
+
           <h3>Exemplo e o que muda de um problema para outro</h3>
           <div class="grid-2">
             <div>
@@ -229,6 +233,10 @@ iter sugerido:           iter sugerido:
             <li>Se melhorou, <strong>não desfaz</strong> — o movimento fica aplicado e <code>s.fo</code> já está atualizada pelo <code>calcular_fo</code>.</li>
             <li>Se não melhorou, desfaz o vetor <em>e</em> a <code>fo</code>. Esquecer <code>s.fo = fo_original</code> é a causa clássica de <code>fo</code> errada ao final.</li>
           </ul>
+          <h3>Veja a primeira melhora acontecendo</h3>
+          <p>Mini-exemplo (tarefas em 2 máquinas). Note que ela aceita a primeira melhora e recomeça.</p>
+          <div class="card fitas" data-modo="pm"></div>
+
           <h3>Exemplo rodando (instância A do <a href="laboratorio.html">Laboratório</a>)</h3>
 <pre class="code"><code>início [1,1,1,1,1,1]  FO 1
 APLICA   ponto 1→pos 2  FO 2   ← 1º vizinho já melhora: fica e RECOMEÇA a varredura
@@ -322,6 +330,10 @@ resultado [2,3,1,1,1,1]  FO 4   (21 vizinhos avaliados, 3 aplicados)</code></pre
             <li>Desfaz <u>sempre</u>, ao contrário da PM: nesta busca nenhum movimento é aplicado durante a varredura.</li>
             <li>Só depois da varredura completa é que um único movimento é aplicado, e <code>s.fo = melhor_fo</code> evita um <code>calcular_fo</code> extra.</li>
           </ul>
+          <h3>Veja a melhor melhora acontecendo</h3>
+          <p>Mini-exemplo (tarefas em 2 máquinas). Note que ela olha tudo, sempre desfaz e só no fim aplica a melhor.</p>
+          <div class="card fitas" data-modo="mm"></div>
+
           <h3>Exemplo rodando (mesma instância e mesma solução inicial da PM)</h3>
 <pre class="code"><code>início [1,1,1,1,1,1]  FO 1
 varredura 1: avalia os 12 vizinhos SEM aplicar nenhum
@@ -670,5 +682,6 @@ resultado [1,3,3,1,1,1]  FO 6   (36 vizinhos avaliados, 2 aplicados)</code></pre
   </footer>
 
   <script src="../assets/js/site.js"></script>
+  <script src="../assets/js/fitas.js"></script>
 </body>
 </html>
