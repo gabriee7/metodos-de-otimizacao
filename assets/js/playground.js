@@ -38,6 +38,8 @@
   } catch (e) { /* sem armazenamento */ }
   function guardar() { try { localStorage.setItem(KEY, JSON.stringify(salvo)); } catch (e) { /* segue sem salvar */ } }
 
+  // No GitHub Pages a página fala com o servidor local em localhost:8765; aberta pelo próprio servidor, usa caminhos relativos.
+  var BASE = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? '' : 'http://localhost:8765';
   var servidorOk = false;
   var pAtual = DADOS.problemas[0].id;
   var eAtual = 0;
@@ -47,7 +49,7 @@
 
   // ---------------------------------------------------------------- servidor local
   function verificarServidor() {
-    var url = location.protocol === 'file:' ? null : '/ping';
+    var url = location.protocol === 'file:' ? null : BASE + '/ping';
     var aviso = function (ok, msg) {
       servidorOk = ok;
       elServidor.className = 'alert ' + (ok ? 'alert-success' : 'alert-warning');
@@ -57,8 +59,9 @@
     var instrucoes = '<strong>Executor local não detectado.</strong> Você pode ler os enunciados, as pistas, o código certo e os erros comuns, ' +
       'mas para <strong>rodar os testes</strong> precisa do servidor local (compila com o seu g++; nada sai do seu computador):' +
       '<pre class="qcode">python tools/servidor_local.py</pre>' +
-      'Rode na raiz do repositório e abra <code>http://localhost:8765/pages/playground.html</code>. ' +
-      'Requer Python e g++ instalados. Em <code>file://</code> ou no GitHub Pages os testes não rodam.';
+      'Rode na raiz do repositório (ou use <code>tools/iniciar_playground.bat</code>) e <strong>recarregue esta página</strong>: ela funciona tanto em ' +
+      '<code>http://localhost:8765/pages/playground.html</code> quanto no GitHub Pages. Requer Python e g++ (MinGW). Em <code>file://</code> não roda. ' +
+      'Se o navegador perguntar sobre acesso à rede local / dispositivos neste computador, permita.';
     if (!url) { aviso(false, instrucoes); return; }
     fetch(url, { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (j) {
       if (j && j.ok && j.gpp) aviso(true, '<strong>Executor local conectado.</strong> Seus códigos são compilados com o g++ desta máquina.');
@@ -68,7 +71,7 @@
   }
 
   function executar(fonte) {
-    return fetch('/executar', {
+    return fetch(BASE + '/executar', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ codigo: fonte })
     }).then(function (r) { return r.json(); });
   }

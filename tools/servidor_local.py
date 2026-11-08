@@ -9,8 +9,10 @@ O que faz:
  - recebe o código do Playground em POST /executar, compila com o SEU g++ e roda o programa de testes.
 Tudo acontece na sua máquina: o código não vai para nenhum serviço externo.
 
-Segurança: escuta só em 127.0.0.1 e recusa pedidos cujo Host ou Origin não sejam localhost:PORTA
-(isso impede que outra página aberta no navegador mande código para este servidor executar).
+Segurança: escuta só em 127.0.0.1, exige Host = localhost:PORTA (contra DNS rebinding) e só aceita pedidos
+cuja Origin seja uma destas: esta própria página (localhost) ou o seu GitHub Pages (ORIGENS_EXTRAS).
+Qualquer outra página aberta no navegador é recusada, então não consegue mandar código para executar aqui.
+Para usar o Playground pelo GitHub Pages, deixe este servidor ligado e abra o site normalmente.
 """
 import json
 import os
@@ -28,6 +30,8 @@ LIMITE_EXECUTAR = 5
 MAX_CODIGO = 60000
 MAX_SAIDA = 20000
 PERMITIDOS = {'localhost:%d' % PORTA, '127.0.0.1:%d' % PORTA}
+ORIGENS_EXTRAS = {'https://gabriee7.github.io'}          # o site publicado no GitHub Pages
+ORIGENS_OK = {'http://' + h for h in PERMITIDOS} | ORIGENS_EXTRAS
 
 
 def executar(codigo):
@@ -61,17 +65,41 @@ class Handler(SimpleHTTPRequestHandler):
     def _host_ok(self):
         return self.headers.get('Host', '') in PERMITIDOS
 
+    def _cors(self):
+        origem = self.headers.get('Origin')
+        if origem in ORIGENS_OK:
+            self.send_header('Access-Control-Allow-Origin', origem)
+            self.send_header('Vary', 'Origin')
+            self.send_header('Access-Control-Allow-Private-Network', 'true')
+
+    def _origem_ok(self):
+        origem = self.headers.get('Origin')
+        return origem is None or origem in ORIGENS_OK
+
+    def do_OPTIONS(self):
+        if not self._host_ok() or self.headers.get('Origin') not in ORIGENS_OK:
+            self.send_error(403)
+            return
+        self.send_response(204)
+        self._cors()
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        self.send_header('Access-Control-Max-Age', '600')
+        self.send_header('Content-Length', '0')
+        self.end_headers()
+
     def _json(self, codigo, obj):
         corpo = json.dumps(obj, ensure_ascii=False).encode('utf-8')
         self.send_response(codigo)
         self.send_header('Content-Type', 'application/json; charset=utf-8')
         self.send_header('Content-Length', str(len(corpo)))
         self.send_header('Cache-Control', 'no-store')
+        self._cors()
         self.end_headers()
         self.wfile.write(corpo)
 
     def do_GET(self):
-        if not self._host_ok():
+        if not self._host_ok() or not self._origem_ok():
             self.send_error(403)
             return
         if self.path == '/ping':
@@ -83,8 +111,7 @@ class Handler(SimpleHTTPRequestHandler):
         if self.path != '/executar':
             self.send_error(404)
             return
-        origem = self.headers.get('Origin')
-        if not self._host_ok() or (origem is not None and origem.replace('http://', '') not in PERMITIDOS):
+        if not self._host_ok() or not self._origem_ok():
             self.send_error(403)
             return
         n = int(self.headers.get('Content-Length', '0'))
@@ -102,8 +129,9 @@ class Handler(SimpleHTTPRequestHandler):
         self._json(200, executar(codigo))
 
     def log_message(self, fmt, *args):
-        if '/executar' in (args[0] if args else ''):
-            sys.stderr.write('[executar] %s\n' % args[0])
+        texto = str(args[0]) if args else ''
+        if '/executar' in texto:
+            sys.stderr.write('[executar] %s\n' % texto)
 
 
 if __name__ == '__main__':
