@@ -699,3 +699,26 @@ td.lab-melhor { outline: 2px solid var(--success); outline-offset: -2px; }
 .ft-pilha code { background: #dbeafe; padding: 0 .25rem; border-radius: 3px; }
 .ft-dentro { box-shadow: 0 0 0 2px #38bdf8; }
 .ft-fnhint { display: block; margin-top: .3rem; font-size: .84rem; color: var(--text-muted); }
+
+/* ── Simulador do problema real da P3 (hubs) ── */
+.hb-visual { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: .4rem; }
+.hb-mapa { width: 100%; height: auto; max-height: 270px; display: block; background: #f8fafc; border-radius: 6px; }
+.hb-tiras { margin-top: .4rem; }
+.hb-tira { position: relative; height: 54px; margin-top: .25rem; background: #eef2f7; border-radius: 6px; }
+.hb-tira-rot { position: absolute; left: 6px; top: 20px; font-size: .68rem; font-weight: 700; color: var(--text-muted); width: 86px; line-height: 1.1; }
+.hb-rot-hubs, .hb-rot-nao { position: absolute; top: 2px; font-size: .62rem; text-align: center; color: var(--text-muted); border-bottom: 2px solid #cbd5e1; }
+.hb-rot-hubs { border-bottom-color: #2563eb; color: #2563eb; font-weight: 700; }
+.hb-cel { position: absolute; top: 16px; height: 32px; line-height: 32px; text-align: center; border-radius: 5px; background: #94a3b8; color: #fff; font-weight: 700; font-size: .85rem; transition: left .6s ease, box-shadow .2s; }
+.hb-cel-hub { background: #2563eb; }
+.hb-cel.ft-teste { box-shadow: 0 0 0 3px #facc15; }
+.hb-cel.ft-ok { box-shadow: 0 0 0 3px var(--success); }
+.hb-cel.ft-volta { box-shadow: 0 0 0 3px var(--danger); }
+.hb-legenda { font-size: .82rem; color: var(--text-muted); margin: .4rem 0; min-height: 1.3rem; }
+.hb-matriz-t { font-family: 'Segoe UI', system-ui, sans-serif; font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: var(--text-muted); margin: .5rem 0 .25rem; }
+.hb-matriz { overflow-x: auto; }
+.hb-matriz table { border-collapse: collapse; font-size: .74rem; }
+.hb-matriz th, .hb-matriz td { border: 1px solid var(--border); padding: .08rem .32rem; text-align: right; }
+.hb-matriz th { background: #f1f5f9; color: var(--text-muted); }
+.hb-mud { background: #fef08a; }
+.hb-fornecido { margin-top: .8rem; }
+.hb-fornecido summary { cursor: pointer; font-weight: 600; font-size: .9rem; }

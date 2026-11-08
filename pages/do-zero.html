@@ -104,6 +104,7 @@
     <p><strong>Solução inicial:</strong> <code>[0,0,0,0]</code>. Tudo na máquina 0: carga 5+4+3+2 = 14. <strong>FO = 14</strong>.</p>
 
     <h3>Veja acontecendo: as duas fitas</h3>
+    <div class="alert alert-info"><strong>Este é um exemplo didático simplificado</strong> (tarefas e máquinas), só para entender a ideia. O problema <u>real</u> da P3, com o código parecido com o que o professor entrega, está na <a href="#parte6">Parte 6</a> no fim desta página.</div>
     <p>
       Cada <strong>fita</strong> é uma máquina. Cada <strong>bloco</strong> é uma tarefa, e quanto maior o bloco, maior o tempo.
       A nota (FO) é a carga da fita mais comprida, então o objetivo é deixar as duas fitas com tamanhos parecidos.
@@ -269,6 +270,37 @@
       </tbody>
     </table></div>
 
+    <h2 id="parte6">Parte 6: agora no problema real da P3 (hubs)</h2>
+    <p>
+      Tudo acima usou tarefas e máquinas só para ensinar. A P3 de referência dos arquivos do curso é outra coisa: os <strong>hubs</strong>.
+      <strong>Imagine uma empresa de entregas</strong> que precisa escolher <code>p</code> cidades para serem <em>centros de distribuição</em> (os hubs).
+      Qualquer encomenda sai da cidade de origem, passa por um ou dois hubs e chega ao destino. A nota (FO) é o custo do <u>pior</u> par de cidades, e quanto menor, melhor.
+    </p>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th>Peça</th><th>No exemplo das máquinas</th><th>No problema real (hubs)</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Solução</strong></td><td><code>vet_maquina[tarefa]</code></td><td><code>vet_sol</code>: uma <u>permutação</u> dos nós; os <code>num_hub</code> primeiros são os hubs</td></tr>
+        <tr><td><strong>Movimento</strong></td><td>mudar 1 tarefa de máquina</td><td><u>trocar</u> um hub (posição <code>i &lt; num_hub</code>) por um não-hub (posição <code>j ≥ num_hub</code>)</td></tr>
+        <tr><td><strong>Vizinhança</strong></td><td>tarefas × (máquinas − 1)</td><td><code>num_hub × (num_nos − num_hub)</code> (64 na <code>inst2</code>)</td></tr>
+        <tr><td><strong>FO</strong></td><td>maior carga (minimiza)</td><td>maior custo entre qualquer par de nós (minimiza)</td></tr>
+        <tr><td><strong>Desfazer</strong></td><td>voltar a máquina</td><td>trocar de volta e <code>s.fo = fo_orig</code></td></tr>
+        <tr><td><strong>Tipo da FO</strong></td><td><code>int</code></td><td><code>double</code>: guarde <code>fo_orig</code> e <code>melhor_fo</code> como <code>double</code>, senão a nota é truncada</td></tr>
+      </tbody>
+    </table></div>
+    <div class="attn">
+      <strong>Por que "troca" e não "mudar um só"?</strong> O enunciado exige exatamente <code>p</code> hubs. Virar só um nó mudaria a quantidade de hubs. A troca mantém <code>p</code> sempre.
+    </div>
+    <p>
+      O simulador abaixo usa a <code>inst1.txt</code> real (5 nós, 3 hubs) e o código no estilo do professor, com os nomes do <code>prova3.h</code>.
+      Comece na visão <strong>Animação por jogada</strong>; depois mude para <strong>Debug linha a linha</strong>, passe o mouse nas variáveis e entre em <code>calcular_fo</code> para ver a matriz <code>mat_custo</code> sendo preenchida.
+    </p>
+    <div class="card hubs" data-modo="pm"></div>
+    <div class="attn">
+      <strong>Uma peculiaridade do código dele (para não se assustar):</strong> <code>mat_custo</code> é global e a <code>calcular_fo</code> não a zera antes. Alguns valores,
+      como a diagonal de um nó que antes era não-hub, ficam de chamadas anteriores. Num teste meu com 3.000 avaliações seguidas na <code>inst2</code>, em cerca de 11% delas a nota diferiu da de uma
+      avaliação "do zero". O simulador reproduz isso exatamente (conferi contra a função dele compilada), então <u>não é erro do site</u>.
+    </div>
+
     <h2>Agora é a sua vez (10 minutos, só com papel)</h2>
     <p>
       Mesmo exemplo, outros números: tarefas <code>6, 5, 4, 1</code>, 2 máquinas. Parta de <code>[0,0,0,0]</code> e faça a <strong>primeira melhora</strong> passo a passo,
@@ -303,5 +335,7 @@
 
   <script src="../assets/js/site.js"></script>
   <script src="../assets/js/fitas.js"></script>
+  <script src="../assets/js/hubs-nucleo.js"></script>
+  <script src="../assets/js/hubs.js"></script>
 </body>
 </html>

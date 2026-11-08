@@ -153,8 +153,8 @@
             Ambas estão certas; a diferença é só quanto tempo se gasta. Se a prova pedir uma, siga a prova.
           </div>
           <h3>Veja a randômica acontecendo</h3>
-          <p>Mini-exemplo (tarefas em 2 máquinas): os sorteios são fixos para a animação ser sempre igual. Use Próximo, a barra ou o Automático.</p>
-          <div class="card fitas" data-modo="ra"></div>
+          <p><strong>No problema real da P3</strong> (hubs): instância <code>inst1.txt</code> da pasta da prova, código com os nomes do <code>prova3.h</code> e no estilo do professor (<code>memcpy</code>, <code>flag</code>). Os sorteios são fixos, para a animação ser sempre igual. Troque a <strong>Visão</strong> para <em>Debug linha a linha</em> para inspecionar variáveis e entrar em <code>gerar_vizinha</code> e <code>calcular_fo</code>.</p>
+          <div class="card hubs" data-modo="ra"></div>
 
           <h3>Exemplo e o que muda de um problema para outro</h3>
           <div class="grid-2">
@@ -234,8 +234,8 @@ iter sugerido:           iter sugerido:
             <li>Se não melhorou, desfaz o vetor <em>e</em> a <code>fo</code>. Esquecer <code>s.fo = fo_original</code> é a causa clássica de <code>fo</code> errada ao final.</li>
           </ul>
           <h3>Veja a primeira melhora acontecendo</h3>
-          <p>Mini-exemplo (tarefas em 2 máquinas). Note que ela aceita a primeira melhora e recomeça.</p>
-          <div class="card fitas" data-modo="pm"></div>
+          <p><strong>No problema real da P3</strong> (hubs, <code>inst1.txt</code>). Repare no <code>goto INICIO</code>: ao achar a primeira melhora ela fica com a solução e recomeça a varredura. Aqui o movimento é <em>trocar um hub por um não-hub</em>, e desfazer é trocar de volta.</p>
+          <div class="card hubs" data-modo="pm"></div>
 
           <h3>Exemplo rodando (instância A do <a href="laboratorio.html">Laboratório</a>)</h3>
 <pre class="code"><code>início [1,1,1,1,1,1]  FO 1
@@ -331,8 +331,8 @@ resultado [2,3,1,1,1,1]  FO 4   (21 vizinhos avaliados, 3 aplicados)</code></pre
             <li>Só depois da varredura completa é que um único movimento é aplicado, e <code>s.fo = melhor_fo</code> evita um <code>calcular_fo</code> extra.</li>
           </ul>
           <h3>Veja a melhor melhora acontecendo</h3>
-          <p>Mini-exemplo (tarefas em 2 máquinas). Note que ela olha tudo, sempre desfaz e só no fim aplica a melhor.</p>
-          <div class="card fitas" data-modo="mm"></div>
+          <p><strong>No problema real da P3</strong> (hubs, <code>inst1.txt</code>). Repare que ela olha todas as trocas, <b>sempre desfaz</b>, anota <code>melhor_i</code> e <code>melhor_j</code> e só no fim aplica a melhor.</p>
+          <div class="card hubs" data-modo="mm"></div>
 
           <h3>Exemplo rodando (mesma instância e mesma solução inicial da PM)</h3>
 <pre class="code"><code>início [1,1,1,1,1,1]  FO 1
@@ -682,6 +682,7 @@ resultado [1,3,3,1,1,1]  FO 6   (36 vizinhos avaliados, 2 aplicados)</code></pre
   </footer>
 
   <script src="../assets/js/site.js"></script>
-  <script src="../assets/js/fitas.js"></script>
+  <script src="../assets/js/hubs-nucleo.js"></script>
+  <script src="../assets/js/hubs.js"></script>
 </body>
 </html>
