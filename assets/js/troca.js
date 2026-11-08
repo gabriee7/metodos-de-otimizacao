@@ -46,44 +46,41 @@
     pm: [
       'void primeira_melhora(Solucao& s) {',
       '  INICIO: ;',
-      '  double fo_orig = s.fo;',
       '  for (int i = 0; i < n; i++) {',
       '    if (!s.dentro[i]) continue;      // i precisa estar dentro',
       '    for (int j = 0; j < n; j++) {',
       '      if (s.dentro[j]) continue;     // j precisa estar fora',
-      '      s.dentro[i] = 0; s.dentro[j] = 1;   // TROCA',
-      '      calcular_fo(s);',
-      '      if (s.fo > fo_orig) {          // aqui MAIOR é melhor',
-      '        goto INICIO;                 // fica e recomeça',
+      '      Solucao vizinha = s;           // trabalha numa CÓPIA',
+      '      vizinha.dentro[i] = 0; vizinha.dentro[j] = 1;   // TROCA',
+      '      calcular_fo(vizinha);',
+      '      if (vizinha.fo > s.fo) {       // aqui MAIOR é melhor',
+      '        s = vizinha;                 // fica com a vizinha',
+      '        goto INICIO;                 // e recomeça',
       '      }',
-      '      s.dentro[i] = 1; s.dentro[j] = 0;   // desfaz',
-      '      s.fo = fo_orig;',
+      '      // não melhorou? nada a desfazer: s nunca foi mexida',
       '    }',
       '  }',
       '}'
     ],
     mm: [
       'void melhor_melhora(Solucao& s) {',
-      '  INICIO: ;',
-      '  double fo_orig = s.fo, melhor_fo = s.fo;',
-      '  int melhor_i = -1, melhor_j = -1;',
-      '  for (int i = 0; i < n; i++) {',
-      '    if (!s.dentro[i]) continue;',
-      '    for (int j = 0; j < n; j++) {',
-      '      if (s.dentro[j]) continue;',
-      '      s.dentro[i] = 0; s.dentro[j] = 1;   // TROCA',
-      '      calcular_fo(s);',
-      '      if (s.fo > melhor_fo) {        // compara com o melhor',
-      '        melhor_fo = s.fo; melhor_i = i; melhor_j = j;',
+      '  while (1) {',
+      '    Solucao melhor = s;              // começa igual a s',
+      '    for (int i = 0; i < n; i++) {',
+      '      if (!s.dentro[i]) continue;',
+      '      for (int j = 0; j < n; j++) {',
+      '        if (s.dentro[j]) continue;',
+      '        Solucao vizinha = s;         // trabalha numa CÓPIA',
+      '        vizinha.dentro[i] = 0; vizinha.dentro[j] = 1;   // TROCA',
+      '        calcular_fo(vizinha);',
+      '        if (vizinha.fo > melhor.fo)  // compara com a MELHOR vista',
+      '          melhor = vizinha;          // guarda a melhor',
       '      }',
-      '      s.dentro[i] = 1; s.dentro[j] = 0;   // SEMPRE desfaz',
-      '      s.fo = fo_orig;',
       '    }',
-      '  }',
-      '  if (melhor_i != -1) {              // achou alguma melhora',
-      '    s.dentro[melhor_i] = 0; s.dentro[melhor_j] = 1;',
-      '    s.fo = melhor_fo;',
-      '    goto INICIO;',
+      '    if (melhor.fo > s.fo)            // alguma vizinha melhorou s?',
+      '      s = melhor;                    // aplica só a melhor',
+      '    else',
+      '      break;                         // nenhuma melhorou: ótimo local',
       '  }',
       '}'
     ],
@@ -98,8 +95,8 @@
     ]
   };
   var LN = {
-    pm: { inicio: 0, rodada: 2, teste: 9, aceita: 10, desfaz: 12, fim: 16 },
-    mm: { inicio: 0, rodada: 2, teste: 10, novo: 11, desfaz: 13, aceita: 17, fim: 20 }
+    pm: { inicio: 1, rodada: 1, teste: 9, aceita: 10, desfaz: 13, fim: 16 },
+    mm: { inicio: 0, rodada: 2, teste: 10, novo: 11, desfaz: 12, aceita: 15, fim: 17 }
   };
   function escapar(t) {
     return t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -155,8 +152,8 @@
               melhorou = true;
             } else {
               q.push({ tipo: 'desfaz', ln: L.desfaz, sel: sel.slice(), movs: [i, j], fo: atual, ref: atual,
-                log: 'Rodada ' + rodada + ' · sai ' + i + ', entra ' + j + ' → ' + f + ' · desfaz',
-                msg: 'Não melhorou: <b>desfaço</b> (o item ' + i + ' volta para dentro, o ' + j + ' volta para fora).' });
+                log: 'Rodada ' + rodada + ' · sai ' + i + ', entra ' + j + ' → ' + f + ' · descarta',
+                msg: 'Não melhorou: <b>descarto a cópia</b>. A solução <code>s</code> nunca foi mexida (o item ' + i + ' continua dentro e o ' + j + ' fora), então não há nada para desfazer.' });
             }
           } else {
             var novo = '';
@@ -170,7 +167,7 @@
             if (melhorI >= 0) { resumo = 'melhor até agora: sai ' + melhorI + ', entra ' + melhorJ + ' (soma ' + melhorFO + ')'; }
             q.push({ tipo: 'desfaz', ln: (melhor ? L.novo : L.desfaz), sel: sel.slice(), movs: [i, j], fo: atual, ref: atual,
               log: 'Rodada ' + rodada + ' · sai ' + i + ', entra ' + j + ' → ' + f + novo,
-              msg: 'Na melhor melhora eu <b>sempre desfaço</b> e só anoto. Placar: ' + resumo + '.' });
+              msg: 'Na melhor melhora cada teste é feito numa <b>cópia</b>, e eu guardo em <code>melhor</code> só a melhor vizinha vista. Placar: ' + resumo + '.' });
           }
         }
       }

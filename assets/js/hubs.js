@@ -8,9 +8,9 @@
   if (!N) { return; }
 
   var TOKENS = {
-    's.vet_sol[i]': 1, 's.vet_sol[j]': 1, 's.vet_sol[k]': 1, 's.vet_sol[l]': 1, 's.vet_sol[melhor_i]': 1, 's.vet_sol[melhor_j]': 1,
-    'vizinha.vet_sol': 1, 's.vet_sol': 1, 'vizinha.fo': 1, 's.fo': 1, 'vizinha': 1, 's': 1, 'mat_custo': 1, 'mat_distancias': 1,
-    'melhor_fo': 1, 'melhor_i': 1, 'melhor_j': 1, 'fo_orig': 1, 'flag': 1, 'aux': 1, 'INTER': 1, 'num_hub': 1, 'num_nos': 1,
+    's.vet_sol[i]': 1, 's.vet_sol[j]': 1, 's.vet_sol[k]': 1, 's.vet_sol[l]': 1, 
+    'vizinha.vet_sol': 1, 'melhor.vet_sol': 1, 'melhor.fo': 1, 'melhor': 1, 's.vet_sol': 1, 'vizinha.fo': 1, 's.fo': 1, 'vizinha': 1, 's': 1, 'mat_custo': 1, 'mat_distancias': 1,
+    'flag': 1, 'aux': 1, 'INTER': 1, 'num_hub': 1, 'num_nos': 1,
     'alfa': 1, 'beta': 1, 'lambda': 1, 'INT_MAX': 1, 'i': 1, 'j': 1, 'k': 1, 'l': 1
   };
   var CENARIOS = {
@@ -63,7 +63,7 @@
     if (nome === 'INT_MAX') { return '2147483647 (funciona como "infinito")'; }
     if (nome === 'mat_custo') { return 'matriz global ' + dv['num_nos'] + ' x ' + dv['num_nos'] + ' com o custo do melhor caminho entre cada par de nós (a tabela abaixo do código mostra o conteúdo quando você está dentro de calcular_fo)'; }
     if (nome === 'mat_distancias') { return 'matriz global com a distância entre cada par de nós (calculada por ler_dados)'; }
-    if (nome === 's' || nome === 'vizinha') {
+    if (nome === 's' || nome === 'vizinha' || nome === 'melhor') {
       if (dv[nome + '.vet_sol'] === undefined) { return null; }
       return '{ vet_sol = ' + valStr(dv[nome + '.vet_sol']) + ', fo = ' + valStr(dv[nome + '.fo']) + ' }';
     }
@@ -114,7 +114,7 @@
     if (q.nivel > 0) {
       ordem = ['s.vet_sol', 's.fo', 'i', 'j', 'k', 'l', 'aux'];
     } else {
-      ordem = ['s.vet_sol', 's.fo', 'vizinha.vet_sol', 'vizinha.fo', 'melhor_fo', 'melhor_i', 'melhor_j', 'flag', 'INTER', 'i', 'j', 'fo_orig', 'aux', 'num_hub', 'num_nos'];
+      ordem = ['s.vet_sol', 's.fo', 'vizinha.vet_sol', 'vizinha.fo', 'melhor.vet_sol', 'melhor.fo', 'flag', 'INTER', 'i', 'j', 'aux', 'num_hub', 'num_nos'];
     }
     var h = '<div class="ft-vars-t">Variáveis agora (em amarelo: mudou neste passo)</div><div class="ft-vgrade">';
     for (var x = 0; x < ordem.length; x++) {

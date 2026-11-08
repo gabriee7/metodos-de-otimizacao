@@ -283,8 +283,8 @@
         <tr><td><strong>Movimento</strong></td><td>mudar 1 tarefa de máquina</td><td><u>trocar</u> um hub (posição <code>i &lt; num_hub</code>) por um não-hub (posição <code>j ≥ num_hub</code>)</td></tr>
         <tr><td><strong>Vizinhança</strong></td><td>tarefas × (máquinas − 1)</td><td><code>num_hub × (num_nos − num_hub)</code> (64 na <code>inst2</code>)</td></tr>
         <tr><td><strong>FO</strong></td><td>maior carga (minimiza)</td><td>maior custo entre qualquer par de nós (minimiza)</td></tr>
-        <tr><td><strong>Desfazer</strong></td><td>voltar a máquina</td><td>trocar de volta e <code>s.fo = fo_orig</code></td></tr>
-        <tr><td><strong>Tipo da FO</strong></td><td><code>int</code></td><td><code>double</code>: guarde <code>fo_orig</code> e <code>melhor_fo</code> como <code>double</code>, senão a nota é truncada</td></tr>
+        <tr><td><strong>Desfazer</strong></td><td>voltar a máquina</td><td>nem precisa: testa-se numa <u>cópia</u> (<code>vizinha</code>) e, se não melhorar, a cópia é jogada fora; <code>s</code> nunca foi mexida</td></tr>
+        <tr><td><strong>Tipo da FO</strong></td><td><code>int</code></td><td><code>double</code>: se você guardar a nota em uma variável própria (como <code>melhor_fo</code>), use <code>double</code>, senão a nota é truncada</td></tr>
       </tbody>
     </table></div>
     <div class="attn">

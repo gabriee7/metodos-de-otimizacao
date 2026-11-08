@@ -173,33 +173,25 @@
     return { txt: txt, idx: idx, span: span };
   }
 
-  var SWAP_IJ = [
-    ['aux', '            int aux = s.vet_sol[i];                // troca o hub da posição i...'],
-    ['sw1', '            s.vet_sol[i] = s.vet_sol[j];           // ...com o não-hub da posição j'],
-    ['sw2', '            s.vet_sol[j] = aux;']
-  ];
-
   var LST_PM = lista([
     ['head', 'void heuristica_PrimeiraMelhora(Solucao& s)'],
     ['', '{'],
     ['inicio', '    INICIO : ;                                  // rótulo: um goto recomeça a varredura aqui'],
-    ['mf', '    double melhor_fo = s.fo;                    // a fo é double: não use int'],
     ['fi', '    for (int i = 0; i < num_hub; i++)'],
     ['', '    {'],
     ['fj', '        for (int j = num_hub; j < num_nos; j++)'],
     ['', '        {'],
-    ['foorig', '            double fo_orig = s.fo;'],
-    SWAP_IJ[0], SWAP_IJ[1], SWAP_IJ[2],
-    ['calc', '            calcular_fo(s);'],
-    ['if', '            if (s.fo < melhor_fo)                  // minimiza: menor é melhor'],
-    ['goto', '                goto INICIO;                        // primeira melhora: fica e recomeça'],
-    ['', '            else'],
+    ['cp1', '            memcpy(&vizinha, &s, sizeof(Solucao));   // trabalha numa cópia de s'],
+    ['aux', '            int aux = vizinha.vet_sol[i];            // troca o hub i com o não-hub j'],
+    ['sw1', '            vizinha.vet_sol[i] = vizinha.vet_sol[j];'],
+    ['sw2', '            vizinha.vet_sol[j] = aux;'],
+    ['calc', '            calcular_fo(vizinha);'],
+    ['if', '            if (vizinha.fo < s.fo)                  // minimiza: menor é melhor'],
     ['', '            {'],
-    ['u1', '                aux = s.vet_sol[i];                // desfaz: troca de volta'],
-    ['u2', '                s.vet_sol[i] = s.vet_sol[j];'],
-    ['u3', '                s.vet_sol[j] = aux;'],
-    ['u4', '                s.fo = fo_orig;'],
+    ['cp2', '                memcpy(&s, &vizinha, sizeof(Solucao));  // fica com a vizinha'],
+    ['goto', '                goto INICIO;                         // primeira melhora: recomeça'],
     ['', '            }'],
+    ['', '            // não melhorou? nada a desfazer: s nunca foi mexida'],
     ['', '        }'],
     ['', '    }'],
     ['end', '}']
@@ -208,39 +200,29 @@
   var LST_MM = lista([
     ['head', 'void heuristica_MelhorMelhora(Solucao& s)'],
     ['', '{'],
-    ['decl', '    int melhor_i, melhor_j;'],
-    ['mf', '    double melhor_fo = s.fo;                    // a fo é double: não use int'],
     ['while', '    while (1)'],
     ['', '    {'],
-    ['flag', '        int flag = 1;                              // 1 = nada melhorou nesta rodada'],
+    ['mel', '        Solucao melhor;                            // vai guardar a MELHOR vizinha vista'],
+    ['cpm', '        memcpy(&melhor, &s, sizeof(Solucao));      // começa igual a s'],
     ['fi', '        for (int i = 0; i < num_hub; i++)'],
     ['', '        {'],
     ['fj', '            for (int j = num_hub; j < num_nos; j++)'],
     ['', '            {'],
-    ['foorig', '                double fo_orig = s.fo;'],
-    ['aux', '                int aux = s.vet_sol[i];            // troca o hub i com o não-hub j'],
-    ['sw1', '                s.vet_sol[i] = s.vet_sol[j];'],
-    ['sw2', '                s.vet_sol[j] = aux;'],
-    ['calc', '                calcular_fo(s);'],
-    ['if', '                if (s.fo < melhor_fo)              // compara com o melhor visto até agora'],
+    ['cp1', '                memcpy(&vizinha, &s, sizeof(Solucao));   // trabalha numa cópia de s'],
+    ['aux', '                int aux = vizinha.vet_sol[i];            // troca o hub i com o não-hub j'],
+    ['sw1', '                vizinha.vet_sol[i] = vizinha.vet_sol[j];'],
+    ['sw2', '                vizinha.vet_sol[j] = aux;'],
+    ['calc', '                calcular_fo(vizinha);'],
+    ['if', '                if (vizinha.fo < melhor.fo)             // compara com a MELHOR vista'],
     ['', '                {'],
-    ['m1', '                    melhor_fo = s.fo;'],
-    ['m2', '                    melhor_i = i;'],
-    ['m3', '                    melhor_j = j;'],
-    ['m4', '                    flag = 0;'],
+    ['cp3', '                    memcpy(&melhor, &vizinha, sizeof(Solucao));  // guarda a melhor'],
     ['', '                }'],
-    ['u1', '                aux = s.vet_sol[i];                // SEMPRE desfaz: só anotamos'],
-    ['u2', '                s.vet_sol[i] = s.vet_sol[j];'],
-    ['u3', '                s.vet_sol[j] = aux;'],
-    ['u4', '                s.fo = fo_orig;'],
     ['', '            }'],
     ['', '        }'],
-    ['flagif', '        if (flag)'],
-    ['brk', '            break;                                 // nenhum vizinho melhora: ótimo local'],
-    ['b1', '        int aux = s.vet_sol[melhor_i];             // aplica só o melhor'],
-    ['b2', '        s.vet_sol[melhor_i] = s.vet_sol[melhor_j];'],
-    ['b3', '        s.vet_sol[melhor_j] = aux;'],
-    ['b4', '        s.fo = melhor_fo;'],
+    ['if2', '        if (melhor.fo < s.fo)                      // alguma vizinha melhorou s?'],
+    ['cp4', '            memcpy(&s, &melhor, sizeof(Solucao));  // aplica só a melhor'],
+    ['', '        else'],
+    ['brk', '            break;                                 // nenhuma melhorou: ótimo local'],
     ['', '    }'],
     ['end', '}']
   ]);
@@ -565,6 +547,24 @@
 
     function trocaMsg(i, j) { return 'trocar a posição ' + i + ' (hub, nó ' + V['s.vet_sol'][i] + ') com a posição ' + j + ' (não-hub, nó ' + V['s.vet_sol'][j] + ')'; }
 
+    /* a troca feita na CÓPIA (vizinha): usada pela primeira e pela melhor melhora */
+    function trocarNaCopia(ii, jj) {
+      var W0 = W;
+      V['vizinha.vet_sol'] = V['s.vet_sol'].slice();
+      V['vizinha.fo'] = V['s.fo'];
+      emit('cp1', '<code>memcpy(&amp;vizinha, &amp;s, ...)</code>: <b>copio</b> a solução <code>s</code> inteira para <code>vizinha</code>. Daqui em diante mexo só na cópia; <code>s</code> fica intacta.', { worst: W0 });
+      V['aux'] = V['vizinha.vet_sol'][ii];
+      emit('aux', 'Guardo o nó da posição ' + ii + ' da cópia: <code>aux</code> = ' + T(V['aux']) + '. O movimento é ' + trocaMsg(ii, jj) + '.', { worst: W0 });
+      V['vizinha.vet_sol'][ii] = V['vizinha.vet_sol'][jj];
+      emit('sw1', 'O nó ' + V['vizinha.vet_sol'][jj] + ' (da posição ' + jj + ') vai para a posição ' + ii + '.', { tipo: 'teste', movs: [ii, jj], ref: V['s.fo'], fov: '-', worst: null });
+      V['vizinha.vet_sol'][jj] = V['aux'];
+      emit('sw2', 'O nó ' + V['aux'] + ' vai para a posição ' + jj + '. <b>Troca feita na cópia</b>: o hub ' + V['aux'] + ' saiu e o nó ' + V['vizinha.vet_sol'][ii] + ' virou hub. A nota da cópia ainda é a velha.', { tipo: 'teste', movs: [ii, jj], ref: V['s.fo'], fov: '-', worst: null });
+      chamarCalc('vizinha', 'calc', 'Chamo <code>calcular_fo(vizinha)</code> para avaliar a cópia.', { tipo: 'teste', movs: [ii, jj], ref: V['s.fo'], fov: '-', worst: null });
+      var Wv = W;
+      W = W0;
+      return Wv;
+    }
+
     /* ===== primeira melhora ===== */
     if (modo === 'pm') {
       emit('head', 'Entrei na função. <code>s</code> chegou <b>por referência</b>, já com <code>s.fo</code> = ' + T(fmt(Math.round(V['s.fo']))) + ' calculada pela <code>main</code>.', { marco: true, worst: W });
@@ -573,8 +573,6 @@
         voltou = false;
         rod++;
         emit('inicio', 'O rótulo <code>INICIO</code>: aqui começa (ou recomeça) a varredura.', { worst: W });
-        V['melhor_fo'] = V['s.fo'];
-        emit('mf', 'Guardo a nota de referência: <code>melhor_fo = s.fo</code> = ' + T(fmt(Math.round(V['melhor_fo']))) + '.', { worst: W });
         V['i'] = 0;
         var primI = true;
         var salto = false;
@@ -593,36 +591,23 @@
             primJ = false;
             if (!okJ) { break; }
             var ii = V['i'], jj = V['j'];
-            V['fo_orig'] = V['s.fo'];
-            var Wbase = W;
-            emit('foorig', 'Guardo a nota de antes: <code>fo_orig</code> = ' + T(fmt(Math.round(V['fo_orig']))) + '.', { worst: W });
-            V['aux'] = V['s.vet_sol'][ii];
-            emit('aux', 'Guardo o nó da posição ' + ii + ': <code>aux</code> = ' + T(V['aux']) + '. O movimento é ' + trocaMsg(ii, jj) + '.', { worst: W });
-            V['s.vet_sol'][ii] = V['s.vet_sol'][jj];
-            emit('sw1', 'O nó ' + V['s.vet_sol'][jj] + ' (da posição ' + jj + ') vai para a posição ' + ii + '.', { tipo: 'teste', movs: [ii, jj], ref: V['fo_orig'], fov: '-', worst: null });
-            V['s.vet_sol'][jj] = V['aux'];
-            emit('sw2', 'O nó ' + V['aux'] + ' vai para a posição ' + jj + '. <b>Troca feita</b>: o hub ' + V['aux'] + ' saiu e o nó ' + V['s.vet_sol'][ii] + ' virou hub. A nota ainda é a velha.', { tipo: 'teste', movs: [ii, jj], ref: V['fo_orig'], fov: '-', worst: null });
-            chamarCalc('s', 'calc', 'Chamo <code>calcular_fo(s)</code> para avaliar a vizinha.', { tipo: 'teste', movs: [ii, jj], ref: V['fo_orig'], fov: '-', worst: null });
-            var melhor = (V['s.fo'] < V['melhor_fo']);
+            var Wv = trocarNaCopia(ii, jj);
+            var melhor = (V['vizinha.fo'] < V['s.fo']);
             var resp = melhor ? 'sim' : 'não';
-            var logTxt = 'Rodada ' + rod + ' · trocar ' + ii + ' e ' + jj + ' → FO ' + Math.round(V['s.fo']) + (melhor ? ' · <b style="color:#16a34a">aceita</b>' : ' · desfaz');
-            emit('if', 'Pergunto <code>s.fo &lt; melhor_fo</code>: ' + Math.round(V['s.fo']) + ' &lt; ' + Math.round(V['melhor_fo']) + '? ' + T(resp) + '.' + (melhor ? '' : ' (Empate também é "não".)'),
-              { tipo: 'teste', movs: [ii, jj], ref: V['fo_orig'], fo: V['s.fo'], worst: W, marco: true, log: logTxt });
+            var logTxt = 'Rodada ' + rod + ' · trocar ' + ii + ' e ' + jj + ' → FO ' + Math.round(V['vizinha.fo']) + (melhor ? ' · <b style="color:#16a34a">aceita</b>' : ' · descarta');
+            emit('if', 'Pergunto <code>vizinha.fo &lt; s.fo</code>: ' + Math.round(V['vizinha.fo']) + ' &lt; ' + Math.round(V['s.fo']) + '? ' + T(resp) + '.' + (melhor ? '' : ' (Empate também é "não".) Nada a desfazer: a cópia é descartada e <code>s</code> nunca foi mexida.'),
+              { tipo: 'teste', movs: [ii, jj], ref: V['s.fo'], fo: V['vizinha.fo'], worst: Wv, marco: true, log: logTxt });
             if (melhor) {
-              emit('goto', '<code>goto INICIO</code>: <b>fico com esta solução</b> e volto ao rótulo. Todas as variáveis locais deixam de existir.', { tipo: 'aceita', movs: [ii, jj], ref: V['s.fo'], worst: W, marco: true });
+              V['s.vet_sol'] = V['vizinha.vet_sol'].slice();
+              V['s.fo'] = V['vizinha.fo'];
+              W = Wv;
+              emit('cp2', '<code>memcpy(&amp;s, &amp;vizinha, ...)</code>: <b>fico com a vizinha</b>, copiando-a de volta para <code>s</code>. Agora <code>s.fo</code> = ' + T(fmt(Math.round(V['s.fo']))) + '.', { tipo: 'aceita', movs: [ii, jj], ref: V['s.fo'], worst: W, marco: true });
+              emit('goto', '<code>goto INICIO</code>: volto ao rótulo e recomeço a varredura. Todas as variáveis locais deixam de existir.', { tipo: 'aceita', movs: [ii, jj], ref: V['s.fo'], worst: W });
               salto = true;
               break;
             }
-            V['aux'] = V['s.vet_sol'][ii];
-            emit('u1', '<b>Desfaço</b> a troca. Guardo de novo o nó da posição ' + ii + ' em <code>aux</code> = ' + T(V['aux']) + '.', { tipo: 'desfaz', movs: [ii, jj], ref: V['fo_orig'], worst: null });
-            V['s.vet_sol'][ii] = V['s.vet_sol'][jj];
-            emit('u2', 'Trago de volta o nó da posição ' + jj + ' para a posição ' + ii + '.', { tipo: 'desfaz', movs: [ii, jj], ref: V['fo_orig'], worst: null });
-            V['s.vet_sol'][jj] = V['aux'];
-            emit('u3', 'Devolvo o nó guardado à posição ' + jj + '. <code>s.vet_sol</code> = ' + T(fmt(V['s.vet_sol'])) + ' de novo.', { tipo: 'desfaz', movs: [ii, jj], ref: V['fo_orig'], worst: null });
-            V['s.fo'] = V['fo_orig'];
-            W = Wbase;
-            emit('u4', 'Volto também a nota: <code>s.fo = fo_orig</code> = ' + T(fmt(Math.round(V['s.fo']))) + '.', { tipo: 'desfaz', movs: [ii, jj], ref: V['s.fo'], worst: W, marco: true });
-            delete V['fo_orig'];
+            delete V['vizinha.vet_sol'];
+            delete V['vizinha.fo'];
             delete V['aux'];
           }
           delete V['j'];
@@ -630,9 +615,9 @@
         }
         delete V['i'];
         delete V['j'];
-        delete V['fo_orig'];
         delete V['aux'];
-        delete V['melhor_fo'];
+        delete V['vizinha.vet_sol'];
+        delete V['vizinha.fo'];
         if (salto) { voltou = true; }
       }
       emit('end', 'Os dois <code>for</code> terminaram sem nenhuma melhora: fim da função. <b>Ótimo local</b>, FO final = ' + T(fmt(Math.round(V['s.fo']))) + '.', { worst: W, marco: true });
@@ -642,14 +627,15 @@
     /* ===== melhor melhora ===== */
     if (modo === 'mm') {
       emit('head', 'Entrei na função. <code>s</code> chegou <b>por referência</b>, já com <code>s.fo</code> = ' + T(fmt(Math.round(V['s.fo']))) + '.', { marco: true, worst: W });
-      emit('decl', 'Declaro <code>melhor_i</code> e <code>melhor_j</code> <b>sem valor</b> (lixo de memória até serem atribuídos).', { worst: W });
-      V['melhor_fo'] = V['s.fo'];
-      emit('mf', 'Guardo a nota de referência: <code>melhor_fo = s.fo</code> = ' + T(fmt(Math.round(V['melhor_fo']))) + '.', { worst: W });
       for (;;) {
         rod++;
         emit('while', '<code>while (1)</code>: laço infinito; só o <code>break</code> o encerra. Rodada ' + rod + '.', { worst: W });
-        V['flag'] = 1;
-        emit('flag', '<code>flag = 1</code>: por enquanto "nada melhorou nesta rodada".', { worst: W });
+        emit('mel', 'Declaro <code>melhor</code>: uma <code>Solucao</code> inteira, <b>ainda sem valores</b> (lixo de memória). Ela vai guardar a melhor vizinha desta rodada.', { worst: W });
+        V['melhor.vet_sol'] = V['s.vet_sol'].slice();
+        V['melhor.fo'] = V['s.fo'];
+        var Wm = W;
+        var mi = -1, mj = -1;
+        emit('cpm', '<code>memcpy(&amp;melhor, &amp;s, ...)</code>: <code>melhor</code> começa <b>igual a <code>s</code></b> (nota ' + T(fmt(Math.round(V['melhor.fo']))) + '). Só será trocada se aparecer uma vizinha melhor que isso.', { worst: W });
         V['i'] = 0;
         var primI2 = true;
         for (;;) {
@@ -667,62 +653,40 @@
             primJ2 = false;
             if (!okJ2) { break; }
             var i2 = V['i'], j2 = V['j'];
-            V['fo_orig'] = V['s.fo'];
-            var Wbase2 = W;
-            emit('foorig', 'Guardo a nota da solução atual: <code>fo_orig</code> = ' + T(fmt(Math.round(V['fo_orig']))) + ' (vou desfazer sempre para ela).', { worst: W });
-            V['aux'] = V['s.vet_sol'][i2];
-            emit('aux', 'Guardo o nó da posição ' + i2 + ': <code>aux</code> = ' + T(V['aux']) + '. O movimento é ' + trocaMsg(i2, j2) + '.', { worst: W });
-            V['s.vet_sol'][i2] = V['s.vet_sol'][j2];
-            emit('sw1', 'O nó ' + V['s.vet_sol'][j2] + ' vai para a posição ' + i2 + '.', { tipo: 'teste', movs: [i2, j2], ref: V['fo_orig'], fov: '-', worst: null });
-            V['s.vet_sol'][j2] = V['aux'];
-            emit('sw2', 'O nó ' + V['aux'] + ' vai para a posição ' + j2 + '. <b>Troca feita</b>. A nota ainda é a velha.', { tipo: 'teste', movs: [i2, j2], ref: V['fo_orig'], fov: '-', worst: null });
-            chamarCalc('s', 'calc', 'Chamo <code>calcular_fo(s)</code> para avaliar a vizinha.', { tipo: 'teste', movs: [i2, j2], ref: V['fo_orig'], fov: '-', worst: null });
-            var melhor2 = (V['s.fo'] < V['melhor_fo']);
+            var Wv2 = trocarNaCopia(i2, j2);
+            var melhor2 = (V['vizinha.fo'] < V['melhor.fo']);
             var resp2 = melhor2 ? 'sim' : 'não';
-            var logTxt2 = 'Rodada ' + rod + ' · trocar ' + i2 + ' e ' + j2 + ' → FO ' + Math.round(V['s.fo']) + (melhor2 ? ' · <b style="color:#16a34a">novo melhor</b>' : '');
-            emit('if', 'Pergunto <code>s.fo &lt; melhor_fo</code>: ' + Math.round(V['s.fo']) + ' &lt; ' + Math.round(V['melhor_fo']) + '? ' + T(resp2) + '. (Compara com o <b>melhor visto</b>, não com a nota atual.)',
-              { tipo: 'teste', movs: [i2, j2], ref: V['fo_orig'], fo: V['s.fo'], worst: W, marco: true, log: logTxt2 });
+            var logTxt2 = 'Rodada ' + rod + ' · trocar ' + i2 + ' e ' + j2 + ' → FO ' + Math.round(V['vizinha.fo']) + (melhor2 ? ' · <b style="color:#16a34a">novo melhor</b>' : '');
+            emit('if', 'Pergunto <code>vizinha.fo &lt; melhor.fo</code>: ' + Math.round(V['vizinha.fo']) + ' &lt; ' + Math.round(V['melhor.fo']) + '? ' + T(resp2) + '. (Compara com a <b>melhor vista</b>, não com <code>s</code>.)',
+              { tipo: 'teste', movs: [i2, j2], ref: V['s.fo'], fo: V['vizinha.fo'], worst: Wv2, marco: true, log: logTxt2 });
             if (melhor2) {
-              V['melhor_fo'] = V['s.fo'];
-              emit('m1', 'Anoto o novo melhor valor: <code>melhor_fo</code> = ' + T(fmt(Math.round(V['melhor_fo']))) + '.', { tipo: 'teste', movs: [i2, j2], ref: V['fo_orig'], fo: V['s.fo'], worst: W });
-              V['melhor_i'] = i2;
-              emit('m2', 'Anoto a posição do hub: <code>melhor_i</code> = ' + T(i2) + '.', { tipo: 'teste', movs: [i2, j2], ref: V['fo_orig'], fo: V['s.fo'], worst: W });
-              V['melhor_j'] = j2;
-              emit('m3', 'Anoto a posição do não-hub: <code>melhor_j</code> = ' + T(j2) + '.', { tipo: 'teste', movs: [i2, j2], ref: V['fo_orig'], fo: V['s.fo'], worst: W });
-              V['flag'] = 0;
-              emit('m4', '<code>flag = 0</code>: esta rodada achou melhora.', { tipo: 'teste', movs: [i2, j2], ref: V['fo_orig'], fo: V['s.fo'], worst: W });
+              V['melhor.vet_sol'] = V['vizinha.vet_sol'].slice();
+              V['melhor.fo'] = V['vizinha.fo'];
+              Wm = Wv2;
+              mi = i2;
+              mj = j2;
+              emit('cp3', '<code>memcpy(&amp;melhor, &amp;vizinha, ...)</code>: <b>guardo a vizinha inteira</b> em <code>melhor</code> (nota ' + T(fmt(Math.round(V['melhor.fo']))) + '). Não preciso anotar índices: a solução já está guardada.', { tipo: 'teste', movs: [i2, j2], ref: V['s.fo'], fo: V['vizinha.fo'], worst: Wv2 });
             }
-            V['aux'] = V['s.vet_sol'][i2];
-            emit('u1', '<b>SEMPRE desfaço</b> (melhorando ou não). Guardo o nó da posição ' + i2 + ': <code>aux</code> = ' + T(V['aux']) + '.', { tipo: 'desfaz', movs: [i2, j2], ref: V['fo_orig'], worst: null });
-            V['s.vet_sol'][i2] = V['s.vet_sol'][j2];
-            emit('u2', 'Trago de volta o nó da posição ' + j2 + ' para a posição ' + i2 + '.', { tipo: 'desfaz', movs: [i2, j2], ref: V['fo_orig'], worst: null });
-            V['s.vet_sol'][j2] = V['aux'];
-            emit('u3', 'Devolvo o nó guardado à posição ' + j2 + '. <code>s.vet_sol</code> = ' + T(fmt(V['s.vet_sol'])) + ' de novo.', { tipo: 'desfaz', movs: [i2, j2], ref: V['fo_orig'], worst: null });
-            V['s.fo'] = V['fo_orig'];
-            W = Wbase2;
-            emit('u4', 'Volto também a nota: <code>s.fo = fo_orig</code> = ' + T(fmt(Math.round(V['s.fo']))) + '.', { tipo: 'desfaz', movs: [i2, j2], ref: V['s.fo'], worst: W, marco: true });
-            delete V['fo_orig'];
             delete V['aux'];
           }
           delete V['j'];
         }
         delete V['i'];
-        emit('flagif', 'Terminei de olhar as ' + (p * (n - p)) + ' vizinhas. Pergunto <code>if (flag)</code>: flag vale ' + V['flag'] + ', então ' + (V['flag'] ? '<b>sim</b>.' : '<b>não</b>.'), { worst: W });
-        if (V['flag']) {
-          emit('brk', '<code>break</code>: nenhuma vizinha melhorou. Saio do <code>while</code>.', { worst: W });
+        delete V['aux'];
+        delete V['vizinha.vet_sol'];
+        delete V['vizinha.fo'];
+        var achou = (V['melhor.fo'] < V['s.fo']);
+        emit('if2', 'Terminei de olhar as ' + (p * (n - p)) + ' vizinhas. Pergunto <code>melhor.fo &lt; s.fo</code>: ' + Math.round(V['melhor.fo']) + ' &lt; ' + Math.round(V['s.fo']) + '? ' + T(achou ? 'sim' : 'não') + '.', { worst: W });
+        if (!achou) {
+          emit('brk', '<code>break</code>: nenhuma vizinha melhorou <code>s</code>. Saio do <code>while</code>.', { worst: W });
           break;
         }
-        V['aux'] = V['s.vet_sol'][V['melhor_i']];
-        emit('b1', 'Agora aplico <b>só a melhor</b>. Guardo o nó da posição ' + V['melhor_i'] + ': <code>aux</code> = ' + T(V['aux']) + '.', { tipo: 'aceita', movs: [V['melhor_i'], V['melhor_j']], ref: V['s.fo'], worst: W });
-        V['s.vet_sol'][V['melhor_i']] = V['s.vet_sol'][V['melhor_j']];
-        emit('b2', 'O nó da posição ' + V['melhor_j'] + ' vai para a posição ' + V['melhor_i'] + '.', { tipo: 'aceita', movs: [V['melhor_i'], V['melhor_j']], ref: V['s.fo'], fov: '-', worst: null });
-        V['s.vet_sol'][V['melhor_j']] = V['aux'];
-        emit('b3', 'O nó guardado vai para a posição ' + V['melhor_j'] + '. <code>s.vet_sol</code> = ' + T(fmt(V['s.vet_sol'])) + '.', { tipo: 'aceita', movs: [V['melhor_i'], V['melhor_j']], ref: V['s.fo'], fov: '-', worst: null });
-        V['s.fo'] = V['melhor_fo'];
-        W = null;
-        emit('b4', '<code>s.fo = melhor_fo</code> = ' + T(fmt(Math.round(V['s.fo']))) + ': a nota da solução aplicada (já tinha sido calculada no teste).', { tipo: 'aceita', movs: [V['melhor_i'], V['melhor_j']], ref: V['s.fo'], worst: null, marco: true });
-        delete V['aux'];
-        delete V['flag'];
+        V['s.vet_sol'] = V['melhor.vet_sol'].slice();
+        V['s.fo'] = V['melhor.fo'];
+        W = Wm;
+        emit('cp4', '<code>memcpy(&amp;s, &amp;melhor, ...)</code>: aplico <b>só a melhor</b>, copiando-a para <code>s</code>. Agora <code>s.fo</code> = ' + T(fmt(Math.round(V['s.fo']))) + '. Volto ao <code>while</code>.', { tipo: 'aceita', movs: [mi, mj], ref: V['s.fo'], worst: W, marco: true });
+        delete V['melhor.vet_sol'];
+        delete V['melhor.fo'];
       }
       emit('end', 'Fim da função. <b>Ótimo local</b>, FO final = ' + T(fmt(Math.round(V['s.fo']))) + '.', { worst: W, marco: true });
       return q;
