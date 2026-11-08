@@ -667,3 +667,27 @@ td.lab-melhor { outline: 2px solid var(--success); outline-offset: -2px; }
 @media (max-width: 960px) { .ft-duas { grid-template-columns: minmax(0, 1fr); } }
 .ft-vars-t { font-family: 'Segoe UI', system-ui, sans-serif; font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: var(--text-muted); border-bottom: 1px solid var(--border); padding-bottom: .2rem; margin-bottom: .3rem; }
 .ft-col-viz .ft-log-t { margin-top: .75rem; margin-bottom: .2rem; }
+
+/* ── Fitas: cenário personalizado ── */
+.ft-meu { padding: .3rem .7rem; border: 1px solid var(--primary); border-radius: 6px; background: #eff6ff; color: var(--primary); cursor: pointer; font: inherit; font-size: .85rem; font-weight: 600; }
+.ft-custom { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1rem; background: #f8fafc; border: 1px dashed var(--border); border-radius: var(--radius); padding: .6rem .8rem; margin-bottom: .8rem; font-size: .88rem; }
+.ft-custom input[type=text] { margin-left: .35rem; padding: .3rem .5rem; border: 1px solid var(--border); border-radius: 6px; font: inherit; font-family: Consolas, 'Courier New', monospace; background: var(--surface); color: var(--text); }
+.ft-custom button { padding: .35rem .8rem; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); cursor: pointer; font: inherit; font-size: .88rem; }
+.ft-custom button.ft-prim { background: var(--primary); color: #fff; border-color: var(--primary); }
+.ft-erro { color: var(--danger); font-weight: 600; font-size: .85rem; }
+
+/* ── Fitas: modo debug (hover nas variáveis, breakpoints, painel de variáveis) ── */
+.ft-dbg-dica { display: none; font-size: .76rem; color: var(--text-muted); margin-bottom: .35rem; }
+.ft-debug .ft-dbg-dica { display: block; }
+.ft-tok { border-bottom: 1px dotted #64748b; cursor: help; }
+.ft-tok:hover { background: rgba(125, 211, 252, .25); border-bottom-color: #7dd3fc; }
+.ft-tip { position: fixed; z-index: 60; max-width: 340px; background: #0f172a; color: #f8fafc; border: 1px solid #334155; border-radius: 6px; padding: .4rem .6rem; font-family: Consolas, 'Courier New', monospace; font-size: .8rem; line-height: 1.4; box-shadow: 0 4px 14px rgba(0,0,0,.35); pointer-events: none; }
+.ft-tip b { color: #7dd3fc; }
+.ft-ln i { cursor: pointer; }
+.ft-ln i:hover { color: #fca5a5; }
+.ft-bp i { background: #dc2626; color: #fff; border-radius: 3px; }
+.ft-vgrade { display: grid; grid-template-columns: 1fr 1fr; gap: .15rem .8rem; }
+.ft-var { padding: .1rem .3rem; border-radius: 4px; overflow-wrap: anywhere; }
+.ft-var-mud { background: #fef08a; }
+.ft-debug .ft-vars { font-size: .8rem; }
+@media (max-width: 560px) { .ft-vgrade { grid-template-columns: 1fr; } }
