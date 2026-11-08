@@ -645,3 +645,20 @@ td.lab-melhor { outline: 2px solid var(--success); outline-offset: -2px; }
 .ft-vel select { padding: .25rem .4rem; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); }
 .ft-barra-passos { width: 100%; accent-color: var(--primary); }
 .ft-dica { font-size: .78rem; color: var(--text-muted); margin-bottom: .6rem; }
+
+/* ── Fitas: código ao lado (depurador) ── */
+.ft-duas { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.2fr); gap: 1rem; align-items: start; }
+.ft-col-cod { min-width: 0; }
+.ft-cod-t { font-size: .8rem; font-weight: 700; color: var(--text-muted); margin-bottom: .25rem; }
+.ft-codigo { background: #0f172a; color: #e2e8f0; border-radius: var(--radius); padding: .5rem 0; max-height: 520px; overflow-x: auto; overflow-y: auto; position: relative; font-family: Consolas, 'Courier New', monospace; font-size: .74rem; line-height: 1.5; }
+.ft-ln { display: flex; white-space: pre; padding: 0 .6rem 0 0; border-left: 3px solid transparent; }
+.ft-ln i { font-style: normal; color: #64748b; width: 2.2rem; text-align: right; padding-right: .4rem; flex: none; }
+.ft-seta { width: 1rem; flex: none; color: #facc15; }
+.ft-ln code { font-family: inherit; background: none; color: inherit; padding: 0; }
+.ft-cm { color: #7dd3a0; }
+.ft-on { background: rgba(250, 204, 21, .18); border-left-color: #facc15; }
+.ft-ln-erro code { color: #fca5a5; }
+.ft-vars { margin-top: .5rem; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: .4rem .7rem; font-family: Consolas, 'Courier New', monospace; font-size: .78rem; }
+.ft-vars-x { color: var(--text-muted); margin-top: .15rem; }
+@media (max-width: 820px) { .ft-duas { grid-template-columns: minmax(0, 1fr); } }
+.ft-vars-t { font-family: 'Segoe UI', system-ui, sans-serif; font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: var(--text-muted); border-bottom: 1px solid var(--border); padding-bottom: .2rem; margin-bottom: .3rem; }

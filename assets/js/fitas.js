@@ -234,6 +234,174 @@
     return q;
   }
 
+
+  /* ---------- código mostrado ao lado (estilo depurador) ---------- */
+  var PM = [
+    'void primeira_melhora(Solucao& s)',
+    '{',
+    '    int melhorou = 1;',
+    '    calcular_fo(s);',
+    '    while (melhorou == 1)',
+    '    {',
+    '        melhorou = 0;',
+    '        for (int t = 0; t < n && melhorou == 0; t++)',
+    '        {',
+    '            int orig = s.vet_maquina[t];     // guarda o que tinha',
+    '            int fo_orig = s.fo;              // guarda a nota de antes',
+    '            int m = 1 - orig;                // a outra máquina',
+    '            s.vet_maquina[t] = m;            // APLICA o movimento',
+    '            calcular_fo(s);                  // nota da vizinha',
+    '            if (s.fo < fo_orig)              // melhorou?',
+    '                melhorou = 1;                // fica com ela',
+    '            else',
+    '            {',
+    '                s.vet_maquina[t] = orig;     // DESFAZ o movimento',
+    '                s.fo = fo_orig;              // e a nota',
+    '            }',
+    '        }',
+    '    }',
+    '}'
+  ];
+  var BUG = PM.slice();
+  BUG[0] = 'void primeira_melhora_ERRADA(Solucao& s)';
+  BUG[18] = '                // ESQUECI de desfazer a solução!';
+  BUG[19] = '                // ESQUECI de voltar a nota!';
+  var MM = [
+    'void melhor_melhora(Solucao& s)',
+    '{',
+    '    int melhorou = 1;',
+    '    calcular_fo(s);',
+    '    while (melhorou == 1)',
+    '    {',
+    '        melhorou = 0;',
+    '        int melhor_t = -1, melhor_fo = s.fo;',
+    '        int fo_orig = s.fo;',
+    '        for (int t = 0; t < n; t++)',
+    '        {',
+    '            int orig = s.vet_maquina[t];',
+    '            s.vet_maquina[t] = 1 - orig;     // APLICA',
+    '            calcular_fo(s);',
+    '            if (s.fo < melhor_fo)            // melhor que o melhor visto?',
+    '            {',
+    '                melhor_fo = s.fo;            // anota',
+    '                melhor_t = t;',
+    '            }',
+    '            s.vet_maquina[t] = orig;         // SEMPRE desfaz',
+    '            s.fo = fo_orig;',
+    '        }',
+    '        if (melhor_t != -1)',
+    '        {',
+    '            s.vet_maquina[melhor_t] = 1 - s.vet_maquina[melhor_t];  // aplica só a melhor',
+    '            calcular_fo(s);',
+    '            melhorou = 1;',
+    '        }',
+    '    }',
+    '}'
+  ];
+  var RA = [
+    'void randomica(Solucao& s)',
+    '{',
+    '    int melhorou = 1;',
+    '    calcular_fo(s);',
+    '    while (melhorou == 1)',
+    '    {',
+    '        melhorou = 0;',
+    '        for (int k = 0; k < ITER; k++)',
+    '        {',
+    '            Solucao viz = s;                 // CÓPIA da solução',
+    '            gerar_vizinha(viz);              // sorteia uma tarefa e move',
+    '            calcular_fo(viz);',
+    '            if (viz.fo < s.fo)               // melhorou?',
+    '            {',
+    '                s = viz;                     // copia de volta',
+    '                melhorou = 1;',
+    '            }                                // senão: descarta viz',
+    '        }',
+    '    }',
+    '}'
+  ];
+  var CODIGOS = { pm: PM, mm: MM, ra: RA, bug: BUG };
+  var LINHAS_ERRO = { bug: [18, 19] };
+
+  function pad(n) {
+    if (n < 10) { return ' ' + n; }
+    return '' + n;
+  }
+  function escapar(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  /* Para cada quadro: quais linhas do código estão "executando" e o valor das variáveis. */
+  function anotar(q, modo, tp) {
+    var mf = 0;
+    var mt = -1;
+    var rod = 0;
+    for (var i = 0; i < q.length; i++) {
+      var f = q[i];
+      if (f.tipo === 'rodada') { rod++; }
+      var ln = [];
+      var v = '';
+      if (modo === 'pm' || modo === 'bug') {
+        if (f.tipo === 'inicio') { ln = [2, 3]; v = 'melhorou = 1'; }
+        if (f.tipo === 'rodada') { ln = [4, 6]; v = 'melhorou = 0'; }
+        if (f.tipo === 'teste') { ln = [12, 13, 14]; v = 't = ' + f.mov + ' · fo_orig = ' + f.ref + ' · comparo ' + f.fo + ' &lt; ' + f.ref; }
+        if (f.tipo === 'aceita') { ln = [15]; v = 'melhorou = 1 (os for vão parar)'; }
+        if (f.tipo === 'desfaz') { ln = [18, 19]; v = 't = ' + f.mov + ' · restaurou: s.fo = ' + f.ref; }
+        if (f.tipo === 'bug') { ln = [18, 19]; v = 't = ' + f.mov + ' · NÃO restaurou: s.fo ficou ' + f.fo; }
+        if (f.tipo === 'fim') { ln = [4]; v = 'melhorou = 0, o while termina'; }
+      } else if (modo === 'mm') {
+        if (f.tipo === 'inicio') { ln = [2, 3]; v = 'melhorou = 1'; }
+        if (f.tipo === 'rodada') { mf = f.ref; mt = -1; ln = [4, 6, 7, 8]; v = 'melhor_fo = ' + mf + ' · melhor_t = -1'; }
+        if (f.tipo === 'teste') { ln = [12, 13, 14]; v = 't = ' + f.mov + ' · comparo ' + f.fo + ' &lt; melhor_fo (' + mf + ')'; }
+        if (f.tipo === 'desfaz') {
+          if (f.log && f.log.indexOf('novo melhor') >= 0) {
+            mf = q[i - 1].fo;
+            mt = f.mov;
+            ln = [16, 17, 19, 20];
+          } else {
+            ln = [19, 20];
+          }
+          v = 'melhor_fo = ' + mf + ' · melhor_t = ' + mt;
+        }
+        if (f.tipo === 'aceita') { ln = [22, 24, 25, 26]; v = 'melhor_t = ' + mt + ' · melhorou = 1'; }
+        if (f.tipo === 'fim') { ln = [22, 4]; v = 'melhor_t = -1 · melhorou = 0, o while termina'; }
+      } else {
+        if (f.tipo === 'inicio') { ln = [2, 3]; v = 'melhorou = 1'; }
+        if (f.tipo === 'rodada') { ln = [4, 6]; v = 'melhorou = 0'; }
+        if (f.tipo === 'teste') { ln = [9, 10, 11, 12]; v = 'comparo viz.fo (' + f.fo + ') &lt; s.fo (' + f.ref + ')'; }
+        if (f.tipo === 'aceita') { ln = [14, 15]; v = 's = viz · melhorou = 1'; }
+        if (f.tipo === 'desfaz') { ln = [16]; v = 'viz descartada · s.fo continua ' + f.ref; }
+        if (f.tipo === 'fim') { ln = [4]; v = 'melhorou = 0, o while termina'; }
+      }
+      f.ln = ln;
+      var rotulo = 'Variáveis neste passo · rodada ' + rod;
+      if (f.tipo === 'inicio') { rotulo = 'Variáveis neste passo · antes da 1ª rodada'; }
+      if (f.tipo === 'fim') { rotulo = 'Variáveis neste passo · fim (rodada ' + rod + ')'; }
+      if (f.mov >= 0 && f.tipo !== 'fim') {
+        if (modo === 'ra') {
+          rotulo += ' · sorteou a tarefa ' + f.mov;
+        } else if (f.tipo === 'aceita' && modo === 'mm') {
+          rotulo += ' · aplicando a tarefa ' + f.mov;
+        } else {
+          rotulo += ' · tarefa ' + f.mov;
+        }
+      }
+      var cab = '<div class="ft-vars-t">' + rotulo + '</div>';
+      var estilo = '';
+      if (f.tipo === 'bug') { estilo = ' style="color:#dc2626"'; }
+      if (modo === 'ra' && f.tipo === 'teste') {
+        f.vars = cab + '<div><b>s.vet_maquina</b> = [' + q[i - 1].sol.join(', ') + '] &nbsp; <b>s.fo</b> = ' + f.ref + '</div>' +
+          '<div><b>viz.vet_maquina</b> = [' + f.sol.join(', ') + '] &nbsp; <b>viz.fo</b> = ' + f.fo + '</div>' +
+          '<div class="ft-vars-x">' + v + '</div>';
+      } else {
+        var foS = f.ref;
+        if (f.tipo === 'teste' || f.tipo === 'bug') { foS = f.fo; }
+        f.vars = cab + '<div><b>s.vet_maquina</b> = [' + f.sol.join(', ') + '] &nbsp; <b>s.fo</b> = ' + foS + '</div>' +
+          '<div class="ft-vars-x"' + estilo + '>' + v + '</div>';
+      }
+    }
+  }
+
   function montar(raiz) {
     var estado = { modo: 'pm', ex: 'a', frames: [], i: 0, timer: null };
     var modoIni = raiz.getAttribute('data-modo');
@@ -249,12 +417,18 @@
         '</select></label>' +
         '<label>Exemplo <select class="js-ex"><option value="a">' + EXEMPLOS.a.nome + '</option><option value="b">' + EXEMPLOS.b.nome + '</option></select></label>' +
       '</div>' +
+      '<div class="ft-duas"><div class="ft-col-viz">' +
       '<div class="ft-palco js-palco"></div>' +
       '<div class="ft-placar">' +
         '<div><span>Nota atual (FO)</span><b class="js-foa">-</b></div>' +
         '<div><span>Nota da vizinha testada</span><b class="js-fov">-</b></div>' +
       '</div>' +
       '<div class="ft-msg js-msg"></div>' +
+      '</div><div class="ft-col-cod">' +
+        '<div class="ft-cod-t">Código executando (a linha amarela é a que está rodando agora)</div>' +
+        '<div class="ft-codigo js-cod"></div>' +
+        '<div class="ft-vars js-vars"></div>' +
+      '</div></div>' +
       '<div class="ft-botoes">' +
         '<button type="button" class="js-volta">◀ Voltar</button>' +
         '<button type="button" class="js-prox ft-prim">Próximo ▶</button>' +
@@ -282,6 +456,27 @@
     var elVel = raiz.querySelector('.js-vel');
     var elVolta = raiz.querySelector('.js-volta');
     var elProx = raiz.querySelector('.js-prox');
+    var elCod = raiz.querySelector('.js-cod');
+    var elVars = raiz.querySelector('.js-vars');
+    var linhasEl = [];
+
+    function montarCodigo() {
+      var cod = CODIGOS[estado.modo];
+      var erro = LINHAS_ERRO[estado.modo] || [];
+      var h = '';
+      for (var i = 0; i < cod.length; i++) {
+        var linha = cod[i].replace(/^( {4})+/, function (m) { return m.slice(0, m.length / 2); });
+        linha = linha.replace(/ {2,}\/\//, '  //');
+        var txt = escapar(linha);
+        var k = txt.indexOf('//');
+        if (k >= 0) { txt = txt.slice(0, k) + '<span class="ft-cm">' + txt.slice(k) + '</span>'; }
+        var cls = 'ft-ln';
+        if (erro.indexOf(i) >= 0) { cls += ' ft-ln-erro'; }
+        h += '<div class="' + cls + '"><i>' + pad(i + 1) + '</i><span class="ft-seta"></span><code>' + txt + '</code></div>';
+      }
+      elCod.innerHTML = h;
+      linhasEl = elCod.children;
+    }
     var blocos = [];
     var cargaEls = [];
     elModo.value = estado.modo;
@@ -356,6 +551,23 @@
         elFoV.textContent = '-';
       }
       elMsg.innerHTML = q.msg;
+      elVars.innerHTML = q.vars;
+      for (var li = 0; li < linhasEl.length; li++) {
+        var ativa = (q.ln.indexOf(li) >= 0);
+        linhasEl[li].className = linhasEl[li].className.replace(' ft-on', '');
+        if (ativa) { linhasEl[li].className += ' ft-on'; }
+        var seta = linhasEl[li].querySelector('.ft-seta');
+        if (ativa && li === q.ln[q.ln.length - 1]) {
+          seta.textContent = '▶';
+        } else {
+          seta.textContent = '';
+        }
+      }
+      if (q.ln.length > 0) {
+        var alvo = linhasEl[q.ln[0]].offsetTop - 60;
+        if (alvo < 0) { alvo = 0; }
+        elCod.scrollTop = alvo;
+      }
       elCont.textContent = 'Passo ' + (estado.i + 1) + ' de ' + estado.frames.length;
       elBarra.max = estado.frames.length - 1;
       elBarra.value = estado.i;
@@ -386,8 +598,10 @@
       } else {
         estado.frames = gerar(tempos(), estado.modo);
       }
+      anotar(estado.frames, estado.modo, tempos());
       estado.i = 0;
       montarPalco();
+      montarCodigo();
       desenhar();
     }
 
