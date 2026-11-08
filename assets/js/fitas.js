@@ -424,6 +424,8 @@
         '<div><span>Nota da vizinha testada</span><b class="js-fov">-</b></div>' +
       '</div>' +
       '<div class="ft-msg js-msg"></div>' +
+      '<div class="ft-log-t">Histórico dos testes</div>' +
+      '<div class="ft-log js-log"></div>' +
       '</div><div class="ft-col-cod">' +
         '<div class="ft-cod-t">Código executando (a linha amarela é a que está rodando agora)</div>' +
         '<div class="ft-codigo js-cod"></div>' +
@@ -439,8 +441,7 @@
       '</div>' +
       '<input type="range" class="ft-barra-passos js-passos" min="0" max="0" value="0" aria-label="Passo">' +
       '<div class="ft-dica">Dica: arraste a barra para ir e voltar. Com o foco aqui dentro, as setas ← → do teclado também funcionam.</div>' +
-      '<div class="ft-log-t">Histórico dos testes</div>' +
-      '<div class="ft-log js-log"></div>';
+      '';
     raiz.setAttribute('tabindex', '0');
 
     var elModo = raiz.querySelector('.js-modo');
@@ -516,7 +517,7 @@
       var total = 0;
       for (var t = 0; t < tp.length; t++) { total += tp[t]; }
       var unidade = (elPalco.clientWidth - 130) / total;
-      if (unidade > 34) { unidade = 34; }
+      if (unidade > 44) { unidade = 44; }
       var x = [70, 70];
       for (var k = 0; k < tp.length; k++) {
         var m = q.sol[k];
