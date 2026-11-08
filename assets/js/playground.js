@@ -61,7 +61,8 @@
       '<pre class="qcode">python tools/servidor_local.py</pre>' +
       'Rode na raiz do repositório (ou use <code>tools/iniciar_playground.bat</code>) e <strong>recarregue esta página</strong>: ela funciona tanto em ' +
       '<code>http://localhost:8765/pages/playground.html</code> quanto no GitHub Pages. Requer Python e g++ (MinGW). Em <code>file://</code> não roda. ' +
-      'Se o navegador perguntar sobre acesso à rede local / dispositivos neste computador, permita.';
+      'Se o navegador perguntar sobre acesso à rede local / dispositivos neste computador, permita. ' +
+      '<a href="playbook-local.html"><strong>Abrir o playbook passo a passo</strong></a>.';
     if (!url) { aviso(false, instrucoes); return; }
     fetch(url, { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (j) {
       if (j && j.ok && j.gpp) aviso(true, '<strong>Executor local conectado.</strong> Seus códigos são compilados com o g++ desta máquina.');

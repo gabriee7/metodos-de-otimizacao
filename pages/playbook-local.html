@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Passo a passo para ligar o executor local e rodar os testes do Playground pelo GitHub Pages, com diagnóstico de problemas.">
+  <title>Playbook do executor local — Métodos de Otimização</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+  <nav>
+    <a class="brand" href="../index.html">Métodos de Otimização</a>
+    <a href="guia.html">Guia</a>
+    <a href="p1-modelagem.html">P1</a>
+    <a href="p2-construtivas.html">P2</a>
+    <a href="p3-busca-local.html">P3</a>
+    <a href="problemas.html">Problemas</a>
+    <a href="laboratorio.html">Laboratório</a>
+    <a href="quiz.html">Quiz</a>
+    <a href="playground.html" class="active">Playground</a>
+    <a href="checklist.html">Checklist</a>
+    <a href="teoria.html">Teoria</a>
+  </nav>
+
+  <main>
+    <h1>Playbook: rodar o Playground apontando para o seu computador</h1>
+    <p>
+      O site no GitHub Pages é estático e não compila C++. Por isso a página do Playground chama um <strong>programa pequeno que roda no seu computador</strong>
+      (<code>tools/servidor_local.py</code>), que compila com o <strong>g++ (MinGW)</strong> instalado aqui. O código que você escreve não vai para nenhum serviço externo.
+    </p>
+
+    <div class="alert alert-info">
+      <strong>Como funciona, em uma linha:</strong> navegador (GitHub Pages) → <code>http://localhost:8765</code> (servidor local) → <code>g++</code> → resultado dos testes de volta na página.
+    </div>
+
+    <h2>1. O que você precisa (uma vez só)</h2>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th>Requisito</th><th>Como conferir</th><th>Esperado</th></tr></thead>
+      <tbody>
+        <tr><td>Windows com o repositório do projeto</td><td><code>git clone https://github.com/gabriee7/metodos-de-otimizacao.git</code><br>(ou <code>git pull</code> se já tem)</td><td>pasta com <code>tools/servidor_local.py</code></td></tr>
+        <tr><td>Python 3</td><td><code>python --version</code></td><td><code>Python 3.x.x</code></td></tr>
+        <tr><td>g++ (MinGW) no PATH</td><td><code>g++ --version</code></td><td>versão do g++ (ex.: <em>MinGW-W64 ... 13.2.0</em>)</td></tr>
+        <tr><td>Navegador atual</td><td>Chrome, Edge ou Firefox</td><td>Safari costuma bloquear o acesso ao <code>localhost</code></td></tr>
+      </tbody>
+    </table></div>
+    <div class="attn">
+      <strong>Atualize sempre:</strong> o servidor e o site evoluem juntos. Rode <code>git pull</code> na pasta do projeto antes de estudar; um servidor antigo pode recusar o site novo.
+    </div>
+
+    <h2>2. Scripts PowerShell: configurar e ligar com um comando</h2>
+    <p>
+      O projeto traz <code>tools\playground.ps1</code>, que confere o ambiente, instala o que faltar, liga e desliga o servidor e atualiza o projeto.
+      Ele <strong>não altera nada sem avisar</strong>: só a ação <code>instalar</code> mexe no sistema, e pergunta antes de cada item.
+    </p>
+
+    <h3>Como abrir o terminal na pasta do projeto</h3>
+    <div class="card">
+      <ol>
+        <li>Abra a pasta do projeto no Explorador de Arquivos.</li>
+        <li>Clique na barra de endereço, digite <code>powershell</code> e pressione Enter (abre o PowerShell já dentro da pasta).<br>
+            Alternativa: clique com o botão direito num espaço vazio da pasta → <em>Abrir no Terminal</em>.</li>
+        <li>Confirme que está na pasta certa: <code>dir tools\playground.ps1</code> deve listar o arquivo.</li>
+      </ol>
+    </div>
+
+    <h3>Comandos</h3>
+    <p>Sempre no formato abaixo. O <code>-ExecutionPolicy Bypass</code> vale <strong>só para esta execução</strong>; ele não muda a configuração do seu Windows.</p>
+    <pre class="code"><code>powershell -ExecutionPolicy Bypass -File tools\playground.ps1 diagnosticar</code></pre>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th>Ação</th><th>O que faz</th><th>Quando usar</th></tr></thead>
+      <tbody>
+        <tr><td><code>diagnosticar</code></td><td>Confere projeto, Git, Python, g++, porta 8765 e se o servidor responde. <strong>Não altera nada.</strong></td><td>Primeira vez, ou quando algo não funcionar</td></tr>
+        <tr><td><code>instalar</code></td><td>Se faltar Python ou g++, mostra o comando do <code>winget</code> e <strong>pergunta</strong> antes de executar. Depois feche e reabra o terminal.</td><td>Só se o diagnóstico acusar falta</td></tr>
+        <tr><td><code>ligar</code></td><td>Liga o servidor numa janela própria e abre o Playground no navegador. Se já estiver ligado, avisa e não cria outro. Use <code>-SemNavegador</code> para não abrir a página.</td><td>Toda vez que for estudar</td></tr>
+        <tr><td><code>parar</code></td><td>Encerra o servidor do Playground. Só mexe nele: se a porta estiver com outro programa, apenas avisa.</td><td>Ao terminar de estudar, ou antes de religar</td></tr>
+        <tr><td><code>atualizar</code></td><td>Roda <code>git pull --ff-only</code> na pasta do projeto e avisa se o servidor precisa ser religado.</td><td>Antes de estudar, de vez em quando</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>Roteiros</h3>
+    <div class="card">
+      <p><strong>Primeira vez</strong></p>
+      <pre class="code"><code>powershell -ExecutionPolicy Bypass -File tools\playground.ps1 diagnosticar
+# se acusar falta de Python ou g++:
+powershell -ExecutionPolicy Bypass -File tools\playground.ps1 instalar
+# feche e reabra o terminal, e confira de novo:
+powershell -ExecutionPolicy Bypass -File tools\playground.ps1 diagnosticar
+powershell -ExecutionPolicy Bypass -File tools\playground.ps1 ligar</code></pre>
+      <p><strong>Dia a dia</strong></p>
+      <pre class="code"><code>powershell -ExecutionPolicy Bypass -File tools\playground.ps1 atualizar
+powershell -ExecutionPolicy Bypass -File tools\playground.ps1 ligar
+# ... estudar no Playground ...
+powershell -ExecutionPolicy Bypass -File tools\playground.ps1 parar</code></pre>
+      <p><strong>Depois de atualizar o projeto com o servidor ligado</strong> (para carregar o código novo)</p>
+      <pre class="code"><code>powershell -ExecutionPolicy Bypass -File tools\playground.ps1 parar
+powershell -ExecutionPolicy Bypass -File tools\playground.ps1 ligar</code></pre>
+    </div>
+
+    <h3>O que você deve ver</h3>
+    <ul>
+      <li><code>[ OK ]</code> em verde: item conferido.</li>
+      <li><code>[ !! ]</code> em amarelo: atenção, mas não impede de usar.</li>
+      <li><code>[ XX ]</code> em vermelho: precisa corrigir (a mensagem diz como).</li>
+      <li>Depois de <code>ligar</code>, uma <strong>janela do servidor</strong> fica aberta: não feche enquanto estuda. A página deve mostrar a faixa verde <em>"Executor local conectado"</em>.</li>
+    </ul>
+
+    <h3>Atalho opcional: um comando curto</h3>
+    <p>Para não digitar a linha inteira, crie uma função no seu perfil do PowerShell (uma vez só). Ajuste o caminho da pasta do projeto:</p>
+    <pre class="code"><code>notepad $PROFILE    # se der erro de arquivo inexistente: New-Item -Force $PROFILE</code></pre>
+    <p>Cole no arquivo que abrir, salve e abra um terminal novo:</p>
+    <pre class="code"><code>function pg { powershell -ExecutionPolicy Bypass -File "E:\Documents\UFES\MetodoOtimizacao\tools\playground.ps1" @args }</code></pre>
+    <p>Depois, de qualquer pasta: <code>pg diagnosticar</code>, <code>pg ligar</code>, <code>pg parar</code>, <code>pg atualizar</code>.</p>
+
+    <div class="attn">
+      <strong>Se o Windows disser que o script está bloqueado</strong> (acontece quando o projeto veio de um arquivo .zip baixado):
+      rode <code>Unblock-File tools\playground.ps1</code> e tente de novo. Se a política da sua máquina ainda impedir, use a alternativa manual da seção 3.
+    </div>
+
+    <h2>3. Alternativa manual: ligar sem o script</h2>
+    <div class="card">
+      <ol>
+        <li>Abra a pasta do projeto no Explorador de Arquivos.</li>
+        <li>Dê dois cliques em <code>tools\iniciar_playground.bat</code>. Uma janela preta abre e <strong>fica aberta</strong>: é o servidor.<br>
+            Alternativa, no terminal, na raiz do projeto: <code>python tools/servidor_local.py</code></li>
+        <li>A janela deve mostrar o caminho do <code>g++</code> e <code>Servidor em http://localhost:8765/...</code>. Se mostrar <em>NÃO ENCONTRADO</em>, vá para o diagnóstico (seção 5).</li>
+      </ol>
+    </div>
+
+    <h2>4. Usar</h2>
+    <div class="card">
+      <ol>
+        <li>Abra <a href="https://gabriee7.github.io/metodos-de-otimizacao/pages/playground.html">o Playground no GitHub Pages</a> (ou <code>http://localhost:8765/pages/playground.html</code>, que funciona igual).</li>
+        <li>No topo deve aparecer a faixa verde <strong>"Executor local conectado"</strong>. Se aparecer amarela, veja o diagnóstico.</li>
+        <li>Se o navegador perguntar sobre <strong>acesso à rede local / a dispositivos neste computador</strong>, clique em <strong>Permitir</strong>.</li>
+        <li>Escreva a função da etapa, clique em <strong>▶ Executar testes</strong> e leia o resultado.</li>
+        <li>Ao terminar de estudar, volte à janela preta e pressione <strong>Ctrl+C</strong> (ou feche a janela).</li>
+      </ol>
+    </div>
+
+    <h2>5. Diagnóstico: se algo não funcionar</h2>
+    <p>Comece pelo teste de 10 segundos: com o servidor ligado, abra <a href="http://localhost:8765/ping"><code>http://localhost:8765/ping</code></a>. O esperado é:</p>
+    <pre class="code"><code>{"ok": true, "gpp": true}</code></pre>
+
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th>Sintoma</th><th>Causa provável</th><th>O que fazer</th></tr></thead>
+      <tbody>
+        <tr><td><em>"A conexão com localhost foi recusada"</em> / faixa amarela</td><td>O servidor não está ligado (ou a janela foi fechada)</td><td>Ligue com <code>playground.ps1 ligar</code> (ou o <code>iniciar_playground.bat</code>) e <strong>recarregue</strong> a página.</td></tr>
+        <tr><td><code>/ping</code> mostra <code>"gpp": false</code> ou a janela diz <em>NÃO ENCONTRADO</em></td><td>O g++ não está no PATH</td><td>Adicione a pasta <code>bin</code> do MinGW ao PATH do Windows, <strong>feche e reabra</strong> o terminal/.bat e confira com <code>g++ --version</code>.</td></tr>
+        <tr><td><code>python</code> não é reconhecido</td><td>Python não instalado ou fora do PATH</td><td>Instale o Python 3 marcando <em>Add Python to PATH</em>, ou use <code>py tools\servidor_local.py</code>.</td></tr>
+        <tr><td>O servidor não inicia: porta ocupada</td><td>Outro servidor (ou uma janela antiga) já usa a 8765</td><td>Feche a janela antiga. Para achar o processo: <code>netstat -ano | findstr :8765</code> e <code>taskkill /F /PID &lt;número&gt;</code>. Atenção: no Windows dois programas podem ocupar a mesma porta e o <strong>antigo</strong> continua respondendo.</td></tr>
+        <tr><td>Faixa amarela só no GitHub Pages, mas <code>localhost:8765/pages/playground.html</code> funciona</td><td>O navegador bloqueou o acesso do site público ao localhost</td><td>Permita o acesso à rede local quando o navegador perguntar (ícone de cadeado na barra de endereço → permissões). No Brave, desative os Shields para o site. Se nada resolver, use o endereço <code>localhost:8765</code>.</td></tr>
+        <tr><td>Erro 403 ao executar</td><td>Servidor desatualizado, ou a página não está em <code>gabriee7.github.io</code>/<code>localhost</code></td><td><code>git pull</code>, reinicie o servidor. O servidor só aceita esses dois endereços de propósito.</td></tr>
+        <tr><td>"O programa não terminou em 5 segundos"</td><td>Laço infinito no seu código</td><td>Veja a condição de parada, o <code>melhorou</code> e o uso de <code>&lt;</code>/<code>&gt;</code> estrito.</td></tr>
+        <tr><td>Mudei o código do projeto e a página não reflete</td><td>Cache do navegador</td><td><code>Ctrl+F5</code> na página.</td></tr>
+        <tr><td>Antivírus/firewall pergunta algo</td><td>Programa novo escutando na rede</td><td>O servidor escuta só em <code>127.0.0.1</code> (este computador). Pode permitir para redes privadas; ele não é acessível de fora.</td></tr>
+      </tbody>
+    </table></div>
+
+    <h2>6. Segurança (por que é seguro deixar ligado)</h2>
+    <ul>
+      <li>Escuta só em <code>127.0.0.1</code>: outros computadores da rede não alcançam.</li>
+      <li>Só aceita pedidos de <code>https://gabriee7.github.io</code> e do próprio <code>localhost</code>; qualquer outra página aberta no navegador recebe 403.</li>
+      <li>Roda apenas o código que <strong>você</strong> escreveu no Playground, com limite de tempo (5 s) e de tamanho.</li>
+      <li>Mesmo assim: <strong>desligue ao terminar</strong> e não cole nele código de origem desconhecida (ele compila e executa de verdade).</li>
+    </ul>
+
+    <h2>7. Resumo para colar na parede</h2>
+    <pre class="code"><code>PowerShell na pasta do projeto, e então:
+1) powershell -ExecutionPolicy Bypass -File tools\playground.ps1 atualizar
+2) powershell -ExecutionPolicy Bypass -File tools\playground.ps1 ligar     -> abre o Playground
+3) faixa verde "Executor local conectado"; permitir "rede local" se o navegador perguntar
+4) estudar; ao final: ... playground.ps1 parar
+Algo errado?  ... playground.ps1 diagnosticar
+Sem PowerShell: duplo clique em tools\iniciar_playground.bat (e Ctrl+C na janela ao terminar)
+Teste rápido: http://localhost:8765/ping  ->  {"ok": true, "gpp": true}</code></pre>
+
+    <div class="pagenav">
+      <a href="playground.html">← Playground</a>
+      <a href="checklist.html">Checklist →</a>
+    </div>
+  </main>
+
+  <footer>
+    Material de estudo pessoal — Métodos de Otimização.
+  </footer>
+
+  <script src="../assets/js/site.js"></script>
+</body>
+</html>
