@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Como ler um enunciado da disciplina: trechos das provas P1, P2 e P3 anotados, mostrando o que cada parte significa e a resposta que ela dá para o código.">
+  <title>Lendo um enunciado — Métodos de Otimização</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+  <nav>
+    <a class="brand" href="../index.html">Métodos de Otimização</a>
+    <a href="do-zero.html">Do zero</a>
+    <a href="guia.html">Guia</a>
+    <a href="lendo-enunciado.html" class="active">Enunciados</a>
+    <a href="p1-modelagem.html">P1</a>
+    <a href="p2-construtivas.html">P2</a>
+    <a href="p3-busca-local.html">P3</a>
+    <a href="problemas.html">Problemas</a>
+    <a href="laboratorio.html">Laboratório</a>
+    <a href="quiz.html">Quiz</a>
+    <a href="playground.html">Playground</a>
+    <a href="checklist.html">Checklist</a>
+    <a href="teoria.html">Teoria</a>
+  </nav>
+
+  <main>
+    <h1>Lendo um enunciado: onde está cada resposta</h1>
+    <p>
+      O enunciado já contém <strong>quase todas as respostas</strong> das 5 perguntas do <a href="guia.html#perguntas">Guia</a>. O truque é saber <em>onde</em> procurar cada uma.
+      Abaixo estão trechos das provas <strong>P1</strong> (PRVC), <strong>P2</strong> (PRCP) e <strong>P3</strong> (UMApHCP, hubs), <strong>resumidos com as minhas palavras</strong>
+      e anotados. Abra o PDF da prova ao lado e confira o texto original de cada linha.
+    </p>
+    <div class="alert alert-danger">
+      <strong>Ponto de atenção permanente:</strong> o problema da prova <u>pode ser qualquer um</u>. Os três exemplos servem para você <em>aprender a leitura</em>,
+      não para presumir o problema. Veja a Parte 5 para treinar num enunciado novo.
+    </div>
+
+    <h2>Parte 1: a anatomia que se repete em todas as provas</h2>
+    <p>Nas três provas o texto vem na mesma ordem. Saiba o que extrair de cada bloco:</p>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th>Bloco do enunciado</th><th>O que extrair</th><th>Vira o quê no código</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Objetivo</strong> (primeira frase)</td><td>O que a prova cobra: modelagem (P1), construtivas (P2) ou buscas locais (P3)</td><td>Quais funções você vai escrever</td></tr>
+        <tr><td><strong>Contexto</strong> (aplicações, história)</td><td>Quase nada</td><td>Nada. Pode ler rápido</td></tr>
+        <tr><td><strong>Definição formal</strong> (grafo, nós, custos)</td><td>Quais dados existem (n, p, matriz de custos...)</td><td>As variáveis globais do código-base</td></tr>
+        <tr><td><strong>Viabilidade</strong> ("para que uma solução seja viável...")</td><td>As <u>regras</u> que toda solução precisa cumprir</td><td><strong>O que o movimento tem que preservar</strong></td></tr>
+        <tr><td><strong>Função objetivo</strong> (fórmula e "minimizar/maximizar")</td><td>A nota e a direção</td><td>O <code>calcular_fo</code> e o sinal <code>&lt;</code>/<code>&gt;</code></td></tr>
+        <tr><td><strong>Formato da instância</strong></td><td>Como o arquivo de dados é organizado</td><td>O <code>ler_dados</code> (geralmente pronto)</td></tr>
+        <tr><td><strong>Código fornecido</strong> ("já estão definidas...")</td><td>Descrição da <code>struct Solucao</code></td><td>A solução: o que o vetor guarda e o que significa cada posição</td></tr>
+        <tr><td><strong>Questões e pesos</strong></td><td>O que escrever e quanto vale cada uma</td><td>A ordem em que você trabalha</td></tr>
+        <tr><td><strong>Observações</strong></td><td>Regras de entrega e dados de conferência</td><td>Assinaturas, nomes de arquivo, valores de referência</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>A estrutura que o professor repete (lista de exercícios)</h3>
+    <p>A lista de exercícios da disciplina mostra o formato de <strong>cada prova</strong>, e ele se mantém, mudando só o problema:</p>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th>Prova</th><th>O que pede</th></tr></thead>
+      <tbody>
+        <tr><td>P1</td><td>Ler a instância, criar a <code>struct</code> da solução, escrever a solução, calcular a FO</td></tr>
+        <tr><td>P2</td><td>Gerar vizinha, construtiva aleatória, construtiva gulosa, construtiva aleatória-gulosa</td></tr>
+        <tr><td><strong>P3</strong></td><td><strong>Busca local randômica, de primeira melhora e de melhor melhora</strong> (pesos de referência 0,7, 0,8 e 1,0)</td></tr>
+        <tr><td>P4</td><td>Simulated Annealing, Busca Tabu, GRASP, Algoritmo Genético</td></tr>
+        <tr><td>Final</td><td>Todas as anteriores</td></tr>
+      </tbody>
+    </table></div>
+    <p>Em todas: métodos <code>void</code>, solução recebida por referência, arquivos com nome e sobrenome.</p>
+
+    <h2>Parte 2: P3 (a mais importante), UMApHCP, anotada</h2>
+    <p>
+      Este é o enunciado da <strong>Prova III de referência</strong> que está nos arquivos do curso (p-hub centro). Cada linha é um trecho, o que ele <em>é</em> e a resposta que ele dá.
+    </p>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th>Trecho (resumido)</th><th>O que é</th><th>Resposta que dá</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>"Objetivo": implementar heurísticas de refinamento (buscas locais) para o problema dos hubs.</td>
+          <td>Bloco <strong>Objetivo</strong></td>
+          <td>É a P3: você escreve <strong>3 buscas locais</strong>. Não precisa construir solução nem ler dados.</td>
+        </tr>
+        <tr>
+          <td>Todo nó precisa ser atendido por pelo menos um hub; entre nós que não são hubs não há transporte direto; só se instalam <em>p</em> hubs.</td>
+          <td>Descrição do problema e <strong>restrição</strong></td>
+          <td>Há uma quantidade <u>fixa</u> de hubs. Qualquer mexida precisa manter <em>exatamente p</em> hubs.</td>
+        </tr>
+        <tr>
+          <td>Decidir quais nós serão hubs, calcular o custo de transporte entre todos os pares, e <strong>minimizar o maior</strong> desses custos.</td>
+          <td><strong>Função objetivo</strong></td>
+          <td>FO = <u>máximo</u> sobre os pares. <strong>Minimiza</strong> (<code>&lt;</code>). Como é um máximo, desconfie de <em>platôs</em> e de avaliação cara (olha todos os pares).</td>
+        </tr>
+        <tr>
+          <td>Fórmula do custo de um par (i, j): coleta até o hub k, mais transferência entre hubs k e l, mais distribuição do hub l até j, cada parte com um fator.</td>
+          <td><strong>Dado de cálculo</strong></td>
+          <td>Já vem implementada no <code>calcular_fo</code> do código-base. Você <u>chama</u> a função, não reescreve a fórmula.</td>
+        </tr>
+        <tr>
+          <td>Os fatores valem 1, 0,75 e 1, indicando 25% de economia entre hubs.</td>
+          <td><strong>Parâmetros</strong></td>
+          <td>Constantes dentro do código-base. Nada a fazer.</td>
+        </tr>
+        <tr>
+          <td>"Para uma solução ser viável": exatamente <em>p</em> nós são hubs e todo caminho passa por pelo menos um hub.</td>
+          <td><strong>Viabilidade</strong></td>
+          <td>É a mesma ideia do <a href="problemas.html#ex-c">Exercício C</a> (escolher exatamente k): <strong>virar um só nó para hub quebra a regra</strong>. O movimento certo é uma <strong>troca</strong>.</td>
+        </tr>
+        <tr>
+          <td>Formato da instância: n e p na primeira linha, depois as coordenadas x e y de cada nó.</td>
+          <td><strong>Formato do arquivo</strong></td>
+          <td>Leitura pronta. Serve só para você entender os dados (n nós, p hubs).</td>
+        </tr>
+        <tr>
+          <td>A solução é um vetor de n posições: as <em>p</em> primeiras guardam os ids dos hubs, as demais (n − p) os nós que não são hubs.</td>
+          <td><strong>Descrição da <code>struct Solucao</code></strong></td>
+          <td><strong>Solução</strong> definida. Movimento natural: trocar um hub (posição &lt; p) por um não-hub (posição ≥ p). Vizinhança = p·(n − p). Com n = 20 e p = 4, são <strong>64 vizinhos</strong>.</td>
+        </tr>
+        <tr>
+          <td>Quatro instâncias de teste, com a melhor FO conhecida de cada.</td>
+          <td><strong>Dados de conferência</strong></td>
+          <td>Seu resultado deve ficar <u>acima</u> desses valores (minimiza). Se ficar <u>abaixo</u>, há um bug: solução inviável ou <code>fo</code> desatualizada.</td>
+        </tr>
+        <tr>
+          <td>Questão 1 (0,7) randômica; Questão 2 (0,8) primeira melhora; Questão 3 (1,0) melhor melhora.</td>
+          <td><strong>Questões e pesos</strong></td>
+          <td>Faça nesta ordem, compilando a cada uma. A mais pesada (MM) vem por último: garanta as outras antes.</td>
+        </tr>
+        <tr>
+          <td>Escreva "nas áreas indicadas" do código.</td>
+          <td>Instrução</td>
+          <td>Só mexa nos lugares marcados. O <code>.h</code> traz as <strong>assinaturas</strong>: copie os nomes e parâmetros <u>exatamente</u>, inclusive a grafia.</td>
+        </tr>
+        <tr>
+          <td>Métodos sem retorno, solução recebida por parâmetro (referência); arquivos renomeados com nome e sobrenome.</td>
+          <td><strong>Observações</strong></td>
+          <td><code>void</code> e <code>Solucao&amp; s</code>. Entrega: <code>nome_sobrenome.cpp</code> e <code>.h</code>.</td>
+        </tr>
+      </tbody>
+    </table></div>
+
+    <div class="attn">
+      <strong>Dois pontos de atenção reais desta prova:</strong>
+      <ul>
+        <li>O <code>.h</code> da referência declara a randômica com um segundo parâmetro (o número de iterações) e usa a grafia do professor para o nome. Copie a assinatura do <u>seu</u> <code>.h</code>, não a deste site.</li>
+        <li>No PDF desta prova, a fórmula da distância aparece com um sinal de <strong>menos</strong> entre os dois quadrados (na P1 aparece com <strong>mais</strong>, que é o correto para distância euclidiana). Provável erro de digitação. Na dúvida, o <strong>código-base é a referência</strong>, porque é ele que roda.</li>
+      </ul>
+    </div>
+
+    <h3>As 5 perguntas, respondidas só com o enunciado</h3>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th>Pergunta</th><th>Resposta</th><th>De onde veio</th></tr></thead>
+      <tbody>
+        <tr><td>1. O que muda entre vizinhas?</td><td>Um hub sai e um não-hub entra</td><td>"exatamente p" + descrição do vetor</td></tr>
+        <tr><td>2. Como enumero?</td><td><code>for</code> sobre as posições dos hubs × <code>for</code> sobre as dos não-hubs</td><td>descrição do vetor (dois blocos)</td></tr>
+        <tr><td>3. Maximiza ou minimiza?</td><td>Minimiza (<code>&lt;</code>)</td><td>"minimizar o maior custo"</td></tr>
+        <tr><td>4. Como desfaço?</td><td>Repetir a troca (voltar as duas posições) e a <code>fo</code></td><td>o movimento é uma troca</td></tr>
+        <tr><td>5. Chamei <code>calcular_fo</code>?</td><td>Sim, depois de cada troca</td><td>regra geral</td></tr>
+      </tbody>
+    </table></div>
+
+    <h2>Parte 3: P2 (PRCP) anotada</h2>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th>Trecho (resumido)</th><th>O que é</th><th>Resposta que dá</th></tr></thead>
+      <tbody>
+        <tr><td>Objetivo: implementar vizinhança e construtivas para o problema de rotular pontos num mapa.</td><td>Bloco <strong>Objetivo</strong></td><td>É a P2: vizinha e 3 construtivas, sem busca local.</td></tr>
+        <tr><td>Cada ponto tem posições candidatas (de 1 a 8) onde o rótulo pode ficar.</td><td>Definição dos dados</td><td>Cada ponto tem <em>m</em> opções, e você escolhe uma.</td></tr>
+        <tr><td>Aqui as sobreposições são permitidas e o objetivo é <strong>maximizar</strong> os pontos livres (sem sobreposição).</td><td><strong>Função objetivo</strong></td><td><strong>Maximiza</strong> (<code>&gt;</code>). Um exemplo no próprio texto mostra FO = 0 (há conflito) e FO = 2 (nenhum conflito): use para testar sua compreensão.</td></tr>
+        <tr><td>Para ser viável, todo ponto precisa estar rotulado em <strong>exatamente uma</strong> posição candidata.</td><td><strong>Viabilidade</strong></td><td>Todo ponto sempre tem uma posição. O movimento <em>troca</em> a posição de <u>um</u> ponto (não tira nenhuma).</td></tr>
+        <tr><td>A solução é um vetor com n posições, cada uma com um valor entre 0 e m − 1.</td><td><strong>Descrição da struct</strong></td><td><strong>Solução</strong> definida. Vizinhança = n·(m − 1) (cada ponto muda para uma das outras posições).</td></tr>
+        <tr><td>Questão 1 (0,5) vizinha; 2 (0,5) aleatória; 3 (0,75) gulosa; 4 (0,75) aleatória-gulosa.</td><td><strong>Questões e pesos</strong></td><td>A vizinha vem primeiro porque as outras partem dela.</td></tr>
+      </tbody>
+    </table></div>
+
+    <h2>Parte 4: P1 (PRVC) anotada</h2>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th>Trecho (resumido)</th><th>O que é</th><th>Resposta que dá</th></tr></thead>
+      <tbody>
+        <tr><td>Objetivo: <strong>iniciar a modelagem</strong> do problema de roteamento de veículos com capacidade.</td><td>Bloco <strong>Objetivo</strong></td><td>É a P1: <u>sem</u> heurística. Ler, <code>struct</code> e FO.</td></tr>
+        <tr><td>Um depósito, clientes com demanda e uma frota com capacidade limitada; minimizar o custo total.</td><td>Descrição e <strong>FO</strong></td><td>Minimiza. A FO é a soma dos custos das rotas.</td></tr>
+        <tr><td>Lista de restrições de viabilidade: todos atendidos, um veículo por cliente, rotas começam e terminam no depósito, frota e capacidade respeitadas.</td><td><strong>Viabilidade</strong></td><td>Cada item da lista que a modelagem não garante vira uma <strong>penalização</strong> na FO (a questão 3 pede isso).</td></tr>
+        <tr><td>Formato da instância: nº de clientes e de veículos, depois uma linha por nó (id, x, y, demanda), e por fim as capacidades.</td><td><strong>Formato do arquivo</strong></td><td>É o que a questão 1 (leitura) pede: a ordem do arquivo define a ordem do <code>fscanf</code>.</td></tr>
+        <tr><td>Questão 1 (1,0) leitura; 2 (0,5) <code>struct</code>; 3 (1,0) FO com penalização.</td><td><strong>Questões e pesos</strong></td><td>Três funções; as variáveis de dados são <strong>globais</strong>.</td></tr>
+        <tr><td>Tratar até 500 clientes e 100 veículos; usar a instância "toy" para depurar.</td><td><strong>Observações</strong></td><td>Os vetores precisam ter tamanho para <u>500</u> e <u>100</u>. Teste primeiro na toy.</td></tr>
+      </tbody>
+    </table></div>
+
+    <h2>Parte 5: palavras-chave do enunciado e o que fazer com elas</h2>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th>Se você lê...</th><th>Significa</th><th>No código</th></tr></thead>
+      <tbody>
+        <tr><td>"maximizar" / "minimizar"</td><td>A direção da nota</td><td><code>&gt;</code> ou <code>&lt;</code> em todas as buscas</td></tr>
+        <tr><td>"exatamente k" / "exatamente p"</td><td>Uma contagem fixa</td><td>Virar um bit quebra a regra: use <strong>troca</strong></td></tr>
+        <tr><td>"cada X em exatamente um Y"</td><td>Atribuição (um valor por elemento)</td><td>Vetor indexado por X; movimento = mudar o Y de <u>um</u> X</td></tr>
+        <tr><td>"o maior custo", "o pior caso" (um <em>máximo</em>)</td><td>FO tipo max</td><td>Cuidado com <strong>platôs</strong> (vizinhos iguais) e <code>&lt;</code> estrito</td></tr>
+        <tr><td>"a soma dos custos"</td><td>FO tipo soma</td><td>Dá para atualizar só a parte que mudou (bônus de eficiência)</td></tr>
+        <tr><td>"penalização" / "inviabilidades"</td><td>Regras não garantidas pela estrutura</td><td>Termo extra na FO, com peso grande</td></tr>
+        <tr><td>"uma solução viável"</td><td>As regras a respeitar</td><td>O movimento deve levar viável → viável</td></tr>
+        <tr><td>"vetor de n posições" (descrição da struct)</td><td>O que o vetor guarda</td><td>Define o movimento e os <code>for</code></td></tr>
+        <tr><td>"melhor solução conhecida"</td><td>Valor de referência</td><td>Seu resultado não pode ser <em>melhor</em> que ele: se for, há bug</td></tr>
+        <tr><td>"por parâmetro (referência)", "sem retorno"</td><td>Assinatura</td><td><code>void f(Solucao&amp; s)</code></td></tr>
+        <tr><td>"nas áreas indicadas"</td><td>Onde escrever</td><td>Não altere o resto do código</td></tr>
+      </tbody>
+    </table></div>
+
+    <h2>Parte 6: o roteiro de leitura (5 minutos, com caneta)</h2>
+    <div class="card">
+      <ol>
+        <li><strong>Sublinhe o Objetivo</strong> e descubra qual prova é (modelagem, construtivas ou buscas).</li>
+        <li><strong>Circule "maximizar" ou "minimizar"</strong>. Escreva ao lado: <code>&gt;</code> ou <code>&lt;</code>.</li>
+        <li><strong>Ache a viabilidade</strong> (a lista de regras ou a frase "para ser viável"). Escreva: "o movimento precisa manter ___".</li>
+        <li><strong>Ache a descrição do vetor</strong> da solução. Escreva: "posição i guarda ___".</li>
+        <li><strong>Deduza o movimento</strong>: a menor mudança que mantém as regras. Conte as vizinhas.</li>
+        <li><strong>Leia as Questões</strong> e os pesos. Defina a ordem.</li>
+        <li><strong>Leia as Observações</strong>: assinatura, nome dos arquivos, valores de referência.</li>
+        <li>Só então abra o código e confira com o <code>gerar_vizinha</code> e o <code>calcular_fo</code> do professor.</li>
+      </ol>
+    </div>
+
+    <h2>Agora é a sua vez: um enunciado novo</h2>
+    <p>
+      <em>(Enunciado inventado para treino.)</em> Escolher <strong>p cidades</strong> entre n para instalar centros de atendimento. Cada cidade é atendida pelo centro mais próximo.
+      O objetivo é <strong>minimizar a maior distância</strong> de uma cidade até o seu centro. A solução é um vetor de n posições: as p primeiras guardam os ids dos centros e as demais, as outras cidades.
+    </p>
+    <p>Aplique o roteiro: solução, movimento, quantos vizinhos, sinal, como desfaz, e uma armadilha. Só depois abra a resposta.</p>
+    <details class="card">
+      <summary><strong>Ver a resposta</strong></summary>
+      <ul>
+        <li><strong>Solução:</strong> o vetor descrito; <code>fo</code> = maior distância de uma cidade ao centro mais próximo.</li>
+        <li><strong>Viabilidade:</strong> exatamente p centros (mesma ideia do exercício C e dos hubs).</li>
+        <li><strong>Movimento:</strong> trocar um centro (posição &lt; p) por uma cidade comum (posição ≥ p). Virar uma só cidade quebraria o "exatamente p".</li>
+        <li><strong>Vizinhança:</strong> p·(n − p). Com n = 10 e p = 3, são 21 vizinhos.</li>
+        <li><strong>Sinal:</strong> minimiza (<code>&lt;</code>).</li>
+        <li><strong>Desfaz:</strong> repetir a troca (voltar as duas posições) e restaurar a <code>fo</code>.</li>
+        <li><strong>Armadilha:</strong> a FO é um <em>máximo</em>: trocar um centro que não atende a cidade mais distante pode não mudar a FO (platô), e o <code>&lt;</code> estrito rejeita o empate.</li>
+      </ul>
+      <p>Repare: é o <strong>mesmo molde</strong> dos hubs. O problema parece outro, mas as respostas saem do enunciado do mesmo jeito.</p>
+    </details>
+
+    <div class="alert alert-success">
+      <strong>Próximo passo:</strong> treine no <a href="playground.html">Playground</a> e teste o raciocínio no <a href="quiz.html">Quiz</a>.
+    </div>
+
+    <div class="pagenav">
+      <a href="guia.html">← Guia</a>
+      <a href="p3-busca-local.html">P3: Busca local →</a>
+    </div>
+  </main>
+
+  <footer>
+    Material de estudo pessoal — Métodos de Otimização. Os trechos dos enunciados estão resumidos; o texto original está nos PDFs das provas.
+  </footer>
+
+  <script src="../assets/js/site.js"></script>
+</body>
+</html>

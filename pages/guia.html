@@ -13,6 +13,7 @@
     <a class="brand" href="../index.html">Métodos de Otimização</a>
     <a href="do-zero.html">Do zero</a>
     <a href="guia.html" class="active">Guia</a>
+    <a href="lendo-enunciado.html">Enunciados</a>
     <a href="p1-modelagem.html">P1</a>
     <a href="p2-construtivas.html">P2</a>
     <a href="p3-busca-local.html">P3</a>
@@ -45,6 +46,7 @@
         <strong>Importante saber disso antes de prosseguir.</strong> Este Guia supõe que você já sabe o que é <em>solução</em>, <em>FO</em>, <em>movimento</em> e <em>vizinha</em>,
         e já viu uma busca local funcionando na mão. Se ainda não, pare aqui e faça o mergulho do zero:
         <a href="do-zero.html"><strong>Comece aqui: o assunto do zero</strong></a> (20 minutos, com exemplo feito no papel). Depois volte para cá.
+        Quando terminar o Guia, veja <a href="lendo-enunciado.html">como ler um enunciado</a>: trechos reais das provas anotados, mostrando onde está cada resposta.
       </div>
 
       <p>
@@ -64,6 +66,10 @@
         <div class="phase-head"><span class="phase-tag">1</span><span class="phase-title">A ideia em uma frase</span><span class="phase-line"></span></div>
         <div class="phase-body">
           <div class="alert alert-info">
+            <strong>Imagine um guarda-roupa já arrumado de qualquer jeito.</strong> Você não desmonta tudo para recomeçar: troca uma peça de lugar,
+            olha se ficou melhor e, se ficou, mantém. Se não, volta como estava. Repete até cansar de achar melhoras.
+          </div>
+          <div class="alert alert-info">
             Você já tem uma solução <strong>completa e viável</strong> (a construtiva da P2 gerou uma).
             A busca local tenta <strong>melhorá-la mexendo um pouquinho de cada vez</strong>:
             se o mexer melhorou, fica; se não melhorou, descarta.
@@ -80,6 +86,11 @@
       <div class="phase" id="funciona">
         <div class="phase-head"><span class="phase-tag">2</span><span class="phase-title">Por que funciona — e onde trava</span><span class="phase-line"></span></div>
         <div class="phase-body">
+          <div class="alert alert-info">
+            <strong>Imagine-se numa montanha na neblina</strong>, enxergando só um passo à frente. Você sempre sobe. Em algum ponto nenhum passo sobe mais,
+            e você para, achando que chegou ao topo. Mas pode ser só um <u>morrinho</u>, e o Everest estar do outro lado do vale.
+            Esse morrinho é o <strong>ótimo local</strong>; o Everest é o <strong>ótimo global</strong>.
+          </div>
           <p>
             Soluções parecidas têm FO parecida. Um movimento pequeno raramente destrói uma solução
             boa e às vezes a melhora. Repetir isso é uma <strong>escalada de morro</strong>: só se dão passos que
@@ -109,6 +120,11 @@
       <div class="phase" id="pecas">
         <div class="phase-head"><span class="phase-tag">3</span><span class="phase-title">As 4 peças de toda busca local</span><span class="phase-line"></span></div>
         <div class="phase-body">
+          <div class="alert alert-info">
+            <strong>Imagine um jogo de tabuleiro.</strong> Para jogar você precisa saber: (1) <b>onde estão as peças agora</b> (solução),
+            (2) <b>o que é uma jogada</b> (movimento), (3) <b>todas as jogadas possíveis</b> (vizinhança) e (4) <b>como saber se a jogada foi boa</b> (melhorou?).
+            Troque o jogo (xadrez, damas) e as 4 perguntas continuam as mesmas; só as respostas mudam. É isso que "problema novo" significa.
+          </div>
           <div class="pecas">
             <div class="peca"><b>1. Solução</b><span>O que eu guardo? (a struct + a <code>fo</code>)</span></div>
             <div class="peca"><b>2. Movimento</b><span>Qual a <em>menor</em> mudança possível numa solução?</span></div>
@@ -139,6 +155,10 @@
       <div class="phase" id="perguntas">
         <div class="phase-head"><span class="phase-tag">4</span><span class="phase-title">As 5 perguntas (problema novo? faça nesta ordem)</span><span class="phase-line"></span></div>
         <div class="phase-body">
+          <div class="alert alert-info">
+            <strong>Imagine uma receita de bolo.</strong> Misturar, assar e esperar esfriar nunca mudam. Só mudam os ingredientes. Estas 5 perguntas são os
+            ingredientes: responda as 5 para o problema da prova e as 3 funções saem quase sozinhas.
+          </div>
           <div class="step"><div class="step-num">1</div><div><strong>O que muda entre duas soluções vizinhas?</strong><br>Defina o movimento: 1 ponto, 1 tarefa, 2 cidades. <em>Por quê:</em> sem isso não há vizinhança, e sem vizinhança não há busca.</div></div>
           <div class="step"><div class="step-num">2</div><div><strong>Como eu enumero todos os movimentos?</strong><br>São os laços <code>for</code> da primeira/melhor melhora. A randômica usa o <code>gerar_vizinha</code> (sorteio). <em>Por quê:</em> PM e MM precisam <u>varrer</u> a vizinhança inteira, em ordem, sem esquecer nenhum.</div></div>
           <div class="step"><div class="step-num">3</div><div><strong>Maximizo ou minimizo?</strong><br>Escolha <code>&gt;</code> ou <code>&lt;</code> e escreva um comentário ao lado. <em>Por quê:</em> errar o sinal compila e roda — e piora a solução em silêncio.</div></div>
@@ -150,6 +170,11 @@
       <div class="phase" id="metodos">
         <div class="phase-head"><span class="phase-tag">5</span><span class="phase-title">Os 3 métodos: só diferem em quais vizinhos olhar e quando aceitar</span><span class="phase-line"></span></div>
         <div class="phase-body">
+          <div class="alert alert-info">
+            <strong>Imagine uma vitrine de 20 tênis e o seu tênis atual como nota a bater.</strong>
+            <b>Randômica:</b> aponta um par de olhos fechados, prova, leva se for melhor. <b>Primeira melhora:</b> prova na ordem e leva o primeiro melhor que o seu.
+            <b>Melhor melhora:</b> prova os 20, anota o melhor e só depois leva esse. Os três só diferem em <u>como escolhem o par a provar</u>.
+          </div>
           <div class="grid-3">
             <div class="card"><div class="card-title">Randômica (RA)</div><p><em>"Tento ao acaso."</em> Sorteia <code>iter</code> vizinhos; aceita os que melhoram; repete até uma rodada sem melhora.</p></div>
             <div class="card"><div class="card-title">Primeira melhora (PM)</div><p><em>"Aceito o primeiro que presta."</em> Varre a vizinhança em ordem e aplica o primeiro melhor; recomeça a varredura.</p></div>
@@ -187,6 +212,10 @@ MELHOR melhora:    avalia os 12 vizinhos, aplica só ponto3→pos3 (FO 4) ...
       <div class="phase" id="sinal">
         <div class="phase-head"><span class="phase-tag">6</span><span class="phase-title">Maximizar × minimizar (a pegadinha nº 1)</span><span class="phase-line"></span></div>
         <div class="phase-body">
+          <div class="alert alert-info">
+            <strong>Imagine um golfe e uma corrida.</strong> No golfe, vence quem faz <u>menos</u> tacadas. Na corrida de pontos, vence quem faz <u>mais</u>.
+            Se você se confundir e comemorar o placar errado, joga o jogo inteiro na direção contrária. O código não reclama: ele só piora a solução em silêncio.
+          </div>
           <div class="t-outer">
             <table class="tab">
               <thead><tr><th>Problema</th><th>Objetivo</th><th>"Melhorou" é...</th></tr></thead>
@@ -208,6 +237,11 @@ MELHOR melhora:    avalia os 12 vizinhos, aplica só ponto3→pos3 (FO 4) ...
       <div class="phase" id="desfazer">
         <div class="phase-head"><span class="phase-tag">7</span><span class="phase-title">Desfazer o movimento (3 jeitos)</span><span class="phase-line"></span></div>
         <div class="phase-body">
+          <div class="alert alert-info">
+            <strong>Imagine provar uma camisa na loja.</strong> Se não serviu, você a devolve ao cabide como estava. Desfazer é isso.
+            Os 3 jeitos são 3 formas de "devolver": <b>tirar uma xerox antes</b> e mexer na xerox (cópia), <b>anotar a etiqueta antes</b> e recolocar (restaurar valor),
+            ou <b>fazer o movimento ao contrário</b> (inverso). E lembre: junto com a camisa, devolva também a <u>nota</u> (<code>fo</code>) que você anotou.
+          </div>
           <div class="t-outer">
             <table class="tab">
               <thead><tr><th>Jeito</th><th>Como</th><th>Quando usar</th></tr></thead>
@@ -228,6 +262,10 @@ MELHOR melhora:    avalia os 12 vizinhos, aplica só ponto3→pos3 (FO 4) ...
       <div class="phase" id="erros">
         <div class="phase-head"><span class="phase-tag">8</span><span class="phase-title">Erros que custam nota</span><span class="phase-line"></span></div>
         <div class="phase-body">
+          <div class="alert alert-info">
+            <strong>Imagine uma checklist de decolagem de avião.</strong> O piloto já sabe voar, mas confere a lista porque um item esquecido derruba o voo.
+            Aqui é igual: estes erros não são falta de inteligência, são itens esquecidos. Passe os olhos nesta tabela antes de entregar a prova.
+          </div>
           <div class="t-outer">
             <table class="tab">
               <thead><tr><th>Erro</th><th>Sintoma</th><th>Correção</th></tr></thead>

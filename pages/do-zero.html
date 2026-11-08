@@ -13,6 +13,7 @@
     <a class="brand" href="../index.html">Métodos de Otimização</a>
     <a href="do-zero.html" class="active">Do zero</a>
     <a href="guia.html">Guia</a>
+    <a href="lendo-enunciado.html">Enunciados</a>
     <a href="p1-modelagem.html">P1</a>
     <a href="p2-construtivas.html">P2</a>
     <a href="p3-busca-local.html">P3</a>
@@ -36,7 +37,25 @@
       um código-base do professor e <strong>3 funções</strong> para você escrever (randômica, primeira melhora, melhor melhora). Aqui você aprende a lógica que serve para qualquer problema.
     </div>
 
+    <div class="alert alert-success">
+      <strong>Sobre a prova, uma imagem.</strong> Pense na prova de direção: o carro e o trajeto mudam, mas o roteiro é o mesmo (ligar, arrancar, fazer baliza, estacionar).
+      O professor faz igual. O problema muda, mas o roteiro é sempre: <u>ler o código dele → achar as 4 peças → escrever as 3 funções</u>.
+    </div>
+
     <h2>Parte 1: o que a prova está pedindo</h2>
+    <div class="alert alert-info">
+      <strong>Imagine uma montanha na neblina.</strong> Você quer chegar ao ponto mais alto, mas a neblina é tão densa que só enxerga os passos ao seu redor.
+      O que você faz? Olha um passo para cada lado, <u>se algum for mais alto, vai para lá</u>, e repete. Quando nenhum passo à volta sobe mais, você para.
+      <br>Isso é a busca local inteira. O resto da página só dá nome às coisas:
+      <ul>
+        <li><strong>Sua posição</strong> = a solução.</li>
+        <li><strong>A altura</strong> = a nota (a FO).</li>
+        <li><strong>Um passo</strong> = o movimento.</li>
+        <li><strong>Os lugares a um passo</strong> = as vizinhas.</li>
+        <li><strong>Parar num morrinho</strong> achando que é o Everest = o ótimo local (você está no mais alto <em>da sua volta</em>, não do mapa).</li>
+      </ul>
+    </div>
+
     <div class="card">
       <p><strong>O problema.</strong> Existem muitas formas de resolver uma coisa, e cada uma tem uma <strong>nota</strong>. Queremos a de melhor nota. Testar todas leva tempo demais.</p>
       <p><strong>O método, a busca local.</strong> Em quatro passos:</p>
@@ -47,6 +66,16 @@
         <li>Repito até não conseguir melhorar.</li>
       </ol>
       <p>Só isso. Os três nomes da prova (<strong>randômica</strong>, <strong>primeira melhora</strong>, <strong>melhor melhora</strong>) são três jeitos de decidir <em>qual mexida testar primeiro</em>.</p>
+    </div>
+
+    <div class="alert alert-info">
+      <strong>Imagine que você quer trocar de tênis e entra numa loja com 20 pares na vitrine.</strong> O seu tênis atual é a nota a bater.
+      <ul>
+        <li><strong>Primeira melhora:</strong> prova os pares na ordem da vitrine e <u>leva o primeiro que for melhor que o seu</u>. Não olha o resto. Rápido, mas pode perder um par ainda melhor lá no fim.</li>
+        <li><strong>Melhor melhora:</strong> prova <u>todos os 20</u>, anota qual foi o melhor e só então leva esse. Mais demorado, mais cuidadoso.</li>
+        <li><strong>Randômica:</strong> de olhos fechados, aponta um par qualquer, prova, e leva se for melhor. Repete várias vezes.</li>
+      </ul>
+      Depois de levar um par, o <em>novo</em> tênis vira o que você calça, e você começa a provar de novo a partir dele. Para quando nenhum par da loja é melhor que o seu.
     </div>
 
     <h3>As 5 palavras, com um exemplo</h3>
@@ -64,6 +93,12 @@
         <tr><td><strong>Vizinhança</strong></td><td>Todas as vizinhas possíveis</td><td>As 4 soluções que mudam uma só tarefa</td></tr>
       </tbody>
     </table></div>
+
+    <div class="alert alert-info">
+      <strong>Imagine a mesma coisa com as 4 tarefas.</strong> Você é o chefe de uma oficina com 2 mecânicos (as máquinas) e 4 serviços (as tarefas).
+      O dia só termina quando o <u>último mecânico</u> acaba, então o que importa é o mecânico mais ocupado. A <strong>solução</strong> é "quem faz qual serviço".
+      A <strong>nota</strong> é "quantas horas o mecânico mais ocupado trabalha" (menos é melhor). O <strong>movimento</strong> é passar <u>um</u> serviço de um mecânico para o outro.
+    </div>
 
     <h2>Parte 2: fazendo na mão (o ponto-chave)</h2>
     <p><strong>Solução inicial:</strong> <code>[0,0,0,0]</code>. Tudo na máquina 0: carga 5+4+3+2 = 14. <strong>FO = 14</strong>.</p>
@@ -119,6 +154,11 @@
         <tr><td>4</td><td><strong>A função <code>gerar_vizinha</code></strong></td><td><strong>Qual é o movimento</strong> (já vem pronta)</td><td>Muda a máquina de <u>uma</u> tarefa</td></tr>
       </tbody>
     </table></div>
+    <div class="alert alert-info">
+      <strong>Imagine que o professor te entrega um carro já montado e pede só uma coisa: "faça o carro andar".</strong>
+      Você não precisa entender o motor inteiro. Precisa achar <u>onde fica a chave, o volante e o acelerador</u>. Aqui é igual: não leia o código todo,
+      procure só as 4 peças da tabela. A mais importante é a <code>gerar_vizinha</code>, porque ela mostra <em>qual passo</em> o professor considera uma mexida.
+    </div>
     <div class="attn">
       O item 4 diz tudo: o que <code>gerar_vizinha</code> muda é o <strong>movimento</strong>, e as suas buscas precisam fazer <u>a mesma mudança</u>.
     </div>
@@ -132,6 +172,10 @@
       <li><strong>Como desfaço a mexida?</strong> (voltar tudo o que mudei, inclusive a <code>fo</code>)</li>
       <li><strong>Lembrei de recalcular a <code>fo</code>?</strong> (chamar <code>calcular_fo</code> depois de mexer)</li>
     </ol>
+    <div class="alert alert-info">
+      <strong>Imagine uma receita de bolo.</strong> O passo a passo é sempre o mesmo (misturar, assar, esperar esfriar). O que muda de bolo para bolo são os ingredientes.
+      Aqui o passo a passo são as 3 funções, e os "ingredientes" são essas 5 respostas. Responda as 5 e o código sai.
+    </div>
 
     <h2>Parte 4: o código da primeira melhora, linha por linha</h2>
     <p>Para o exemplo (4 tarefas, 2 máquinas):</p>
@@ -164,6 +208,12 @@
     }
 }</code></pre>
 
+    <div class="alert alert-info">
+      <strong>Imagine que você está provando camisas numa loja.</strong> Veste uma (aplica o movimento), olha no espelho (calcula a nota). Gostou mais que da sua? Fica com ela.
+      Não gostou? <u>Tira e devolve ao cabide</u> (desfaz). Esquecer de devolver é o erro clássico: você sai da loja vestindo a camisa ruim sem perceber.
+      E a <code>fo_original</code> é a <u>foto</u> que você tirou de como estava antes, para poder comparar e voltar.
+    </div>
+
     <h3>Por que cada coisa existe</h3>
     <div class="t-outer"><table class="tab">
       <thead><tr><th>Trecho</th><th>Para quê</th></tr></thead>
@@ -181,6 +231,14 @@
       <li><strong>Melhor melhora:</strong> o mesmo esqueleto, com 3 diferenças. (1) Guarda <code>melhor_tarefa</code>, <code>melhor_maquina</code> e <code>melhor_fo</code> (que começa em <code>s.fo</code>). (2) Dentro dos <code>for</code> <strong>sempre desfaz</strong>, melhorando ou não. (3) Só <u>depois</u> dos <code>for</code> aplica a melhor encontrada.</li>
       <li><strong>Randômica:</strong> troca os <code>for</code> por um laço de sorteios. Copia <code>s</code> para <code>vizinha</code>, chama <code>gerar_vizinha(vizinha)</code>, calcula a <code>fo</code> e, se for melhor, copia de volta para <code>s</code>.</li>
     </ul>
+
+    <div class="alert alert-info">
+      <strong>Dois detalhes que viram prova, com imagem:</strong>
+      <ul>
+        <li><strong><code>&lt;</code> e não <code>&lt;=</code>.</strong> Imagine duas pessoas da mesma altura numa fila querendo "ficar na frente de quem é mais baixo". Se empate contasse, elas trocariam de lugar para sempre. Só a melhora <em>de verdade</em> conta, senão o laço nunca termina.</li>
+        <li><strong><code>Solucao&amp; s</code> (com &amp;).</strong> Imagine que você empresta o <u>seu caderno</u> a um amigo. Com o <code>&amp;</code> ele rabisca no <u>caderno original</u> e você vê. Sem o <code>&amp;</code> você entrega uma <u>xerox</u>: ele rabisca à vontade e o seu caderno continua intacto. Por isso a busca precisa do <code>&amp;</code>: o resultado tem que ficar no original.</li>
+      </ul>
+    </div>
 
     <h2>Parte 5: o C++ que apareceu, traduzido</h2>
     <div class="t-outer"><table class="tab">
@@ -214,7 +272,7 @@
     </details>
 
     <div class="alert alert-success">
-      <strong>Próximo passo:</strong> vá para o <a href="guia.html">Guia</a>. Ele organiza o que você acabou de ver. Depois treine escrevendo as funções no <a href="playground.html">Playground</a>.
+      <strong>Próximo passo:</strong> vá para o <a href="guia.html">Guia</a>, que organiza o que você acabou de ver. Depois aprenda a <a href="lendo-enunciado.html">ler um enunciado</a> (trechos das provas anotados) e treine no <a href="playground.html">Playground</a>.
     </div>
 
     <div class="pagenav">
