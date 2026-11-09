@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Exercício no formato da P3: escreva a gerar_vizinha e as três buscas locais do UMApHCP (hubs), com esqueleto comentado, tabela de conferência e gabarito.">
+  <title>Exercício P3 (hubs) — Métodos de Otimização</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+  <nav>
+    <a class="brand" href="../index.html">Métodos de Otimização</a>
+    <a href="do-zero.html">Do zero</a>
+    <a href="guia.html">Guia</a>
+    <a href="lendo-enunciado.html">Enunciados</a>
+    <a href="p1-modelagem.html">P1</a>
+    <a href="p2-construtivas.html">P2</a>
+    <a href="p3-busca-local.html" class="active">P3</a>
+    <a href="problemas.html">Problemas</a>
+    <a href="laboratorio.html">Laboratório</a>
+    <a href="quiz.html">Quiz</a>
+    <a href="playground.html">Playground</a>
+    <a href="checklist.html">Checklist</a>
+    <a href="teoria.html">Teoria</a>
+  </nav>
+
+  <main>
+    <h1>Exercício P3: refinamento no UMApHCP (hubs)</h1>
+    <p>
+      Treino no formato da prova: você escreve <strong>quatro funções</strong> e confere o resultado com números conhecidos.
+      Antes, passe pelos simuladores da <a href="p3-busca-local.html">página P3</a> (visão Debug).
+    </p>
+    <div class="alert alert-info">
+      <strong>Base:</strong> use os arquivos da pasta <code>prova3</code> da disciplina (<code>3.cpp</code>, <code>prova3.h</code> e <code>inst1.txt</code>), com 5 nós e <code>p = 3</code> hubs.
+      Escreva seu código na área "INSIRA SEU CÓDIGO AQUI". Todas as funções são <code>void</code> e recebem <code>Solucao&amp; s</code> por referência.
+    </div>
+
+    <h2>O que fazer</h2>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th>Questão</th><th>Pontos</th><th>Função</th></tr></thead>
+      <tbody>
+        <tr><td>0</td><td>–</td><td><code>gerar_vizinha(s)</code>: troca um hub sorteado por um não-hub sorteado. A prova não a entrega pronta.</td></tr>
+        <tr><td>1</td><td>0,7</td><td><code>heuristica_randonica(s, INTER)</code></td></tr>
+        <tr><td>2</td><td>0,8</td><td><code>heuristica_PrimeiraMelhora(s)</code></td></tr>
+        <tr><td>3</td><td>1,0</td><td><code>heuristica_MelhorMelhora(s)</code></td></tr>
+      </tbody>
+    </table></div>
+
+    <h2>Antes de codar (2 minutos, no papel)</h2>
+    <ol>
+      <li>Qual é a <strong>solução</strong>? (O vetor <code>vet_sol</code>.)</li>
+      <li>Qual é o <strong>movimento</strong>?</li>
+      <li>Quantas <strong>vizinhas</strong> existem na <code>inst1</code>?</li>
+      <li>A FO é de <strong>minimizar ou maximizar</strong>? Qual operador você usa?</li>
+      <li>Como você <strong>descarta</strong> uma vizinha ruim?</li>
+    </ol>
+
+    <h2>Esqueleto (complete os <code>___</code>)</h2>
+    <pre class="code"><code>// ---- Q0 ----
+void gerar_vizinha(Solucao&amp; s)
+{
+    int pos_hub   = rand() % ___;                    // sorteia entre os hubs
+    int pos_nohub = ___ + rand() % (___ - ___);      // sorteia entre os não-hubs
+    int no_que_sai = s.vet_sol[pos_hub];             // guarda para poder trocar
+    s.vet_sol[pos_hub]   = s.vet_sol[pos_nohub];
+    s.vet_sol[pos_nohub] = no_que_sai;
+}
+
+// ---- Q1 ----
+void heuristica_randonica(Solucao&amp; s, int INTER)
+{
+    while (1)
+    {
+        int achou_melhora = 0;                       // 0 = rodada sem melhora
+        for (int tentativa = 0; tentativa &lt; INTER; tentativa++)
+        {
+            memcpy(&amp;vizinha, &amp;s, sizeof(Solucao));   // trabalha na cópia
+            ___(vizinha);                            // sorteia a troca
+            calcular_fo(vizinha);
+            if (vizinha.fo ___ s.fo)                 // o sinal certo
+            {
+                memcpy(&amp;s, &amp;vizinha, sizeof(Solucao));   // anda
+                achou_melhora = 1;
+            }
+        }
+        if (!achou_melhora) break;                   // rodada sem melhora: para
+    }
+}
+
+// ---- Q2 ----
+void heuristica_PrimeiraMelhora(Solucao&amp; s)
+{
+    INICIO: ;                                        // para o goto recomeçar
+    for (int pos_hub = 0; pos_hub &lt; ___; pos_hub++)
+        for (int pos_nohub = ___; pos_nohub &lt; ___; pos_nohub++)
+        {
+            memcpy(&amp;vizinha, &amp;s, sizeof(Solucao));
+            /* troque pos_hub com pos_nohub na vizinha (3 linhas) */
+            calcular_fo(vizinha);
+            if (vizinha.fo ___ s.fo)
+            {
+                memcpy(&amp;s, &amp;vizinha, sizeof(Solucao));
+                goto ___;                            // 1ª melhora: recomeça
+            }
+        }
+}
+
+// ---- Q3 ----
+void heuristica_MelhorMelhora(Solucao&amp; s)
+{
+    while (1)
+    {
+        Solucao melhor;
+        memcpy(&amp;melhor, &amp;s, sizeof(Solucao));        // melhor começa igual a s
+        for (int pos_hub = 0; pos_hub &lt; ___; pos_hub++)
+            for (int pos_nohub = ___; pos_nohub &lt; ___; pos_nohub++)
+            {
+                memcpy(&amp;vizinha, &amp;s, sizeof(Solucao));
+                /* troque pos_hub com pos_nohub na vizinha */
+                calcular_fo(vizinha);
+                if (vizinha.fo ___ melhor.fo)        // compara com a MELHOR vista
+                    memcpy(&amp;melhor, &amp;vizinha, sizeof(Solucao));
+            }
+        if (melhor.fo ___ s.fo) memcpy(&amp;s, &amp;melhor, sizeof(Solucao));  // aplica só a melhor
+        else break;                                  // nenhuma melhorou: acabou
+    }
+}</code></pre>
+
+    <h2>Como conferir (resultado determinístico)</h2>
+    <p>Na <code>main</code>, troque <code>criar_solucao(s)</code> por uma solução fixa e calcule a nota:</p>
+    <pre class="code"><code>int v[5] = {0, 1, 2, 3, 4};
+for (int k = 0; k &lt; 5; k++) s.vet_sol[k] = v[k];
+calcular_fo(s);                                      // espere ≈ 28292,27</code></pre>
+    <p>As seis vizinhas de <code>[0,1,2,3,4]</code> (3 hubs × 2 não-hubs):</p>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th>Troca (posição do hub ↔ posição do não-hub)</th><th>Vetor resultante</th><th><code>fo</code></th></tr></thead>
+      <tbody>
+        <tr><td>0 ↔ 3</td><td><code>3,1,2,0,4</code></td><td>29701,96</td></tr>
+        <tr><td>0 ↔ 4</td><td><code>4,1,2,3,0</code></td><td>28072,10</td></tr>
+        <tr><td>1 ↔ 3</td><td><code>0,3,2,1,4</code></td><td>27877,07</td></tr>
+        <tr><td>1 ↔ 4</td><td><code>0,4,2,3,1</code></td><td>27877,07</td></tr>
+        <tr><td>2 ↔ 3</td><td><code>0,1,3,2,4</code></td><td>27877,07</td></tr>
+        <tr><td>2 ↔ 4</td><td><code>0,1,4,3,2</code></td><td>27877,07</td></tr>
+      </tbody>
+    </table></div>
+    <ul>
+      <li><strong>Primeira melhora:</strong> termina em <strong>27877,07</strong> com <code>4,1,0,3,2</code>. Pega a troca 0↔4 (28072,10), recomeça e chega lá.</li>
+      <li><strong>Melhor melhora:</strong> termina em <strong>27877,07</strong> com <code>0,3,2,1,4</code>. Nos empates fica o primeiro encontrado, porque o <code>&lt;</code> é estrito.</li>
+      <li><strong>Randômica:</strong> depende dos sorteios (e do <code>srand</code>). Confira só que <code>s.fo</code> <u>nunca piora</u> e que termina abaixo de 28292,27. Com a <code>calcular_fo</code> do professor podem aparecer valores menores que 27877,07 (veja o aviso abaixo).</li>
+    </ul>
+    <div class="alert alert-danger">
+      <strong>Atenção: a <code>calcular_fo</code> do professor tem uma peculiaridade.</strong> A matriz global <code>mat_custo</code> <u>não é zerada</u> a cada chamada, então a nota de uma mesma solução pode
+      mudar conforme as chamadas anteriores. Conferi compilando o código dele: os números da tabela valem <strong>nesta ordem de chamadas</strong> (a <code>fo</code> inicial e depois as vizinhas na ordem dos dois <code>for</code>).
+      Por exemplo, os hubs {0, 1, 4} valem de fato 24982,96, mas a função reporta 27877,07 para <code>4,1,0,3,2</code> nesse caminho. Se você varrer em outra ordem, a nota final pode diferir.
+      <br><strong>Na prova:</strong> não tente "consertar" a <code>calcular_fo</code> nem confie que a FO final bate com a da tabela do PDF (inst1: 24574,90, hubs {0, 2, 4}). Use as invariantes: a <code>fo</code> nunca piora e a lógica de cada método está certa.
+    </div>
+
+    <h2>Autocorreção (cinco perguntas)</h2>
+    <ul>
+      <li>A <code>fo</code> final de cada método ficou ≤ 28292,27?</li>
+      <li>Você usou <code>&lt;</code> e não <code>&lt;=</code>? (Empate não é melhora.)</li>
+      <li>A melhor melhora compara com <code>melhor.fo</code> e não com <code>s.fo</code>?</li>
+      <li>Ao achar uma melhora, a primeira melhora dá <code>goto INICIO</code>? Continuar varrendo está errado.</li>
+      <li><code>s</code> só mudou depois de você decidir aceitar a vizinha?</li>
+    </ul>
+
+    <details>
+      <summary><strong>Gabarito</strong> (abra só depois de tentar)</summary>
+      <pre class="code"><code>void gerar_vizinha(Solucao&amp; s)
+{
+    int pos_hub   = rand() % num_hub;                       // um hub qualquer
+    int pos_nohub = num_hub + rand() % (num_nos - num_hub); // um não-hub qualquer
+    int no_que_sai = s.vet_sol[pos_hub];
+    s.vet_sol[pos_hub]   = s.vet_sol[pos_nohub];
+    s.vet_sol[pos_nohub] = no_que_sai;
+}
+
+void heuristica_randonica(Solucao&amp; s, int INTER)
+{
+    while (1)
+    {
+        int achou_melhora = 0;
+        for (int tentativa = 0; tentativa &lt; INTER; tentativa++)
+        {
+            memcpy(&amp;vizinha, &amp;s, sizeof(Solucao));
+            gerar_vizinha(vizinha);
+            calcular_fo(vizinha);
+            if (vizinha.fo &lt; s.fo)                  // minimiza: menor é melhor
+            {
+                memcpy(&amp;s, &amp;vizinha, sizeof(Solucao));
+                achou_melhora = 1;
+            }
+        }
+        if (!achou_melhora) break;
+    }
+}
+
+void heuristica_PrimeiraMelhora(Solucao&amp; s)
+{
+    INICIO: ;
+    for (int pos_hub = 0; pos_hub &lt; num_hub; pos_hub++)
+        for (int pos_nohub = num_hub; pos_nohub &lt; num_nos; pos_nohub++)
+        {
+            memcpy(&amp;vizinha, &amp;s, sizeof(Solucao));
+            int no_que_sai = vizinha.vet_sol[pos_hub];
+            vizinha.vet_sol[pos_hub]   = vizinha.vet_sol[pos_nohub];
+            vizinha.vet_sol[pos_nohub] = no_que_sai;
+            calcular_fo(vizinha);
+            if (vizinha.fo &lt; s.fo)
+            {
+                memcpy(&amp;s, &amp;vizinha, sizeof(Solucao));
+                goto INICIO;
+            }
+        }
+}
+
+void heuristica_MelhorMelhora(Solucao&amp; s)
+{
+    while (1)
+    {
+        Solucao melhor;
+        memcpy(&amp;melhor, &amp;s, sizeof(Solucao));
+        for (int pos_hub = 0; pos_hub &lt; num_hub; pos_hub++)
+            for (int pos_nohub = num_hub; pos_nohub &lt; num_nos; pos_nohub++)
+            {
+                memcpy(&amp;vizinha, &amp;s, sizeof(Solucao));
+                int no_que_sai = vizinha.vet_sol[pos_hub];
+                vizinha.vet_sol[pos_hub]   = vizinha.vet_sol[pos_nohub];
+                vizinha.vet_sol[pos_nohub] = no_que_sai;
+                calcular_fo(vizinha);
+                if (vizinha.fo &lt; melhor.fo)
+                    memcpy(&amp;melhor, &amp;vizinha, sizeof(Solucao));
+            }
+        if (melhor.fo &lt; s.fo) memcpy(&amp;s, &amp;melhor, sizeof(Solucao));
+        else break;
+    }
+}</code></pre>
+      <p>
+        <strong>Respostas das 5 perguntas:</strong> solução = <code>vet_sol</code> (os <code>num_hub</code> primeiros são hubs);
+        movimento = trocar um hub por um não-hub (o enunciado exige exatamente <code>p</code> hubs);
+        vizinhas = <code>num_hub × (num_nos − num_hub)</code> = 6 na <code>inst1</code>;
+        sinal = <code>&lt;</code>, pois minimiza;
+        descarte = jogar fora a cópia, porque <code>s</code> nunca foi mexida.
+      </p>
+    </details>
+
+    <div class="alert alert-success">
+      <strong>Próximo passo:</strong> digite no <a href="playground.html">Playground</a>, compare com a tabela e depois faça o <a href="quiz.html">Quiz</a>.
+    </div>
+
+    <div class="pagenav">
+      <a href="p3-busca-local.html">← P3: Busca local</a>
+      <a href="problemas.html">Outros problemas →</a>
+    </div>
+  </main>
+
+  <footer>
+    Material de estudo pessoal — Métodos de Otimização. Exercício autoral no formato da P3; os arquivos da prova ficam na pasta da disciplina.
+  </footer>
+
+  <script src="../assets/js/site.js"></script>
+</body>
+</html>
