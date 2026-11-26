@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Aulas diretas para a P3: a ideia da busca local ligada ao texto da prova, o molde genérico das três buscas, como achar e interpretar os três marcadores em qualquer problema, e como funciona a gerar_vizinha e o rand.">
+  <title>Aulas P3 — Métodos de Otimização</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+  <nav>
+    <a class="brand" href="../index.html">Métodos de Otimização</a>
+    <a href="do-zero.html">Do zero</a>
+    <a href="guia.html">Guia</a>
+    <a href="lendo-enunciado.html">Enunciados</a>
+    <a href="p1-modelagem.html">P1</a>
+    <a href="p2-construtivas.html">P2</a>
+    <a href="p3-busca-local.html" class="active">P3</a>
+    <a href="problemas.html">Problemas</a>
+    <a href="laboratorio.html">Laboratório</a>
+    <a href="quiz.html">Quiz</a>
+    <a href="playground.html">Playground</a>
+    <a href="checklist.html">Checklist</a>
+    <a href="teoria.html">Teoria</a>
+  </nav>
+
+  <main>
+    <h1>Aulas P3: do zero ao molde que serve para qualquer problema</h1>
+    <p>
+      Quatro aulas curtas, na ordem. Os exemplos usam a P3 de referência (a pasta <code>prova3</code>, problema dos <strong>hubs</strong>), mas o foco é o <strong>molde</strong>,
+      que se aplica a qualquer problema. Depois, treine no <a href="exercicio-p3.html">Exercício P3</a>.
+    </p>
+    <div class="alert alert-danger">
+      <strong>Aviso permanente:</strong> o problema da prova pode não ser os hubs. O que se repete é o método; os nomes, o movimento e o sinal mudam. Aula 3 ensina a descobri-los.
+    </div>
+
+    <!-- ===================== AULA 1 ===================== -->
+    <h2 id="aula1">Aula 1: a ideia, ligada ao texto da prova</h2>
+    <p>
+      <strong>Imagine</strong> que você está num prédio, no escuro, e quer chegar ao andar mais baixo. Você só sente os degraus ao redor: apalpa um, se for mais baixo você vai para ele,
+      se não, ignora. Quando nenhum vizinho é mais baixo, você para: é o <strong>ótimo local</strong>. As três buscas só mudam <em>como</em> você apalpa e <em>quando</em> você anda.
+    </p>
+
+    <h3>As 4 peças, cada uma ligada a uma linha real</h3>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th>Peça</th><th>Onde está na prova</th><th>Nos hubs</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Solução</strong></td><td><code>prova3.h</code>, linhas 7–10, e o PDF ("as p primeiras indicando os hubs")</td><td><code>s.vet_sol</code>: os <code>num_hub</code> primeiros são os hubs; os outros, não-hubs</td></tr>
+        <tr><td><strong>Movimento</strong></td><td>PDF: "exatamente p nós devem ser selecionados como hubs"</td><td>trocar 1 hub por 1 não-hub</td></tr>
+        <tr><td><strong>Vizinhança</strong></td><td>conta sobre o movimento</td><td><code>num_hub × (num_nos − num_hub)</code> (6 na <code>inst1</code>)</td></tr>
+        <tr><td><strong>Nota</strong></td><td>PDF: a FO "deverá ser minimizada"; <code>prova3.h</code>, linha 10</td><td><code>s.fo</code> (<code>double</code>); menor é melhor, então <code>&lt;</code></td></tr>
+      </tbody>
+    </table></div>
+<pre class="code"><code>vet_sol = [ 0  1  2 | 3  4 ]      hubs = 0, 1, 2      não-hubs = 3, 4
+trocar a posição 0 com a posição 3:
+vizinha = [ 3  1  2 | 0  4 ]      continua com 3 hubs</code></pre>
+    <div class="attn">
+      <strong>Por que troca e não "mudar um só"?</strong> <strong>Imagine</strong> um time de 3 titulares: para mudar a escalação você tira um e põe um reserva. Pôr um sem tirar ninguém deixaria 4 em campo, e o time seria inválido.
+      Na prova, "exatamente k" significa <u>troca</u>.
+    </div>
+
+    <h3>O que o professor entrega e o que você escreve (<code>3.cpp</code>)</h3>
+    <ul>
+      <li>Linha 16: <code>Solucao vizinha;</code> já existe como <strong>variável global</strong>. Você a usa nas três funções.</li>
+      <li>Linhas 25–26: a <code>main</code> já chama <code>criar_solucao(s)</code> e <code>calcular_fo(s)</code>: quando sua função recebe <code>s</code>, a nota <code>s.fo</code> <u>já está calculada</u>.</li>
+      <li>Linha 52: <code>// INSIRA SEU CÓDIGO AQUI</code>. É onde seu código vai.</li>
+      <li>As assinaturas estão no <code>prova3.h</code>, linhas 20–24. Todas as heurísticas são <code>void</code> e recebem <code>Solucao&amp; s</code> por referência.</li>
+    </ul>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th>Questão</th><th>Pontos</th><th>O que pede</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>0,7</td><td>busca local randômica</td></tr>
+        <tr><td>2</td><td>0,8</td><td>busca local de primeira melhora</td></tr>
+        <tr><td>3</td><td>1,0</td><td>busca local de melhor melhora</td></tr>
+      </tbody>
+    </table></div>
+
+    <!-- ===================== AULA 2 ===================== -->
+    <h2 id="aula2">Aula 2: o molde genérico das três buscas</h2>
+    <p>
+      <strong>Imagine</strong> uma receita em que só trocam os ingredientes: o modo de preparo é sempre o mesmo. Em qualquer problema, só <strong>três pedaços</strong> mudam.
+      Nos códigos abaixo eu os marco com <code>&lt;...&gt;</code>:
+    </p>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th>Marcador</th><th>Pergunta que você responde</th></tr></thead>
+      <tbody>
+        <tr><td><code>&lt;PERCORRER&gt;</code></td><td>Quais movimentos existem? (os <code>for</code> que geram todos)</td></tr>
+        <tr><td><code>&lt;MOVER&gt;</code></td><td>Como aplico um movimento na <code>vizinha</code>? (as linhas que mexem no vetor)</td></tr>
+        <tr><td><code>&lt;MELHOR&gt;</code></td><td>Qual é o sinal? (<code>&lt;</code> se minimiza, <code>&gt;</code> se maximiza)</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>O molde: 3 linhas que se repetem</h3>
+<pre class="code"><code>memcpy(&amp;vizinha, &amp;s, sizeof(Solucao));   // 1) copia: s fica intacta
+&lt;MOVER&gt;                                   // 2) mexe só na cópia
+calcular_fo(vizinha);                     // 3) dá a nota à cópia</code></pre>
+    <p><strong>Imagine</strong> um rascunho: você copia a folha original, rabisca no rascunho e só passa a limpo se ficou melhor. A original nunca é rabiscada. Se a vizinha não melhora, <u>não há nada para desfazer</u>.</p>
+
+    <h3>1) Primeira melhora: aceita a primeira vizinha melhor e recomeça</h3>
+<pre class="code"><code>void heuristica_PrimeiraMelhora(Solucao&amp; s)
+{
+    INICIO: ;                                    // marca onde recomeçar
+    &lt;PERCORRER todos os movimentos&gt;              // for(...) for(...)
+    {
+        memcpy(&amp;vizinha, &amp;s, sizeof(Solucao));   // copia
+        &lt;MOVER na vizinha&gt;                       // move
+        calcular_fo(vizinha);                    // nota
+        if (vizinha.fo &lt;MELHOR&gt; s.fo)            // melhorou?
+        {
+            memcpy(&amp;s, &amp;vizinha, sizeof(Solucao));   // sim: s vira a vizinha
+            goto INICIO;                             // e recomeça a varredura
+        }
+    }
+}</code></pre>
+
+    <h3>2) Melhor melhora: olha todas, guarda a melhor, só no fim anda</h3>
+<pre class="code"><code>void heuristica_MelhorMelhora(Solucao&amp; s)
+{
+    while (1)
+    {
+        Solucao melhor;
+        memcpy(&amp;melhor, &amp;s, sizeof(Solucao));        // melhor começa igual a s
+        &lt;PERCORRER todos os movimentos&gt;
+        {
+            memcpy(&amp;vizinha, &amp;s, sizeof(Solucao));   // copia
+            &lt;MOVER na vizinha&gt;                       // move
+            calcular_fo(vizinha);                    // nota
+            if (vizinha.fo &lt;MELHOR&gt; melhor.fo)       // melhor que a MELHOR vista?
+                memcpy(&amp;melhor, &amp;vizinha, sizeof(Solucao));   // guarda
+        }
+        if (melhor.fo &lt;MELHOR&gt; s.fo)                 // alguma vizinha venceu s?
+            memcpy(&amp;s, &amp;melhor, sizeof(Solucao));    // aplica só a melhor
+        else
+            break;                                   // nenhuma venceu: acabou
+    }
+}</code></pre>
+    <p>A diferença da primeira melhora: <strong>não anda dentro do laço</strong>. Compara com <code>melhor.fo</code> (não com <code>s.fo</code>) e só no fim decide.</p>
+
+    <h3>3) Randômica: em vez de percorrer, sorteia</h3>
+<pre class="code"><code>void heuristica_randonica(Solucao&amp; s, int INTER)
+{
+    while (1)
+    {
+        int achou_melhora = 0;                       // 0 = nada melhorou nesta rodada
+        for (int tentativa = 0; tentativa &lt; INTER; tentativa++)
+        {
+            memcpy(&amp;vizinha, &amp;s, sizeof(Solucao));   // copia
+            gerar_vizinha(vizinha);                  // &lt;MOVER&gt; com sorteio
+            calcular_fo(vizinha);                    // nota
+            if (vizinha.fo &lt;MELHOR&gt; s.fo)
+            {
+                memcpy(&amp;s, &amp;vizinha, sizeof(Solucao));
+                achou_melhora = 1;
+            }
+        }
+        if (!achou_melhora) break;                   // rodada sem melhora: para
+    }
+}</code></pre>
+    <p>Aqui o <code>&lt;PERCORRER&gt;</code> vira o <code>for</code> de <code>INTER</code>, e o <code>&lt;MOVER&gt;</code> vira <code>gerar_vizinha</code> (veja a Aula 4).</p>
+
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th></th><th>Randômica</th><th>Primeira melhora</th><th>Melhor melhora</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Laços</strong></td><td><code>for</code> de <code>INTER</code></td><td>todos os movimentos</td><td>todos os movimentos</td></tr>
+        <tr><td><strong>Compara com</strong></td><td><code>s.fo</code></td><td><code>s.fo</code></td><td><code>melhor.fo</code></td></tr>
+        <tr><td><strong>Anda</strong></td><td>na hora, se melhora</td><td>na hora, e <code>goto INICIO</code></td><td>só depois dos laços</td></tr>
+        <tr><td><strong>Para quando</strong></td><td>rodada sem melhora</td><td>varredura sem melhora</td><td><code>melhor.fo</code> não vence <code>s.fo</code></td></tr>
+      </tbody>
+    </table></div>
+
+    <!-- ===================== AULA 3 ===================== -->
+    <h2 id="aula3">Aula 3: como achar e interpretar os três marcadores em qualquer problema</h2>
+    <p>
+      Esta é a ponte entre o molde e o problema novo. Siga as 4 perguntas, <u>nesta ordem</u>, sempre com o enunciado e o <code>.h</code> abertos.
+    </p>
+
+    <h3>Pergunta 1: o que é a solução? (leia a <code>struct</code>)</h3>
+    <p>Procure a <code>struct Solucao</code> no <code>.h</code> e o comentário ao lado do vetor. Anote <strong>o que cada posição significa</strong> e <strong>o que cada valor significa</strong>.</p>
+<pre class="code"><code>hubs:      int vet_sol[MAX_NOS];       // [num_hub | num_nos - num_hub]
+           posição = lugar na lista; valor = id da cidade
+máquinas:  int vet_maquina[MAX_TAREFAS];
+           posição = a tarefa;       valor = a máquina onde ela está</code></pre>
+
+    <h3>Pergunta 2: qual é o movimento? (leia a regra de viabilidade)</h3>
+    <p>
+      Procure frases como "para que uma solução seja viável…". O movimento <strong>não pode quebrar essa regra</strong>. Sem regra rígida, o movimento é o menor passo possível.
+    </p>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th>Regra no enunciado</th><th>Movimento</th></tr></thead>
+      <tbody>
+        <tr><td>"exatamente <em>p</em> hubs" (ou "exatamente <em>k</em>")</td><td><strong>troca</strong>: um sai, um entra</td></tr>
+        <tr><td>cada tarefa em exatamente 1 máquina</td><td><strong>mudar</strong> a máquina de uma tarefa</td></tr>
+        <tr><td>a solução é uma permutação (rota, ordem)</td><td><strong>trocar a posição</strong> de dois elementos</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>Pergunta 3: como percorro? (um <code>for</code> por escolha do movimento)</h3>
+    <p>Conte <strong>o que o movimento escolhe</strong>. Cada escolha vira um <code>for</code> em <code>&lt;PERCORRER&gt;</code>, e o produto dos tamanhos é o tamanho da vizinhança.</p>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th>Problema</th><th>O movimento escolhe…</th><th><code>&lt;PERCORRER&gt;</code></th><th>Vizinhas</th></tr></thead>
+      <tbody>
+        <tr><td>Hubs</td><td>um hub e um não-hub</td><td><code>for pos_hub</code> em <code>0..num_hub−1</code>; <code>for pos_nohub</code> em <code>num_hub..num_nos−1</code></td><td><code>num_hub × (num_nos − num_hub)</code></td></tr>
+        <tr><td>Tarefas em máquinas</td><td>uma tarefa e uma máquina nova</td><td><code>for tarefa</code>; <code>for maquina</code> (pulando a atual)</td><td><code>num_tarefas × (num_maquinas − 1)</code></td></tr>
+        <tr><td>Rota (permutação)</td><td>duas posições</td><td><code>for i</code>; <code>for j = i + 1</code></td><td><code>n × (n − 1) / 2</code></td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>Pergunta 4: qual é o sinal? (procure "minimizar" ou "maximizar")</h3>
+    <ul>
+      <li><strong>Minimizar:</strong> <code>&lt;MELHOR&gt;</code> = <code>&lt;</code>. Foi o caso da P3 de referência (o PDF diz que a FO "deverá ser minimizada").</li>
+      <li><strong>Maximizar:</strong> <code>&lt;MELHOR&gt;</code> = <code>&gt;</code>.</li>
+      <li>Empate <u>não</u> é melhora, então use sempre o operador estrito (<code>&lt;</code> ou <code>&gt;</code>), nunca <code>&lt;=</code>.</li>
+    </ul>
+
+    <h3>Preenchendo os três marcadores, lado a lado</h3>
+    <p><strong>Hubs:</strong></p>
+<pre class="code"><code>// &lt;PERCORRER&gt;
+for (int pos_hub = 0; pos_hub &lt; num_hub; pos_hub++)
+  for (int pos_nohub = num_hub; pos_nohub &lt; num_nos; pos_nohub++)
+// &lt;MOVER&gt;
+int aux = vizinha.vet_sol[pos_hub];
+vizinha.vet_sol[pos_hub]   = vizinha.vet_sol[pos_nohub];
+vizinha.vet_sol[pos_nohub] = aux;
+// &lt;MELHOR&gt;  →  &lt;   (minimiza)</code></pre>
+    <p><strong>Tarefas em máquinas</strong> (só para treinar a ponte):</p>
+<pre class="code"><code>// &lt;PERCORRER&gt;
+for (int tarefa = 0; tarefa &lt; num_tarefas; tarefa++)
+  for (int maquina = 0; maquina &lt; num_maquinas; maquina++)
+    if (maquina != s.vet_maquina[tarefa])       // pula a máquina em que ela já está
+// &lt;MOVER&gt;
+vizinha.vet_maquina[tarefa] = maquina;
+// &lt;MELHOR&gt;  →  &lt;   (minimiza o maior tempo)</code></pre>
+    <p><strong>Rota (troca de duas cidades):</strong></p>
+<pre class="code"><code>// &lt;PERCORRER&gt;
+for (int i = 0; i &lt; n - 1; i++)
+  for (int j = i + 1; j &lt; n; j++)
+// &lt;MOVER&gt;
+int aux = vizinha.rota[i];
+vizinha.rota[i] = vizinha.rota[j];
+vizinha.rota[j] = aux;
+// &lt;MELHOR&gt;  →  &lt;   (minimiza a distância)</code></pre>
+    <div class="alert alert-success">
+      <strong>Repare:</strong> o esqueleto das três funções (Aula 2) não mudou nenhuma linha. Só estes três pedaços.
+    </div>
+
+    <h3>Seu roteiro nos primeiros 5 minutos da prova</h3>
+    <ol>
+      <li>Abra o <code>.h</code>: copie os <strong>nomes</strong> da <code>struct</code>, das variáveis e das funções.</li>
+      <li>Leia a regra de viabilidade: defina o <code>&lt;MOVER&gt;</code>.</li>
+      <li>Conte o que o movimento escolhe: defina o <code>&lt;PERCORRER&gt;</code>.</li>
+      <li>Procure "minimizar" ou "maximizar": defina o <code>&lt;MELHOR&gt;</code>.</li>
+      <li>Encaixe os três no molde da Aula 2.</li>
+    </ol>
+
+    <!-- ===================== AULA 4 ===================== -->
+    <h2 id="aula4">Aula 4: <code>gerar_vizinha</code> e o <code>rand</code> (onde e como o sorteio acontece)</h2>
+
+    <h3>O professor entrega a <code>gerar_vizinha</code>?</h3>
+    <p>Pelos arquivos da <code>prova3</code>, <strong>não</strong>. Conferi assim:</p>
+    <ul>
+      <li>O <code>prova3.h</code> <strong>declara</strong> <code>void gerar_vizinha(Solucao&amp; s);</code> (linha 24), mas só declara.</li>
+      <li>No <code>3.cpp</code>, as funções que o professor entrega (<code>criar_solucao</code>, <code>calcular_fo</code>, <code>escrever_solucao</code>, <code>testar_dados</code>, <code>ler_dados</code>) vêm <u>depois</u> da área "INSIRA SEU CÓDIGO AQUI". A <code>gerar_vizinha</code> não está entre elas.</li>
+      <li>Logo, ela está declarada para você <strong>escrever</strong>. O enunciado também só pede os métodos das questões 1 a 3, o que reforça que ela é parte do que você faz para a randômica.</li>
+    </ul>
+    <div class="alert alert-danger">
+      <strong>Verifique na hora da prova:</strong> procure no código-base por <code>gerar_vizinha</code> (Ctrl+F). Se já houver um <em>corpo</em> dela, <u>não a escreva de novo</u>: definir a mesma função duas vezes dá erro de compilação.
+      Se existir só a declaração do <code>.h</code>, escreva a sua. Eu não tenho a prova de amanhã, então confirme.
+    </div>
+
+    <h3>Onde o <code>rand</code> é chamado?</h3>
+    <p>
+      <strong>Só dentro da <code>gerar_vizinha</code></strong>. A randômica <u>não</u> chama <code>rand</code> diretamente: ela chama <code>gerar_vizinha(vizinha)</code>, e é essa função que sorteia.
+      O <code>3.cpp</code> inclui <code>&lt;cstdlib&gt;</code> (linha 5), que traz o <code>rand</code>, então nada a incluir.
+    </p>
+    <p>O professor usa o <code>rand</code> no <code>criar_solucao</code> (<code>3.cpp</code>, linha 148): <code>int pos = i + rand() % (num_nos - i);</code>. Seguir esse estilo é seguro.</p>
+
+    <h3>Como funciona <code>rand() % N</code></h3>
+    <p>
+      <strong>Imagine</strong> um dado enorme que devolve um número grande e imprevisível. O <code>% N</code> (resto da divisão) o "dobra" para o intervalo <code>0</code> a <code>N − 1</code>.
+      Para sortear dentro de um bloco que começa em <code>inicio</code>, some o início: <code>inicio + rand() % tamanho</code>.
+    </p>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th>Quero sortear…</th><th>Código</th><th>Resultado</th></tr></thead>
+      <tbody>
+        <tr><td>um hub (posição)</td><td><code>rand() % num_hub</code></td><td><code>0</code> a <code>num_hub − 1</code></td></tr>
+        <tr><td>um não-hub (posição)</td><td><code>num_hub + rand() % (num_nos - num_hub)</code></td><td><code>num_hub</code> a <code>num_nos − 1</code></td></tr>
+        <tr><td>uma tarefa</td><td><code>rand() % num_tarefas</code></td><td><code>0</code> a <code>num_tarefas − 1</code></td></tr>
+      </tbody>
+    </table></div>
+    <div class="attn">
+      <strong>Erro clássico:</strong> sortear o não-hub com <code>rand() % num_nos</code>. Isso pode cair numa posição de hub, e a "troca" não troca hub por não-hub. Sempre sorteie <u>dentro do bloco certo</u>.
+    </div>
+
+    <h3>A <code>gerar_vizinha</code> pronta (hubs)</h3>
+<pre class="code"><code>void gerar_vizinha(Solucao&amp; s)
+{
+    int pos_hub   = rand() % num_hub;                        // sorteia um hub
+    int pos_nohub = num_hub + rand() % (num_nos - num_hub);  // sorteia um não-hub
+    int aux = s.vet_sol[pos_hub];                            // troca os dois
+    s.vet_sol[pos_hub]   = s.vet_sol[pos_nohub];
+    s.vet_sol[pos_nohub] = aux;
+}</code></pre>
+    <p>E para tarefas em máquinas, sorteando uma máquina diferente da atual:</p>
+<pre class="code"><code>void gerar_vizinha(Solucao&amp; s)
+{
+    int tarefa = rand() % num_tarefas;                // sorteia uma tarefa
+    int nova = rand() % num_maquinas;                 // sorteia uma máquina
+    while (nova == s.vet_maquina[tarefa])             // tem que ser diferente da atual
+        nova = rand() % num_maquinas;
+    s.vet_maquina[tarefa] = nova;                     // muda a tarefa de máquina
+}</code></pre>
+    <p>Repare: a <code>gerar_vizinha</code> é o <code>&lt;MOVER&gt;</code> com sorteio. Ela altera <code>s</code>, que na randômica é a <code>vizinha</code> (a cópia).</p>
+
+    <h3>E o <code>srand</code>?</h3>
+    <ul>
+      <li>O <code>3.cpp</code> <strong>não chama <code>srand</code></strong>. Então a sequência do <code>rand</code> é a mesma a cada execução: seu resultado é <strong>repetível</strong>, o que ajuda a depurar.</li>
+      <li>Você <strong>não precisa</strong> chamar <code>srand</code> para a prova funcionar.</li>
+      <li>Se quiser sorteios diferentes a cada execução, chame <code>srand(time(NULL));</code> uma vez, no começo da <code>main</code> (o <code>3.cpp</code> já inclui <code>&lt;time.h&gt;</code>). Não coloque dentro da <code>gerar_vizinha</code>.</li>
+      <li>O arquivo <code>paulo_rizzi3.cpp</code> (que a <code>3.cpp</code> inclui) não está na pasta; se ele chamar <code>srand</code>, vale o dele.</li>
+    </ul>
+
+    <h3>O que fica de uma rodada para outra na randômica</h3>
+    <ul>
+      <li>Cada tentativa <u>copia</u> <code>s</code> em <code>vizinha</code> antes de sortear. Se não copiasse, os sorteios se acumulariam na mesma solução.</li>
+      <li>Uma rodada sem nenhuma melhora encerra a busca. Como os sorteios são ao acaso, <u>pode sobrar uma troca que melhora</u>, e a randômica não garante ótimo local.</li>
+    </ul>
+
+    <div class="alert alert-success">
+      <strong>Próximo passo:</strong> faça o <a href="exercicio-p3.html">Exercício P3</a> e confira com a tabela. Depois vá ao <a href="quiz.html">Quiz</a>.
+    </div>
+
+    <div class="pagenav">
+      <a href="p3-busca-local.html">← P3: Busca local</a>
+      <a href="exercicio-p3.html">Exercício P3 →</a>
+    </div>
+  </main>
+
+  <footer>
+    Material de estudo pessoal — Métodos de Otimização. Exemplos baseados na P3 de referência dos arquivos do curso; o problema da prova pode ser outro.
+  </footer>
+
+  <script src="../assets/js/site.js"></script>
+</body>
+</html>

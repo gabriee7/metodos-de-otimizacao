@@ -1,0 +1,1454 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Guia de reforço da P4: meta-heurísticas (AG, SA, Busca Tabu, GRASP) a partir da busca local da P3, com o código do professor, controle de tempo, código-modelo testado e perguntas.">
+  <title>P4 — Meta-heurísticas — Métodos de Otimização</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <style>
+    .cx-linha { display: flex; gap: .25rem; flex-wrap: wrap; margin: .3rem 0; align-items: center; }
+    .cx { min-width: 2.1rem; text-align: center; padding: .3rem .2rem; border: 1px solid var(--border); border-radius: 4px; font-family: 'Consolas','Courier New',monospace; background: var(--surface); }
+    .cx-a { border-width: 2px; border-style: solid; }
+    .cx-b { border-width: 2px; border-style: dashed; }
+    .cx-rot { min-width: 5.5rem; font-weight: 600; font-size: .9rem; }
+    .tab td code { white-space: nowrap; }
+    .cx-corte { width: 3px; align-self: stretch; background: var(--text); margin: 0 .2rem; }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a class="brand" href="../index.html">Métodos de Otimização</a>
+    <a href="do-zero.html">Do zero</a>
+    <a href="guia.html">Guia</a>
+    <a href="lendo-enunciado.html">Enunciados</a>
+    <a href="p1-modelagem.html">P1</a>
+    <a href="p2-construtivas.html">P2</a>
+    <a href="p3-busca-local.html">P3</a>
+    <a href="p4-meta-heuristicas.html" class="active">P4</a>
+    <a href="problemas.html">Problemas</a>
+    <a href="laboratorio.html">Laboratório</a>
+    <a href="quiz.html">Quiz</a>
+    <a href="playground.html">Playground</a>
+    <a href="checklist.html">Checklist</a>
+    <a href="teoria.html">Teoria</a>
+  </nav>
+
+  <main>
+    <h1>P4: meta-heurísticas (reforço e aprendizado)</h1>
+    <p>
+      A P4 pega a busca local da P3 e adiciona <strong>uma regra a mais</strong> para não travar no primeiro morro.
+      Esta página vai do zero ao código de prova, sempre no formato do professor.
+    </p>
+
+    <div class="alert alert-info">
+      <strong>O que o professor já cobrou</strong> (arquivos da disciplina):
+      <ul>
+        <li><strong>Prova IV:</strong> Algoritmo Genético (AG) no PRCP, de <strong>maximizar</strong>. Pasta <code>Métodos\Métodos\Prova4\prova4\</code> (<code>prova4.pdf</code>, <code>prova4.h</code>, <code>prova4.cpp</code>, instâncias <code>i25</code>, <code>i1000</code>, <code>i13206</code>).</li>
+        <li><strong>Prova final 2025:</strong> Simulated Annealing (SA) no PET, de minimizar. Pasta <code>arquivofinal\prova_final25\</code>.</li>
+      </ul>
+      O problema da sua prova pode ser outro. Por isso cada método aqui é explicado pela <strong>lógica geral</strong>, e o PRCP é só o exemplo.
+    </div>
+
+    <h2>Sumário</h2>
+    <ol>
+      <li><a href="#ideia">A ideia em 1 minuto</a></li>
+      <li><a href="#tabela">O que muda em relação à P3</a></li>
+      <li><a href="#relogio">O relógio (tempo total e tempo da melhor)</a></li>
+      <li><a href="#ag">Algoritmo Genético: a Prova IV completa</a></li>
+      <li><a href="#sa">Simulated Annealing: o pseudo-código da prova final</a></li>
+      <li><a href="#tabu">Busca Tabu: o algoritmo base dos slides</a></li>
+      <li><a href="#grasp">GRASP: o algoritmo base dos slides</a></li>
+      <li><a href="#regra">Do enunciado ao código: a regra passo a passo</a></li>
+      <li><a href="#cola">Cola mínima da P4</a></li>
+    </ol>
+
+    <!-- ============================================================ -->
+    <h2 id="ideia">1. A ideia em 1 minuto</h2>
+    <p>
+      <strong>Imagine</strong> que você está numa serra à noite, com uma lanterna, procurando o ponto mais alto.
+      A busca local da P3 só sobe: quando chega num topo, pára. Só que esse topo pode ser um morrinho, e o pico de verdade está do outro lado do vale.
+    </p>
+    <p>
+      Uma <strong>meta-heurística</strong> é uma regra para sair do morrinho. Cada uma faz isso de um jeito:
+    </p>
+    <ul>
+      <li><strong>SA:</strong> às vezes aceita descer, mais no começo e menos no fim.</li>
+      <li><strong>Busca Tabu:</strong> anda sempre para a melhor vizinha, mesmo que desça, e proíbe voltar por onde veio.</li>
+      <li><strong>GRASP:</strong> começa de vários lugares diferentes e sobe de cada um.</li>
+      <li><strong>AG:</strong> mantém um grupo de soluções e mistura as boas para criar outras.</li>
+    </ul>
+    <p>Em todas elas vale o mesmo: <strong>guarde a melhor que já viu</strong>, porque a solução atual pode piorar.</p>
+
+    <!-- ============================================================ -->
+    <h2 id="tabela">2. O que muda em relação à P3</h2>
+    <p>O C-M-N-D da P3 continua igual (Copia, Move na cópia, Nota com <code>calcular_fo</code>, Decide). O que muda é o <strong>D</strong> e o que se guarda.</p>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th>Método</th><th>Aceita vizinha pior?</th><th>Memória extra</th><th>Quando pára</th></tr></thead>
+      <tbody>
+        <tr><td>Busca local (P3)</td><td>Não</td><td>Nenhuma</td><td>Ótimo local</td></tr>
+        <tr><td>SA</td><td>Às vezes (sorteio com a temperatura)</td><td>Temperatura <code>T</code> e a melhor <code>S*</code></td><td>Tempo</td></tr>
+        <tr><td>Busca Tabu</td><td>Sim, se for a melhor vizinha não proibida</td><td>Lista tabu e a melhor <code>S*</code></td><td>Tempo</td></tr>
+        <tr><td>GRASP</td><td>Não (a busca local é a da P3)</td><td>A melhor de todas as voltas</td><td>Tempo</td></tr>
+        <tr><td>AG</td><td>Não se aplica: trabalha com uma população</td><td>A população inteira, ordenada</td><td>Tempo</td></tr>
+      </tbody>
+    </table></div>
+    <div class="alert alert-warning">
+      <strong>Mudança grande:</strong> na P3 a busca parava sozinha. Na P4 ela roda <strong>até acabar o tempo</strong> (<code>Tem_Max</code>), e a função devolve mais dois números: o tempo total e o instante em que achou a melhor.
+    </div>
+
+    <!-- ============================================================ -->
+    <h2 id="relogio">3. O relógio (igual em todos os métodos)</h2>
+    <p>
+      <strong>Imagine</strong> um cronômetro que você dispara no começo. Toda volta você olha para ele: passou do limite, pára.
+      E toda vez que bate um recorde, você anota no papel o tempo que o cronômetro marcava.
+    </p>
+    <pre class="code"><code>clock_t inicio = clock();          // dispara o cronômetro (precisa de &lt;time.h&gt;)
+tempo_total = 0;
+tempo_melhor = 0;
+while (tempo_total &lt; Tem_Max)      // "ENQUANTO (Tempo &lt;= Tem_Max)"
+{
+    // ... uma volta do método ...
+    if (/* bateu o recorde */)
+    {
+        memcpy(&amp;s, &amp;nova_melhor, sizeof(Solucao));                   // guarda a melhor em s
+        tempo_melhor = (double)(clock() - inicio) / CLOCKS_PER_SEC;   // anota QUANDO achou
+    }
+    tempo_total = (double)(clock() - inicio) / CLOCKS_PER_SEC;        // atualiza o cronômetro
+}</code></pre>
+    <ul>
+      <li><code>clock()</code> devolve quantos "tique-taques" o programa já usou. Dividir por <code>CLOCKS_PER_SEC</code> (tique-taques por segundo) converte para segundos. Fazer <code>clock() - inicio</code> dá o tempo desde o disparo.</li>
+      <li><code>tempo_total</code> e <code>tempo_melhor</code> entram como <code>double&amp;</code>: a função é <code>void</code>, então a saída "tempo" volta por referência.</li>
+      <li>Atualize o <code>tempo_total</code> <strong>dentro</strong> do laço. Se esquecer, o <code>while</code> nunca termina.</li>
+      <li>O <code>(double)</code> antes da divisão é obrigatório. Sem ele, a conta é inteira e dá 0.</li>
+    </ul>
+
+    <!-- ============================================================ -->
+    <h2 id="ag">4. Algoritmo Genético: a Prova IV completa</h2>
+
+    <h3>4.1 A ideia</h3>
+    <p>
+      <strong>Imagine</strong> um criador de cavalos. Ele tem um estábulo com 100 cavalos (a <strong>população</strong>).
+      Todo ano escolhe um cavalo campeão e um qualquer, cruza os dois e nascem dois potros, que herdam metade de cada pai (<strong>crossover</strong>).
+      De vez em quando um potro nasce com uma característica nova, que nenhum pai tinha (<strong>mutação</strong>).
+      No fim do ano o estábulo só tem lugar para 100: ficam os 100 melhores entre velhos e potros (<strong>seleção elite</strong>).
+    </p>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th>Palavra do AG</th><th>No código</th></tr></thead>
+      <tbody>
+        <tr><td>Indivíduo</td><td>Uma <code>Solucao</code></td></tr>
+        <tr><td>Gene</td><td>Uma posição do vetor (<code>vet_sol[i]</code>)</td></tr>
+        <tr><td>População <code>P</code></td><td>Um vetor de <code>Solucao</code> com <code>Tam_Pop</code> elementos</td></tr>
+        <tr><td>Aptidão</td><td>A <code>fo</code></td></tr>
+        <tr><td>Elite</td><td>Os <code>Per_Eli</code> melhores: o começo do vetor <strong>depois de ordenar</strong></td></tr>
+        <tr><td>Nova população <code>NP</code></td><td>Os filhos do ano, guardados depois de <code>P</code> no mesmo vetor</td></tr>
+        <tr><td>Mutação</td><td>A mesma ideia da <code>gerar_vizinha</code>: muda um gene sorteado</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>4.2 Uma geração feita na mão (antes de qualquer código)</h3>
+    <p>Aqui você vê o AG trabalhando com números pequenos, passo a passo. Depois, o código só repete isso.</p>
+
+    <h4>O problema de brinquedo</h4>
+    <p>
+      <strong>Imagine</strong> uma rua com 5 casas em fila (casas 0, 1, 2, 3 e 4). Cada casa ganha uma plaquinha com o nome dela,
+      que pode ficar <strong>em cima</strong> (posição 0) ou <strong>embaixo</strong> (posição 1) da casa.
+      Se duas plaquinhas vizinhas ficam no mesmo lado, às vezes elas se encostam, e aí nenhuma das duas dá para ler.
+    </p>
+    <p>Esse é o PRCP em miniatura: casa = ponto, plaquinha = rótulo, em cima/embaixo = posição candidata, encostar = conflito. As colisões deste mapa são:</p>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th>Se…</th><th>…e também…</th><th>então as duas plaquinhas se encostam</th></tr></thead>
+      <tbody>
+        <tr><td>casa 0 embaixo (1)</td><td>casa 1 embaixo (1)</td><td>casas 0 e 1 deixam de estar livres</td></tr>
+        <tr><td>casa 1 em cima (0)</td><td>casa 2 em cima (0)</td><td>casas 1 e 2 deixam de estar livres</td></tr>
+        <tr><td>casa 2 embaixo (1)</td><td>casa 3 embaixo (1)</td><td>casas 2 e 3 deixam de estar livres</td></tr>
+        <tr><td>casa 3 em cima (0)</td><td>casa 4 em cima (0)</td><td>casas 3 e 4 deixam de estar livres</td></tr>
+      </tbody>
+    </table></div>
+    <p>
+      Uma <strong>solução</strong> é um vetor com 5 números, um por casa. Por exemplo, <code>[0, 1, 0, 0, 0]</code> quer dizer:
+      casa 0 em cima, casa 1 embaixo, casa 2 em cima, casa 3 em cima, casa 4 em cima.
+      A <strong>FO</strong> conta quantas casas estão livres, sem colisão. O máximo é 5. É de <strong>maximizar</strong>.
+    </p>
+    <p>
+      Conferindo <code>[0, 1, 0, 0, 0]</code>: a casa 3 em cima e a casa 4 em cima se encostam, então as duas não contam.
+      As casas 0, 1 e 2 estão livres, e a <strong>FO é 3</strong>.
+    </p>
+
+    <h4>Os parâmetros, cada um com sua analogia</h4>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th>Parâmetro</th><th>No estábulo</th><th>Valor neste exemplo</th></tr></thead>
+      <tbody>
+        <tr><td><code>Tam_Pop</code></td><td>Quantas baias o estábulo tem: o tamanho fixo da população</td><td>4</td></tr>
+        <tr><td><code>Per_Eli</code></td><td>Que fração dos cavalos conta como "campeão" (elite)</td><td>0,5, ou seja, os 2 melhores</td></tr>
+        <tr><td><code>Num_Cru</code></td><td>Quantos cruzamentos por ano. Cada um gera 2 potros</td><td>1, ou seja, 2 filhos por geração</td></tr>
+        <tr><td><code>Pro_Mut</code></td><td>A chance de um potro nascer com uma novidade</td><td>0,25, ou seja, 1 em cada 4</td></tr>
+        <tr><td><code>Tem_Max</code></td><td>Quantos anos o criador tem até a feira: o tempo limite</td><td>"até parar"</td></tr>
+      </tbody>
+    </table></div>
+
+    <h4>Passo 1: a população inicial</h4>
+    <p>Começamos com 4 soluções quaisquer (na prova, criadas pela construtiva <code>heur_cons_ale_gul</code>, que já vem pronta):</p>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th>Indivíduo</th><th>Vetor</th><th>Casas livres</th><th>FO</th></tr></thead>
+      <tbody>
+        <tr><td>A</td><td><code>[0, 1, 0, 0, 0]</code></td><td>0, 1, 2 (o lado esquerdo está bom)</td><td>3</td></tr>
+        <tr><td>B</td><td><code>[1, 1, 1, 0, 1]</code></td><td>2, 3, 4 (o lado direito está bom)</td><td>3</td></tr>
+        <tr><td>C</td><td><code>[1, 0, 0, 0, 0]</code></td><td>0</td><td>1</td></tr>
+        <tr><td>D</td><td><code>[1, 1, 1, 1, 1]</code></td><td>4</td><td>1</td></tr>
+      </tbody>
+    </table></div>
+
+    <h4>Passo 2: ordenar e achar a elite</h4>
+    <p>
+      Ordenando da maior FO para a menor: <strong>A (3), B (3)</strong>, C (1), D (1).
+      Com <code>Per_Eli = 0,5</code>, a elite são os 2 primeiros: <strong>A e B</strong>.
+      É por isso que se ordena antes: a elite é "o começo da fila".
+    </p>
+
+    <h4>Passo 3: escolher os pais</h4>
+    <p>
+      O pai 1 vem da elite (sorteamos <strong>A</strong>). O pai 2 é qualquer um da população, menos o próprio A (sorteamos <strong>B</strong>).
+    </p>
+    <p>
+      <strong>Por que um campeão e um qualquer?</strong> <strong>Imagine</strong> um time que só treina com os craques: todos aprendem as mesmas jogadas.
+      Misturar com um jogador comum traz jogadas diferentes, e é isso que o AG chama de <strong>diversidade</strong>.
+    </p>
+
+    <h4>Passo 4: o cruzamento (corte sorteado = 3)</h4>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th></th><th>casas 0, 1, 2 (antes do corte)</th><th>casas 3, 4 (depois do corte)</th><th>FO</th></tr></thead>
+      <tbody>
+        <tr><td>Pai 1 = A</td><td><code>0, 1, 0</code></td><td><code>0, 0</code></td><td>3</td></tr>
+        <tr><td>Pai 2 = B</td><td><code>1, 1, 1</code></td><td><code>0, 1</code></td><td>3</td></tr>
+        <tr><td><strong>Filho 1</strong> = começo de A + fim de B</td><td><code>0, 1, 0</code></td><td><code>0, 1</code></td><td><strong>5</strong></td></tr>
+        <tr><td>Filho 2 = começo de B + fim de A</td><td><code>1, 1, 1</code></td><td><code>0, 0</code></td><td>1</td></tr>
+      </tbody>
+    </table></div>
+    <p>
+      Esse é o coração do AG. A tinha o <strong>lado esquerdo bom</strong> e B tinha o <strong>lado direito bom</strong>.
+      O filho 1 herdou a parte boa de cada um e resolveu o mapa inteiro (FO 5).
+      O filho 2 herdou as partes ruins (FO 1), e a seleção vai descartá-lo.
+      Nenhuma busca local fez isso: foi a mistura.
+    </p>
+
+    <h4>Passo 5: a mutação (com probabilidade)</h4>
+    <p>
+      "Com probabilidade <code>Pro_Mut</code>" funciona como um dado.
+      Sorteia-se um número <code>x</code> entre 0 e 1. Se <code>x &lt; 0,25</code>, muta. Isso acontece, em média, 1 vez a cada 4.
+    </p>
+    <ul>
+      <li><strong>Filho 1:</strong> saiu <code>x = 0,73</code>. Como 0,73 não é menor que 0,25, ele <strong>não muta</strong> e continua <code>[0, 1, 0, 0, 1]</code>, com FO 5.</li>
+      <li><strong>Filho 2:</strong> saiu <code>x = 0,12</code>. Como é menor que 0,25, ele <strong>muta</strong>. Sorteia-se uma casa (a casa 0), e a plaquinha dela vai de embaixo (1) para em cima (0): <code>[0, 1, 1, 0, 0]</code>. As casas 0, 1 e 2 ficam livres, e a FO vai de 1 para <strong>3</strong>.</li>
+    </ul>
+    <p>
+      <strong>Por que a mutação existe?</strong> <strong>Imagine</strong> que, depois de muitos anos, todos os cavalos do estábulo são primos.
+      Cruzar primos não traz nada novo. A mutação é a única forma de aparecer uma característica que nenhum cavalo tinha.
+      Sem ela, a população vira um monte de cópias e o AG pára de melhorar.
+    </p>
+
+    <h4>Passo 6: a seleção elite</h4>
+    <p>Juntamos os 4 velhos com os 2 filhos (6 ao todo), ordenamos, e só os 4 melhores ficam:</p>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th>Posição na fila</th><th>Indivíduo</th><th>FO</th><th>Destino</th></tr></thead>
+      <tbody>
+        <tr><td>1º</td><td>Filho 1 <code>[0, 1, 0, 0, 1]</code></td><td>5</td><td>fica (e vira a melhor de todas: vai para <code>s</code>)</td></tr>
+        <tr><td>2º</td><td>A</td><td>3</td><td>fica</td></tr>
+        <tr><td>3º</td><td>B</td><td>3</td><td>fica</td></tr>
+        <tr><td>4º</td><td>Filho 2 mutado <code>[0, 1, 1, 0, 0]</code></td><td>3</td><td>fica</td></tr>
+        <tr><td>5º</td><td>C</td><td>1</td><td>sai</td></tr>
+        <tr><td>6º</td><td>D</td><td>1</td><td>sai</td></tr>
+      </tbody>
+    </table></div>
+    <p>
+      O estábulo continua com 4 baias (<code>Tam_Pop</code> nunca muda), mas agora com cavalos melhores.
+      Como a FO do filho 1 (5) é maior que a melhor anterior (3), ele é copiado para <code>s</code> e <code>tempo_melhor</code> anota o tempo daquele momento.
+    </p>
+
+    <h4>Passo 7: repetir até acabar o tempo</h4>
+    <p>
+      Cada volta dos passos 2 a 6 se chama <strong>geração</strong>. O AG faz gerações até o cronômetro passar de <code>Tem_Max</code>.
+      Aqui o ótimo (5) apareceu logo na primeira geração. Em problemas grandes, como a <code>i1000</code>, são milhares de gerações, e a melhor vai subindo aos poucos.
+    </p>
+
+    <div class="alert alert-success">
+      <strong>Resumo do AG em uma frase:</strong> manter um grupo de soluções; a cada geração, cruzar um campeão com um qualquer, às vezes mutar os filhos, e ficar só com os melhores; repetir até o tempo acabar e devolver a melhor.
+    </div>
+
+    <h3>4.3 O que a Prova IV pede (texto do enunciado → decisão)</h3>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th>Trecho do enunciado</th><th>Decisão no código</th></tr></thead>
+      <tbody>
+        <tr><td>"maximizar o número de pontos livres"</td><td>Melhor = <strong>maior</strong> <code>fo</code>. Ordenação decrescente, comparação com <code>&gt;</code>.</td></tr>
+        <tr><td>"cada posição pode assumir um valor entre 0 e m − 1"</td><td>Gene = número de 0 a <code>num_pos − 1</code>. Mutação: sorteia outro valor nesse intervalo.</td></tr>
+        <tr><td>"todos os pontos devem ser rotulados em exatamente uma posição"</td><td>Qualquer vetor com valores válidos é viável. O crossover de um ponto mantém isso.</td></tr>
+        <tr><td>"Questão 1: mutação de uma solução"</td><td><code>void mutacao(Solucao&amp; s)</code></td></tr>
+        <tr><td>"Questão 2: cruzamento de um ponto"</td><td><code>void cruzamento(Solucao&amp; p1, Solucao&amp; p2, Solucao&amp; f1, Solucao&amp; f2)</code></td></tr>
+        <tr><td>"ENTRADA: Tam_Pop; Per_Eli; Num_Cru; Pro_Mut; Tem_Max"</td><td>Parâmetros da função do AG, mais <code>Solucao&amp; s</code> e os dois tempos por referência.</td></tr>
+        <tr><td>"Pseudo-código para ordenação"</td><td>A bolha do enunciado, decrescente pela <code>fo</code>.</td></tr>
+        <tr><td>"Tam_Pop é limitado em 20.000"</td><td>População alocada com <code>new</code> (fica no heap), nunca como vetor local.</td></tr>
+        <tr><td>"métodos ... não devem possuir retorno (void)"</td><td>Tudo <code>void</code>, com resultados por referência.</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>4.4 Questão 1: mutação</h3>
+    <p>
+      <strong>Imagine</strong> um erro de cópia no DNA: um único gene muda.
+      No PRCP isso é um ponto trocar de posição candidata, ou seja, a mesma vizinha da P2/P3.
+    </p>
+    <pre class="code"><code>void mutacao(Solucao&amp; s)
+{
+    int pt = rand() % num_pts;                 // sorteia um ponto (um gene)
+    int pos;
+    do
+        pos = rand() % num_pos;                // sorteia uma posição candidata
+    while (pos == s.vet_sol[pt]);              // tem que ser diferente da atual
+    s.vet_sol[pt] = pos;                       // muda o gene
+    calcular_fo(s);                            // mudou a solução: recalcula a nota
+}</code></pre>
+    <p>Em outro problema, a mutação é <strong>o movimento da P3 sorteado uma vez</strong> (por exemplo, trocar duas cidades de lugar numa rota).</p>
+
+    <h3>4.5 Questão 2: cruzamento de um ponto</h3>
+    <p>
+      <strong>Imagine</strong> duas fileiras de peças. Você corta as duas no mesmo lugar e cola o começo de uma no fim da outra.
+      O filho 1 fica com o começo do pai 1 e o fim do pai 2. O filho 2 fica com o contrário.
+    </p>
+    <div class="card">
+      <div class="card-title">Teste o corte</div>
+      <p>Mova o corte e veja de onde vem cada gene. Borda contínua = pai 1. Borda tracejada = pai 2.</p>
+      <label>Corte: <input type="range" id="corte" min="1" max="5" value="2"> <strong id="corte-val">2</strong></label>
+      <div id="cx-area"></div>
+    </div>
+    <pre class="code"><code>void cruzamento(Solucao&amp; p1, Solucao&amp; p2, Solucao&amp; f1, Solucao&amp; f2)
+{
+    int corte = 1 + rand() % (num_pts - 1);    // corte de 1 a num_pts-1: cada pai contribui com pelo menos 1 gene
+    for (int i = 0; i &lt; num_pts; i++)
+    {
+        if (i &lt; corte)
+        {
+            f1.vet_sol[i] = p1.vet_sol[i];     // antes do corte: f1 copia p1
+            f2.vet_sol[i] = p2.vet_sol[i];     //                 f2 copia p2
+        }
+        else
+        {
+            f1.vet_sol[i] = p2.vet_sol[i];     // depois do corte: inverte
+            f2.vet_sol[i] = p1.vet_sol[i];
+        }
+    }
+    calcular_fo(f1);                           // filhos novos: calcula a nota dos dois
+    calcular_fo(f2);
+}</code></pre>
+    <div class="alert alert-danger">
+      <strong>Atenção em outros problemas:</strong> se a solução for uma <strong>permutação</strong> (cada cidade uma vez só), cortar e colar pode repetir cidades.
+      No PRCP isso não acontece, porque cada gene é independente.
+      Se cair uma permutação, confira o enunciado: o professor costuma dizer qual cruzamento quer.
+    </div>
+
+    <h3>4.6 A ordenação (a bolha do enunciado)</h3>
+    <p>
+      A elite precisa estar no começo do vetor, então a população é ordenada da maior <code>fo</code> para a menor.
+      O código abaixo é o pseudo-código do enunciado, trocando <code>vetor[i].criterio</code> por <code>pop[i].fo</code>.
+    </p>
+    <pre class="code"><code>void ordenar_populacao(Solucao* pop, int tam)
+{
+    Solucao aux;
+    int flag = 1;
+    while (flag)
+    {
+        flag = 0;
+        for (int i = 0; i &lt; tam - 1; i++)       // tam - 1: compara i com i+1 sem sair do vetor
+        {
+            if (pop[i].fo &lt; pop[i + 1].fo)     // decrescente (maximiza). Se minimizar: &gt;
+            {
+                flag = 1;
+                memcpy(&amp;aux, &amp;pop[i], sizeof(Solucao));
+                memcpy(&amp;pop[i], &amp;pop[i + 1], sizeof(Solucao));
+                memcpy(&amp;pop[i + 1], &amp;aux, sizeof(Solucao));
+            }
+        }
+    }
+}</code></pre>
+    <p>
+      O pseudo-código diz <code>PARA i ← 0 ATÉ tamanho − 1</code> e compara com <code>i + 1</code>. Em C isso vira <code>i &lt; tam - 1</code>; com <code>i &lt; tam</code>, o <code>pop[i + 1]</code> sai do vetor.
+    </p>
+
+    <h3>4.7 Questão 3: o AG</h3>
+    <p>É a geração feita na mão (seção 4.2) escrita em C. Os comentários <code>PASSO</code> do código são os mesmos passos de lá. Pseudo-código do enunciado ligado ao código:</p>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th>Pseudo-código</th><th>Código</th></tr></thead>
+      <tbody>
+        <tr><td>P ← população inicial com Tam_Pop indivíduos</td><td><code>heur_cons_ale_gul(pop[i])</code> para cada <code>i</code>, depois ordena</td></tr>
+        <tr><td>NP ← ∅</td><td><code>tam = Tam_Pop</code>: os filhos entram a partir da posição <code>Tam_Pop</code></td></tr>
+        <tr><td>ENQUANTO (Tempo ≤ Tem_Max)</td><td><code>while (tempo_total &lt; Tem_Max)</code></td></tr>
+        <tr><td>p1 ← um indivíduo elite de P</td><td><code>p1 = rand() % num_eli</code> (P está ordenada)</td></tr>
+        <tr><td>p2 ← um indivíduo qualquer de P (p2 ≠ p1)</td><td><code>do p2 = rand() % Tam_Pop; while (p2 == p1);</code></td></tr>
+        <tr><td>(f1, f2) ← CROSSOVER(p1, p2)</td><td><code>cruzamento(pop[p1], pop[p2], pop[tam], pop[tam + 1])</code></td></tr>
+        <tr><td>Com probabilidade Pro_Mut: MUTACAO(f1)</td><td>sorteia <code>x</code> em [0, 1]; <code>if (x &lt; Pro_Mut) mutacao(pop[tam])</code></td></tr>
+        <tr><td>NP ← NP ∪ {f1, f2}</td><td><code>tam = tam + 2</code></td></tr>
+        <tr><td>P ← P* ⊂ {P ∪ NP}, |P*| = Tam_Pop</td><td>ordena os <code>tam</code> indivíduos: os <code>Tam_Pop</code> primeiros são a nova P</td></tr>
+        <tr><td>SAÍDA: melhor indivíduo; tempos</td><td><code>pop[0]</code> copiado para <code>s</code>; <code>tempo_total</code> e <code>tempo_melhor</code></td></tr>
+      </tbody>
+    </table></div>
+    <pre class="code"><code>void algoritmo_genetico(Solucao&amp; s, int Tam_Pop, double Per_Eli, int Num_Cru, double Pro_Mut,
+                        double Tem_Max, double&amp; tempo_total, double&amp; tempo_melhor)
+{
+    Solucao* pop = new Solucao[Tam_Pop + 2 * Num_Cru];   // P (0..Tam_Pop-1) e, depois, NP (os filhos)
+    int num_eli = (int)(Per_Eli * Tam_Pop);              // quantos são elite
+    if (num_eli &lt; 1)
+        num_eli = 1;
+    clock_t inicio = clock();
+
+    for (int i = 0; i &lt; Tam_Pop; i++)                   // PASSO 1: P inicial
+        heur_cons_ale_gul(pop[i]);                       // construtiva da P2 (já calcula a fo)
+    ordenar_populacao(pop, Tam_Pop);                     // PASSO 2: melhor no começo
+    memcpy(&amp;s, &amp;pop[0], sizeof(Solucao));
+    tempo_melhor = (double)(clock() - inicio) / CLOCKS_PER_SEC;
+    tempo_total = tempo_melhor;
+
+    while (tempo_total &lt; Tem_Max)                      // PASSO 7: uma geração por volta
+    {
+        int tam = Tam_Pop;                               // NP vazia: filhos entram depois de P
+        for (int i = 0; i &lt; Num_Cru; i++)
+        {
+            int p1 = rand() % num_eli;                   // PASSO 3: pai 1 da elite
+            int p2;
+            do
+                p2 = rand() % Tam_Pop;                   // pai 2: qualquer um de P
+            while (p2 == p1);                            // diferente do pai 1
+            cruzamento(pop[p1], pop[p2], pop[tam], pop[tam + 1]);   // PASSO 4
+            double x = (rand() % 1001) / 1000.0;         // PASSO 5: o "dado" entre 0 e 1
+            if (x &lt; Pro_Mut)
+                mutacao(pop[tam]);
+            x = (rand() % 1001) / 1000.0;
+            if (x &lt; Pro_Mut)
+                mutacao(pop[tam + 1]);
+            tam = tam + 2;                               // NP ganhou dois filhos
+        }
+        ordenar_populacao(pop, tam);                     // PASSO 6: os Tam_Pop primeiros ficam
+        if (pop[0].fo &gt; s.fo)                            // recorde? (maximiza)
+        {
+            memcpy(&amp;s, &amp;pop[0], sizeof(Solucao));
+            tempo_melhor = (double)(clock() - inicio) / CLOCKS_PER_SEC;
+        }
+        tempo_total = (double)(clock() - inicio) / CLOCKS_PER_SEC;
+    }
+    delete[] pop;
+}</code></pre>
+    <p>Os cabeçalhos vão na área "INSIRA SEU CODIGO AQUI" do <code>prova4.h</code>, e o teste na área do <code>main</code>:</p>
+    <pre class="code"><code>// prova4.h
+void mutacao(Solucao&amp; s);
+void cruzamento(Solucao&amp; p1, Solucao&amp; p2, Solucao&amp; f1, Solucao&amp; f2);
+void ordenar_populacao(Solucao* pop, int tam);
+void algoritmo_genetico(Solucao&amp; s, int Tam_Pop, double Per_Eli, int Num_Cru, double Pro_Mut,
+                        double Tem_Max, double&amp; tempo_total, double&amp; tempo_melhor);
+
+// main (área de teste)
+srand(time(NULL));
+Solucao s;
+double tempo_total, tempo_melhor;
+algoritmo_genetico(s, 30, 0.2, 10, 0.1, 5, tempo_total, tempo_melhor);
+escrever_solucao(s, "");
+printf("Tempo total: %.2f s | melhor encontrada em: %.2f s\n", tempo_total, tempo_melhor);</code></pre>
+
+    <h3>4.8 Erros que custam nota</h3>
+    <ul>
+      <li><strong>Pegar a "elite" sem ordenar antes:</strong> <code>pop[0]</code> só é a melhor se o vetor estiver ordenado.</li>
+      <li><strong>Declarar <code>Solucao pop[20000]</code> dentro da função:</strong> cada <code>Solucao</code> tem cerca de 56 KB (14.000 inteiros), então estoura a pilha. Use <code>new</code> e <code>delete[]</code>.</li>
+      <li><strong>Alocar só <code>Tam_Pop</code> posições:</strong> os filhos precisam de mais <code>2 * Num_Cru</code>.</li>
+      <li><strong>Esquecer <code>calcular_fo</code> nos filhos:</strong> a ordenação passa a usar notas antigas.</li>
+      <li><strong><code>Per_Eli</code> e <code>Pro_Mut</code> em porcentagem:</strong> se o teste passar <code>20</code> e <code>10</code> em vez de <code>0.2</code> e <code>0.1</code>, divida por 100.</li>
+      <li><strong>Ordenar crescente num problema de maximizar:</strong> a "elite" vira a pior parte.</li>
+      <li><strong>Não atualizar <code>tempo_total</code> dentro do <code>while</code>:</strong> o programa não termina.</li>
+    </ul>
+
+    <h3>4.9 Como conferir</h3>
+    <ol>
+      <li><strong>Compila sem erro</strong> (erro de compilação zera a questão).</li>
+      <li><strong>Nota confere:</strong> copie <code>s</code> para outra <code>Solucao</code>, chame <code>calcular_fo</code> e compare com <code>s.fo</code>.</li>
+      <li><strong>Solução válida:</strong> todo <code>vet_sol[i]</code> está entre 0 e <code>num_pos − 1</code>.</li>
+      <li><strong>Tempos coerentes:</strong> <code>tempo_melhor ≤ tempo_total</code>, e <code>tempo_total</code> perto de <code>Tem_Max</code>.</li>
+      <li><strong>Melhora a população inicial:</strong> a <code>fo</code> final é maior ou igual à melhor da população inicial.</li>
+    </ol>
+    <div class="alert alert-success">
+      <strong>Meu teste</strong> (g++ MinGW local, <code>Tam_Pop = 30</code>, <code>Per_Eli = 0.2</code>, <code>Num_Cru = 10</code>, <code>Pro_Mut = 0.1</code>, <code>srand(1)</code> a <code>srand(3)</code>):
+      <ul>
+        <li><code>i25</code> com 0,3 s: FO final 22, 20 e 21 (de 25 pontos).</li>
+        <li><code>i1000</code> com 2 s: FO final 801 e 779.</li>
+      </ul>
+      Nos dois, a nota guardada bateu com a recalculada, a solução continuou válida e o tempo foi respeitado.
+      Seus números podem ser outros, porque dependem do <code>rand</code> e da máquina. O que importa é passar nas cinco conferências.
+    </div>
+
+    <h3>4.10 Perguntas de verificação</h3>
+    <ol>
+      <li>Por que a população precisa estar ordenada antes de escolher <code>p1</code>?</li>
+      <li>Na Prova IV, se <code>Tam_Pop = 100</code> e <code>Num_Cru = 25</code>, quantas <code>Solucao</code> você aloca?</li>
+      <li>Com pais <code>[0, 3, 1, 2, 0, 1]</code> e <code>[2, 2, 0, 1, 3, 3]</code> e corte = 2, quais são os filhos?</li>
+      <li>Por que o corte é sorteado como <code>1 + rand() % (num_pts - 1)</code> e não <code>rand() % num_pts</code>?</li>
+      <li>Se o problema fosse de minimizar, quais duas linhas do AG mudam?</li>
+    </ol>
+    <details>
+      <summary>Respostas</summary>
+      <ol>
+        <li>A elite é "o começo do vetor". Isso só é verdade depois de ordenar; antes, o começo é qualquer um.</li>
+        <li><code>100 + 2 × 25 = 150</code>: 100 para P e 50 para os filhos.</li>
+        <li>f1 = <code>[0, 3 | 0, 1, 3, 3]</code> e f2 = <code>[2, 2 | 1, 2, 0, 1]</code>.</li>
+        <li>Com <code>rand() % num_pts</code> o corte pode dar 0, e aí o filho 1 vira cópia inteira do pai 2. Somar 1 garante que os dois pais contribuem.</li>
+        <li>A comparação da bolha (<code>&lt;</code> vira <code>&gt;</code>, para ordenar crescente) e o teste do recorde (<code>pop[0].fo &gt; s.fo</code> vira <code>&lt;</code>).</li>
+      </ol>
+    </details>
+
+    <!-- ============================================================ -->
+    <h2 id="sa">5. Simulated Annealing (SA): o pseudo-código da prova final</h2>
+
+    <h3>5.1 A ideia</h3>
+    <p>
+      <strong>Imagine</strong> um ferreiro fazendo uma espada. Ele esquenta o metal até ficar vermelho, e aí os átomos se mexem à vontade, para qualquer lado.
+      Depois deixa <strong>esfriar devagar</strong>: os átomos se mexem cada vez menos, até se acomodarem numa forma forte.
+      Se esfriar de uma vez (jogar na água), o metal fica quebradiço. "Annealing" é esse esfriamento lento, o recozimento.
+    </p>
+    <p>
+      No SA, o "metal" é a solução, e a <strong>temperatura <code>T</code></strong> diz o quanto ela pode se mexer para o lado ruim:
+    </p>
+    <ul>
+      <li><strong>Quente (<code>T</code> alto):</strong> aceita vizinhas piores com frequência. A solução passeia, desce morros, sai de ótimos locais.</li>
+      <li><strong>Frio (<code>T</code> baixo):</strong> quase nunca aceita piorar. Vira praticamente a busca local randômica da P3.</li>
+      <li><strong>Melhorou?</strong> Aceita sempre, quente ou frio.</li>
+    </ul>
+    <p>
+      <strong>Outra imagem:</strong> uma bolinha numa caixa de ovos que você sacode. Sacudindo forte, ela pula de um buraco para outro.
+      Sacudindo cada vez mais fraco, ela termina no buraco mais fundo que encontrou.
+    </p>
+
+    <h3>5.2 A conta da probabilidade, sem medo</h3>
+    <p>
+      O pseudo-código diz "com probabilidade <code>e<sup>−Δ/T</sup></code>". Só três coisas importam:
+    </p>
+    <ul>
+      <li><strong><code>Δ</code> (delta) = quanto a vizinha piorou.</strong> Se piorou 2 pontos, <code>Δ = 2</code>.</li>
+      <li><strong><code>e<sup>−Δ/T</sup></code> é sempre um número entre 0 e 1:</strong> é a chance de aceitar. Em C: <code>exp(-delta / T)</code>.</li>
+      <li><strong>Piorou muito ou está frio:</strong> chance pequena. <strong>Piorou pouco ou está quente:</strong> chance grande. <strong>Empatou (<code>Δ = 0</code>):</strong> <code>e<sup>0</sup> = 1</code>, então aceita sempre.</li>
+    </ul>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th>Temperatura T</th><th>Piorou 2 (Δ = 2)</th><th>Piorou 4 (Δ = 4)</th></tr></thead>
+      <tbody>
+        <tr><td>2 (quente)</td><td>e<sup>−1</sup> ≈ 0,37 (37%)</td><td>e<sup>−2</sup> ≈ 0,14 (14%)</td></tr>
+        <tr><td>1</td><td>e<sup>−2</sup> ≈ 0,14 (14%)</td><td>e<sup>−4</sup> ≈ 0,018 (1,8%)</td></tr>
+        <tr><td>0,5 (frio)</td><td>e<sup>−4</sup> ≈ 0,018 (1,8%)</td><td>e<sup>−8</sup> ≈ 0,0003 (quase nunca)</td></tr>
+      </tbody>
+    </table></div>
+    <div class="card">
+      <div class="card-title">Teste a chance de aceitar</div>
+      <p>Mexa na temperatura e no quanto a vizinha piorou.</p>
+      <label>Temperatura <code>T</code>: <input type="range" id="sa-t" min="0.1" max="5" step="0.1" value="2"> <strong id="sa-t-val">2.0</strong></label><br>
+      <label>Piorou <code>Δ</code>: <input type="range" id="sa-d" min="0" max="10" step="1" value="2"> <strong id="sa-d-val">2</strong></label>
+      <p id="sa-res" style="font-size:1.05rem;margin-top:.6rem"></p>
+    </div>
+    <p>
+      O "com probabilidade" é o mesmo dado do AG: sorteia <code>x</code> entre 0 e 1 e aceita se <code>x &lt; exp(-delta / T)</code>.
+    </p>
+
+    <h3>5.3 Os parâmetros, cada um com sua analogia</h3>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th>Parâmetro</th><th>Na forja</th><th>Valor no exemplo</th></tr></thead>
+      <tbody>
+        <tr><td><code>S</code></td><td>A peça de metal que entra na forja: a solução inicial (vem da construtiva)</td><td><code>[1, 0, 0, 1, 0]</code></td></tr>
+        <tr><td><code>Tem_Ini</code></td><td>A temperatura em que o forno começa</td><td>2</td></tr>
+        <tr><td><code>Tax_Res</code></td><td>Taxa de resfriamento: a cada etapa, <code>T</code> é multiplicada por ela (entre 0 e 1). Perto de 1 = esfria devagar</td><td>0,5 (cai pela metade)</td></tr>
+        <tr><td><code>Tem_Con</code></td><td>Temperatura de congelamento: abaixo dela, pára de esfriar</td><td>0,3</td></tr>
+        <tr><td><code>SA_Max</code></td><td>Quantas marteladas em cada temperatura: tentativas de vizinha antes de esfriar</td><td>2</td></tr>
+        <tr><td><code>Tem_Max</code></td><td>Tempo total da forja. Se congelou e ainda sobra tempo, <strong>reaquece</strong> e começa de novo</td><td>"até parar"</td></tr>
+      </tbody>
+    </table></div>
+    <p>Com esses números, as temperaturas serão 2 → 1 → 0,5 → 0,25. Como 0,25 ≤ 0,3, congela depois da etapa de 0,5.</p>
+
+    <h3>5.4 Uma execução feita na mão (a mesma rua de 5 casas)</h3>
+    <p>
+      Começamos em <code>S = [1, 0, 0, 1, 0]</code>, com FO 3. Esta solução é um <strong>ótimo local</strong>: mudando qualquer uma das casas, a FO fica 3 ou cai para 1. Nunca sobe.
+      A primeira melhora da P3 pararia aqui. O SA não para. A melhor de todas, <code>S*</code>, começa igual a <code>S</code>.
+    </p>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th>T</th><th>Tentativa</th><th>Vizinha (casa mudada)</th><th>FO</th><th>Δ (piorou)</th><th>Decisão</th><th>S*</th></tr></thead>
+      <tbody>
+        <tr><td>2</td><td>1</td><td><code>[1, 0, 0, 0, 0]</code> (casa 3)</td><td>1</td><td>3 − 1 = 2</td><td>Piorou. Chance e<sup>−2/2</sup> = 0,37. Saiu <code>x = 0,21</code>: <strong>aceita</strong> (desceu o morro de propósito)</td><td>3</td></tr>
+        <tr><td>2</td><td>2</td><td><code>[1, 0, 1, 0, 0]</code> (casa 2)</td><td>3</td><td>1 − 3 = −2</td><td>Melhorou: <strong>aceita</strong>. Não passa de 3, então <code>S*</code> não muda</td><td>3</td></tr>
+        <tr><td>1</td><td>1</td><td><code>[1, 0, 1, 0, 1]</code> (casa 4)</td><td>5</td><td>3 − 5 = −2</td><td>Melhorou: <strong>aceita</strong>. 5 &gt; 3: <strong>novo recorde</strong>, guarda em <code>S*</code> e anota <code>tempo_melhor</code></td><td><strong>5</strong></td></tr>
+        <tr><td>1</td><td>2</td><td><code>[0, 0, 1, 0, 1]</code> (casa 0)</td><td>5</td><td>5 − 5 = 0</td><td>Empatou. Chance e<sup>0</sup> = 1: <strong>aceita</strong> sempre</td><td>5</td></tr>
+        <tr><td>0,5</td><td>1</td><td><code>[0, 0, 0, 0, 1]</code> (casa 2)</td><td>3</td><td>2</td><td>Piorou. Chance e<sup>−2/0,5</sup> = 0,018. Saiu <code>x = 0,40</code>: <strong>rejeita</strong></td><td>5</td></tr>
+        <tr><td>0,5</td><td>2</td><td><code>[0, 0, 1, 1, 1]</code> (casa 3)</td><td>3</td><td>2</td><td>Piorou. Chance 0,018. Saiu <code>x = 0,65</code>: <strong>rejeita</strong></td><td>5</td></tr>
+      </tbody>
+    </table></div>
+    <p>
+      Depois disso, <code>T = 0,5 × 0,5 = 0,25</code>, que é menor que <code>Tem_Con = 0,3</code>: <strong>congelou</strong>.
+      Se ainda houver tempo, <code>T</code> volta para 2 (reaquece) e tudo recomeça a partir da solução atual. A saída é <code>S*</code>, com FO 5.
+    </p>
+    <div class="alert alert-success">
+      <strong>O que esse exemplo mostra:</strong> aceitar uma piora na tentativa 1 (de 3 para 1) foi o que abriu o caminho até o 5.
+      Já no frio (<code>T = 0,5</code>), as pioras foram rejeitadas: a solução se acomodou.
+      E a solução atual pode piorar, mas <code>S*</code> nunca piora.
+    </div>
+
+    <h3>5.5 Minimizar × maximizar (o ponto que mais confunde)</h3>
+    <p>O pseudo-código da prova final é de <strong>minimizar</strong> (custo do PET). Lá está escrito:</p>
+    <pre class="code"><code>Δ ← f(S') – f(S);     SE Δ &lt; 0 ENTÃO S ← S'     // minimiza: vizinha menor = melhorou</code></pre>
+    <p>
+      A regra para nunca errar: <strong><code>Δ</code> é sempre "quanto a vizinha piorou"</strong>.
+      Com isso, o <code>if (delta &lt; 0)</code> e o <code>exp(-delta / T)</code> ficam iguais nos dois casos. Só muda a conta do <code>delta</code> e o teste do recorde:
+    </p>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th></th><th>Minimizar (prova final, PET)</th><th>Maximizar (Prova IV, PRCP)</th></tr></thead>
+      <tbody>
+        <tr><td>Conta do <code>delta</code></td><td><code>delta = vizinha.fo - atual.fo;</code></td><td><code>delta = atual.fo - vizinha.fo;</code></td></tr>
+        <tr><td>Teste do recorde</td><td><code>if (vizinha.fo &lt; s.fo)</code></td><td><code>if (vizinha.fo &gt; s.fo)</code></td></tr>
+        <tr><td>O resto</td><td colspan="2">igual: <code>if (delta &lt; 0)</code> aceita; senão, <code>if (x &lt; exp(-delta / T))</code> aceita</td></tr>
+      </tbody>
+    </table></div>
+    <div class="alert alert-danger">
+      <strong>Erro clássico:</strong> copiar <code>f(S') − f(S)</code> num problema de maximizar. O SA passa a aceitar sempre as pioras e a sortear as melhoras: anda para trás.
+    </div>
+
+    <h3>5.6 A vizinha (Questão 4 da prova final)</h3>
+    <p>
+      O SA precisa de <code>gerar_vizinha</code>: <strong>um movimento sorteado</strong>, igual ao da busca randômica da P3.
+      No PRCP é a mesma coisa que a mutação do AG, só que sem calcular a FO (o SA calcula depois, no passo N):
+    </p>
+    <pre class="code"><code>void gerar_vizinha(Solucao&amp; s)
+{
+    int pt = rand() % num_pts;                 // sorteia um ponto
+    int pos;
+    do
+        pos = rand() % num_pos;                // sorteia uma posição candidata
+    while (pos == s.vet_sol[pt]);              // diferente da atual
+    s.vet_sol[pt] = pos;
+}</code></pre>
+
+    <h3>5.7 O código (pseudo-código da prova final, adaptado ao PRCP)</h3>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th>Pseudo-código</th><th>Código</th></tr></thead>
+      <tbody>
+        <tr><td>ENTRADA: S; Tem_Ini; Tem_Con; Tax_Res; SA_Max; Tem_Max</td><td>parâmetros; <code>s</code> entra como a solução inicial</td></tr>
+        <tr><td>S* ← S</td><td><code>s</code> guarda a melhor (<code>S*</code>); a cópia <code>atual</code> faz o papel de <code>S</code></td></tr>
+        <tr><td>ENQUANTO (Tempo ≤ Tem_Max)</td><td><code>while (tempo_total &lt; Tem_Max)</code></td></tr>
+        <tr><td>T ← Tem_Ini</td><td><code>double T = Tem_Ini;</code></td></tr>
+        <tr><td>ENQUANTO (T &gt; Tem_Con)</td><td><code>while (T &gt; Tem_Con &amp;&amp; tempo_total &lt; Tem_Max)</code></td></tr>
+        <tr><td>PARA i ← 1 ATÉ SA_Max</td><td><code>for (int i = 0; i &lt; SA_Max; i++)</code></td></tr>
+        <tr><td>S' ← N(S)</td><td>C-M-N: <code>memcpy</code>, <code>gerar_vizinha</code>, <code>calcular_fo</code></td></tr>
+        <tr><td>Δ ← f(S') − f(S)</td><td><code>delta</code> = quanto piorou (ver 5.5)</td></tr>
+        <tr><td>SE Δ &lt; 0: S ← S'; SE melhor que S*: S* ← S'</td><td>aceita; se for recorde, copia para <code>s</code> e anota <code>tempo_melhor</code></td></tr>
+        <tr><td>SENÃO, com probabilidade e<sup>−Δ/T</sup>: S ← S'</td><td><code>if (x &lt; exp(-delta / T))</code> aceita</td></tr>
+        <tr><td>T ← T × Tax_Res</td><td><code>T = T * Tax_Res;</code></td></tr>
+        <tr><td>SAÍDA: S*; tempos</td><td><code>s</code>, <code>tempo_total</code>, <code>tempo_melhor</code></td></tr>
+      </tbody>
+    </table></div>
+    <pre class="code"><code>#include &lt;math.h&gt;     // no topo do .cpp: sem ele, exp() não compila (testado: "'exp' was not declared")
+
+void simulated_annealing(Solucao&amp; s, double Tem_Ini, double Tem_Con, double Tax_Res, int SA_Max,
+                         double Tem_Max, double&amp; tempo_total, double&amp; tempo_melhor)
+{
+    Solucao atual, vizinha;
+    memcpy(&amp;atual, &amp;s, sizeof(Solucao));                // S = solução de entrada; s guarda S* (a melhor)
+    clock_t inicio = clock();
+    tempo_total = 0;
+    tempo_melhor = 0;
+    while (tempo_total &lt; Tem_Max)                        // sobrou tempo? reaquece
+    {
+        double T = Tem_Ini;                              // começa quente
+        while (T &gt; Tem_Con &amp;&amp; tempo_total &lt; Tem_Max)     // até congelar
+        {
+            for (int i = 0; i &lt; SA_Max; i++)             // SA_Max tentativas em cada temperatura
+            {
+                memcpy(&amp;vizinha, &amp;atual, sizeof(Solucao));    // C: copia a ATUAL (não a melhor)
+                gerar_vizinha(vizinha);                       // M
+                calcular_fo(vizinha);                         // N
+                double delta = atual.fo - vizinha.fo;         // quanto PIOROU (maximiza)
+                if (delta &lt; 0)                                // D: melhorou -&gt; aceita sempre
+                {
+                    memcpy(&amp;atual, &amp;vizinha, sizeof(Solucao));
+                    if (vizinha.fo &gt; s.fo)                    // recorde?
+                    {
+                        memcpy(&amp;s, &amp;vizinha, sizeof(Solucao));
+                        tempo_melhor = (double)(clock() - inicio) / CLOCKS_PER_SEC;
+                    }
+                }
+                else                                          // D: piorou ou empatou -&gt; sorteio
+                {
+                    double x = (rand() % 1001) / 1000.0;      // o "dado" entre 0 e 1
+                    if (x &lt; exp(-delta / T))
+                        memcpy(&amp;atual, &amp;vizinha, sizeof(Solucao));
+                }
+            }
+            T = T * Tax_Res;                                  // esfria
+            tempo_total = (double)(clock() - inicio) / CLOCKS_PER_SEC;
+        }
+    }
+}</code></pre>
+    <p>No <code>main</code>, o SA precisa de uma solução pronta antes:</p>
+    <pre class="code"><code>srand(time(NULL));
+Solucao s;
+double tempo_total, tempo_melhor;
+heur_cons_ale_gul(s);                                   // S inicial (já calcula a fo)
+printf("FO inicial: %d\n", s.fo);
+simulated_annealing(s, 2.0, 0.01, 0.95, 2 * num_pts, 5, tempo_total, tempo_melhor);
+escrever_solucao(s, "");
+printf("Tempo total: %.2f s | melhor encontrada em: %.2f s\n", tempo_total, tempo_melhor);</code></pre>
+
+    <h3>5.8 Erros que custam nota</h3>
+    <ul>
+      <li><strong>Esquecer <code>#include &lt;math.h&gt;</code>:</strong> <code>exp</code> não compila, e erro de compilação zera.</li>
+      <li><strong>Usar uma variável só para a atual e a melhor:</strong> a atual pode piorar, e você perde o recorde. São duas: <code>atual</code> (<code>S</code>) e <code>s</code> (<code>S*</code>).</li>
+      <li><strong>Copiar a vizinha da melhor (<code>s</code>) em vez da <code>atual</code>:</strong> o SA nunca sai do lugar onde estava o recorde.</li>
+      <li><strong>Sinal do <code>delta</code> trocado</strong> (ver 5.5).</li>
+      <li><strong><code>Tax_Res</code> maior ou igual a 1:</strong> <code>T</code> nunca cai e o <code>while</code> interno só termina pelo tempo. É sempre entre 0 e 1.</li>
+      <li><strong>Escrever <code>-delta / T</code> com <code>delta</code> e <code>T</code> inteiros:</strong> a divisão vira inteira (2 / 4 = 0). Use <code>double</code>.</li>
+      <li><strong>Atualizar <code>tempo_melhor</code> quando aceita uma piora:</strong> ele só muda quando bate o recorde.</li>
+    </ul>
+
+    <h3>5.9 Como conferir</h3>
+    <ol>
+      <li>Compila (com o <code>math.h</code>).</li>
+      <li><strong>FO final ≥ FO inicial</strong> (maximiza). Como <code>s</code> só muda com recorde, nunca pode piorar.</li>
+      <li>A nota guardada bate com a recalculada, e a solução é válida.</li>
+      <li><code>tempo_melhor ≤ tempo_total</code>, e <code>tempo_total</code> fica perto de <code>Tem_Max</code>.</li>
+    </ol>
+    <div class="alert alert-success">
+      <strong>Meu teste</strong> (g++ MinGW local, <code>Tem_Ini = 2</code>, <code>Tem_Con = 0,01</code>, <code>Tax_Res = 0,95</code>, <code>SA_Max = 2 × num_pts</code>, <code>srand(1)</code> a <code>srand(3)</code>):
+      <ul>
+        <li><code>i25</code> com 0,3 s: a FO foi de 17, 14 e 15 para <strong>23</strong> nas três sementes.</li>
+        <li><code>i1000</code> com 2 s: de 600 e 570 para <strong>916</strong>. O AG, com os parâmetros da seção 4, chegou a 801 e 779.</li>
+      </ul>
+      Passou nas quatro conferências.
+    </div>
+
+    <h3>5.10 Perguntas de verificação</h3>
+    <ol>
+      <li>Com <code>Tem_Ini = 10</code>, <code>Tax_Res = 0,5</code> e <code>Tem_Con = 1</code>, quais temperaturas o SA usa até congelar?</li>
+      <li>Num problema de maximizar, a atual tem FO 40 e a vizinha 37. Quanto vale <code>delta</code>, e o que o código faz?</li>
+      <li>Por que o SA aceita sempre uma vizinha que empatou?</li>
+      <li>Por que são necessárias duas soluções (<code>atual</code> e <code>s</code>)? O que dá errado com uma só?</li>
+      <li>Com <code>Δ = 3</code>, a chance de aceitar é maior com <code>T = 6</code> ou com <code>T = 1</code>? Por quê?</li>
+    </ol>
+    <details>
+      <summary>Respostas</summary>
+      <ol>
+        <li>10 → 5 → 2,5 → 1,25 (as próximas seriam 0,625, que já não é maior que 1). São 4 temperaturas, cada uma com <code>SA_Max</code> tentativas. Se sobrar tempo, reaquece em 10.</li>
+        <li><code>delta = 40 − 37 = 3</code> (piorou 3). Como não é menor que 0, vai para o sorteio: aceita se <code>x &lt; exp(-3 / T)</code>.</li>
+        <li>Porque <code>Δ = 0</code> dá <code>e<sup>0</sup> = 1</code>, ou seja, 100% de chance. Andar entre soluções iguais ajuda a atravessar "planícies" até achar uma subida.</li>
+        <li>A atual pode piorar de propósito. Com uma só, a melhor encontrada seria perdida na primeira piora aceita.</li>
+        <li>Com <code>T = 6</code>: e<sup>−0,5</sup> ≈ 0,61, contra e<sup>−3</sup> ≈ 0,05 com <code>T = 1</code>. Quente aceita mais.</li>
+      </ol>
+    </details>
+
+    <h2 id="tabu">6. Busca Tabu: o algoritmo base dos slides</h2>
+    <div class="alert alert-info">
+      <strong>Fonte:</strong> slides da Unidade V do professor (<code>PlanoEnsino\MO-Un5.pdf</code>), "Algoritmo Base". Nenhuma prova antiga desta pasta cobrou a Tabu, mas ela está na ementa da P4.
+    </div>
+
+    <h3>6.1 A ideia</h3>
+    <p>
+      <strong>Imagine</strong> que você está perdido num bairro e quer chegar ao ponto mais alto.
+      Em cada esquina, você olha <strong>todas</strong> as ruas e entra na que parece melhor, <strong>mesmo que desça</strong>.
+      O perigo é ficar indo e voltando entre as mesmas duas esquinas.
+      Por isso você anota num caderninho as últimas ruas por onde passou e <strong>proíbe voltar por elas</strong> por um tempo.
+      O caderninho tem poucas linhas: quando enche, você apaga a anotação mais antiga.
+    </p>
+    <p>Os slides resumem a Busca Tabu em 4 ideias. Cada uma resolve o problema da anterior:</p>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th>Ideia</th><th>O que faz</th><th>Problema que sobra</th></tr></thead>
+      <tbody>
+        <tr><td>1. Heurística de descida</td><td>A busca local da P3</td><td>Fica presa no primeiro ótimo local</td></tr>
+        <tr><td>2. Mover para o melhor vizinho</td><td>Anda para a melhor vizinha, <strong>mesmo que seja pior</strong></td><td>Ciclagem: no passo seguinte, a melhor vizinha é voltar para onde estava</td></tr>
+        <tr><td>3. Lista tabu</td><td>Guarda o movimento <strong>reverso</strong> dos últimos |T| movimentos e proíbe esses movimentos</td><td>Pode proibir um caminho bom que ainda nem foi visitado</td></tr>
+        <tr><td>4. Critério de aspiração</td><td>Libera um movimento proibido se ele <strong>bater o recorde</strong> (a melhor <code>S*</code>)</td><td>(nenhum: se bate o recorde, com certeza é lugar novo)</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>6.2 Os parâmetros, cada um com sua analogia</h3>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th>Parâmetro (slide)</th><th>No código</th><th>No bairro</th><th>Valor no exemplo</th></tr></thead>
+      <tbody>
+        <tr><td>|T|</td><td><code>Tam_Tab</code></td><td>Quantas linhas o caderninho tem: por quantas iterações um movimento fica proibido</td><td>2</td></tr>
+        <tr><td>BT<sub>max</sub></td><td><code>BT_Max</code></td><td>Quantas esquinas seguidas sem bater o recorde você aceita antes de desistir</td><td>3</td></tr>
+        <tr><td>A (aspiração)</td><td>o teste <code>vizinha.fo &gt; s.fo</code></td><td>"Proibido, mas se for o ponto mais alto que já vi, eu vou"</td><td>A(f(S)) = f(S*)</td></tr>
+        <tr><td>(tempo)</td><td><code>Tem_Max</code></td><td>Hora de voltar para casa</td><td>"até parar"</td></tr>
+      </tbody>
+    </table></div>
+    <p>
+      <strong>O critério de parada dos slides:</strong> <code>Iter − MelhorIter ≤ BT<sub>max</sub></code>.
+      <code>Iter</code> conta as iterações, e <code>MelhorIter</code> é a iteração em que o recorde foi batido pela última vez.
+      A diferença é "há quanto tempo não melhoro". Passou de <code>BT_Max</code>, pára.
+      Nas provas da P4 o professor também pede tempo (<code>Tem_Max</code>), então o código abaixo pára no que vier primeiro.
+    </p>
+
+    <h3>6.3 O que vai na lista tabu (no PRCP)</h3>
+    <p>
+      O movimento é "o ponto <code>pt</code> sai da posição antiga e vai para a posição nova".
+      O <strong>movimento reverso</strong> é "o ponto <code>pt</code> voltar para a posição antiga".
+      Então a lista guarda <strong>pares (ponto, posição antiga)</strong>: o ponto não pode voltar para lá enquanto o par estiver na lista.
+    </p>
+    <p>
+      A lista é uma <strong>fila de tamanho fixo</strong>: quando entra um par novo e ela está cheia, o mais antigo sai.
+      No código isso é um vetor com um índice <code>prox</code> que dá a volta: <code>prox = (prox + 1) % Tam_Tab</code>.
+    </p>
+    <p>
+      <strong>Em outro problema:</strong> se o movimento for trocar duas posições <code>i</code> e <code>j</code> (rota, permutação), guarde o par <code>(i, j)</code>. Destrocar é o mesmo par.
+    </p>
+
+    <h3>6.4 Uma execução feita na mão (a mesma rua de 5 casas)</h3>
+    <p>
+      Começamos no mesmo ótimo local do SA: <code>S = [1, 0, 0, 1, 0]</code>, FO 3, com <code>S* = S</code>.
+      Na rua, cada casa só tem 2 lados, então a vizinhança é "trocar a plaquinha de uma casa de lado": 5 vizinhas por iteração.
+    </p>
+
+    <h4>Iteração 1 (lista tabu vazia)</h4>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th>Casa trocada</th><th>Vizinha</th><th>FO</th><th>Proibida?</th></tr></thead>
+      <tbody>
+        <tr><td>0</td><td><code>[0, 0, 0, 1, 0]</code></td><td>3</td><td>não ← <strong>escolhida</strong> (a primeira com a maior FO)</td></tr>
+        <tr><td>1</td><td><code>[1, 1, 0, 1, 0]</code></td><td>3</td><td>não</td></tr>
+        <tr><td>2</td><td><code>[1, 0, 1, 1, 0]</code></td><td>3</td><td>não</td></tr>
+        <tr><td>3</td><td><code>[1, 0, 0, 0, 0]</code></td><td>1</td><td>não</td></tr>
+        <tr><td>4</td><td><code>[1, 0, 0, 1, 1]</code></td><td>3</td><td>não</td></tr>
+      </tbody>
+    </table></div>
+    <p>
+      Nenhuma vizinha melhora. A melhor melhora da P3 <strong>pararia aqui</strong>.
+      A Tabu anda mesmo assim para a melhor vizinha (empate em 3; fica a primeira, porque o teste é <code>&gt;</code> estrito).
+      A casa 0 saiu do lado 1, então entra na lista: <strong>T = {(casa 0, lado 1)}</strong>. Não bateu o recorde, então <code>MelhorIter</code> continua 0.
+    </p>
+
+    <h4>Iteração 2 (atual = <code>[0, 0, 0, 1, 0]</code>)</h4>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th>Casa trocada</th><th>Vizinha</th><th>FO</th><th>Proibida?</th></tr></thead>
+      <tbody>
+        <tr><td>0</td><td><code>[1, 0, 0, 1, 0]</code></td><td>3</td><td><strong>sim</strong>: é a casa 0 voltando para o lado 1. Não bate o recorde (3), então <strong>pula</strong></td></tr>
+        <tr><td>1</td><td><code>[0, 1, 0, 1, 0]</code></td><td>5</td><td>não ← <strong>escolhida</strong></td></tr>
+        <tr><td>2</td><td><code>[0, 0, 1, 1, 0]</code></td><td>3</td><td>não</td></tr>
+        <tr><td>3</td><td><code>[0, 0, 0, 0, 0]</code></td><td>1</td><td>não</td></tr>
+        <tr><td>4</td><td><code>[0, 0, 0, 1, 1]</code></td><td>3</td><td>não</td></tr>
+      </tbody>
+    </table></div>
+    <p>
+      A lista tabu impediu voltar para o ponto de partida: sem ela, um empate poderia levar de volta e o algoritmo ficaria indo e voltando.
+      Anda para FO 5: <strong>novo recorde</strong>. <code>S*</code> recebe a solução, <code>MelhorIter = 2</code> e <code>tempo_melhor</code> é anotado.
+      Lista: <strong>T = {(casa 0, lado 1), (casa 1, lado 0)}</strong>. A lista está cheia (|T| = 2).
+    </p>
+
+    <h4>Iteração 3 (atual = <code>[0, 1, 0, 1, 0]</code>)</h4>
+    <p>
+      A casa 0 voltar para o lado 1 e a casa 1 voltar para o lado 0 estão proibidas (FO 3, não batem o recorde 5).
+      Das permitidas, a melhor é trocar a casa 4: <code>[0, 1, 0, 1, 1]</code>, FO 5. Empatou com o recorde, então não é recorde novo.
+      Entra (casa 4, lado 0) e, como a lista estava cheia, <strong>sai o mais antigo</strong>, (casa 0, lado 1): <strong>T = {(casa 1, lado 0), (casa 4, lado 0)}</strong>.
+    </p>
+
+    <h4>Iterações 4, 5 e 6, e a parada</h4>
+    <p>
+      O algoritmo continua andando entre soluções de FO 5, sempre proibindo o caminho de volta, mas sem bater o recorde.
+      Depois da iteração 6, o teste do <code>while</code> dá <code>Iter − MelhorIter = 6 − 2 = 4</code>, que é maior que <code>BT_Max = 3</code>: <strong>pára</strong>. A saída é <code>S*</code>, com FO 5.
+    </p>
+    <div class="alert alert-success">
+      <strong>O que esse exemplo mostra:</strong> a Tabu anda mesmo sem melhorar (iteração 1), a lista impede voltar (iteração 2), e um movimento sai da lista depois de |T| iterações (iteração 3).
+      <strong>Aspiração</strong> não apareceu aqui. Ela acontece quando uma vizinha proibida tem FO <strong>maior que o recorde</strong>: aí ela é liberada, porque uma solução melhor que todas as já vistas não pode ser repetida.
+    </div>
+
+    <h3>6.5 O código</h3>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th>Algoritmo base (slide)</th><th>Código</th></tr></thead>
+      <tbody>
+        <tr><td>1. DADO (A, BT<sub>max</sub>, |T| e S)</td><td>parâmetros <code>Tam_Tab</code>, <code>BT_Max</code> (A é o teste do recorde); <code>s</code> é a entrada</td></tr>
+        <tr><td>2. S* ← S</td><td><code>s</code> guarda <code>S*</code>; a cópia <code>atual</code> faz o papel de <code>S</code></td></tr>
+        <tr><td>3–4. Iter ← 0; MelhorIter ← 0</td><td><code>int iter = 0, melhor_iter = 0;</code></td></tr>
+        <tr><td>5. T ← ∅</td><td>preenche a lista com <code>-1</code> (nenhum ponto é -1)</td></tr>
+        <tr><td>7. ENQUANTO (Iter − MelhorIter ≤ BT<sub>max</sub>)</td><td><code>while (iter - melhor_iter &lt;= BT_Max &amp;&amp; tempo_total &lt; Tem_Max)</code></td></tr>
+        <tr><td>8. Iter ← Iter + 1</td><td><code>iter++;</code></td></tr>
+        <tr><td>9. GERAR S' ← melhor vizinho com m ∉ T ou f(S') &gt; A(f(S))</td><td>os dois <code>for</code>: C-M-N em toda a vizinhança, pula proibida sem aspiração, guarda a melhor em <code>escolhida</code></td></tr>
+        <tr><td>10. ATUALIZAR (T)</td><td>põe <code>(esc_pt, esc_pos_antiga)</code> em <code>tabu[prox]</code> e avança <code>prox</code></td></tr>
+        <tr><td>11. S ← S'</td><td><code>memcpy(&amp;atual, &amp;escolhida, ...)</code>, mesmo se for pior</td></tr>
+        <tr><td>12–14. SE f(S') &gt; f(S*): S* ← S'; MelhorIter ← Iter</td><td>copia para <code>s</code>, <code>melhor_iter = iter</code>, anota <code>tempo_melhor</code></td></tr>
+        <tr><td>18. RETORNAR (S*)</td><td><code>s</code>, <code>tempo_total</code>, <code>tempo_melhor</code></td></tr>
+      </tbody>
+    </table></div>
+    <pre class="code"><code>#define MAX_TABU 1000
+int tabu_pt[MAX_TABU];                              // lista tabu: o ponto...
+int tabu_pos[MAX_TABU];                             // ...e a posição para onde ele NÃO pode voltar
+
+void busca_tabu(Solucao&amp; s, int Tam_Tab, int BT_Max, double Tem_Max, double&amp; tempo_total, double&amp; tempo_melhor)
+{
+    Solucao atual, vizinha, escolhida;
+    int iter = 0, melhor_iter = 0;
+    int prox = 0;                                   // onde entra o próximo proibido (fila circular)
+    for (int k = 0; k &lt; Tam_Tab; k++)               // T vazia
+    {
+        tabu_pt[k] = -1;
+        tabu_pos[k] = -1;
+    }
+    memcpy(&amp;atual, &amp;s, sizeof(Solucao));            // S = solução de entrada; s guarda S* (a melhor)
+    clock_t inicio = clock();
+    tempo_total = 0;
+    tempo_melhor = 0;
+    while (iter - melhor_iter &lt;= BT_Max &amp;&amp; tempo_total &lt; Tem_Max)
+    {
+        iter++;
+        int achou = 0, esc_pt = -1, esc_pos_antiga = -1;
+        for (int pt = 0; pt &lt; num_pts; pt++)        // varre TODA a vizinhança (como a melhor melhora)
+            for (int pos = 0; pos &lt; num_pos; pos++)
+            {
+                if (pos == atual.vet_sol[pt])
+                    continue;                                   // mesma posição: não é vizinha
+                memcpy(&amp;vizinha, &amp;atual, sizeof(Solucao));      // C
+                vizinha.vet_sol[pt] = pos;                      // M
+                calcular_fo(vizinha);                           // N
+                int eh_tabu = 0;
+                for (int k = 0; k &lt; Tam_Tab; k++)               // o movimento está na lista?
+                    if (tabu_pt[k] == pt &amp;&amp; tabu_pos[k] == pos)
+                        eh_tabu = 1;
+                if (eh_tabu &amp;&amp; vizinha.fo &lt;= s.fo)              // proibida e não bate o recorde
+                    continue;                                   // (aspiração: se bater, libera)
+                if (!achou || vizinha.fo &gt; escolhida.fo)        // D: a melhor permitida até agora
+                {
+                    memcpy(&amp;escolhida, &amp;vizinha, sizeof(Solucao));
+                    esc_pt = pt;
+                    esc_pos_antiga = atual.vet_sol[pt];         // para onde ele não pode voltar
+                    achou = 1;
+                }
+            }
+        if (!achou)                                             // todas proibidas (raro)
+            break;
+        tabu_pt[prox] = esc_pt;                                 // ATUALIZAR(T): proíbe voltar
+        tabu_pos[prox] = esc_pos_antiga;
+        prox = (prox + 1) % Tam_Tab;                            // a mais antiga sai na próxima
+        memcpy(&amp;atual, &amp;escolhida, sizeof(Solucao));            // S &lt;- S' (mesmo se for pior)
+        if (atual.fo &gt; s.fo)                                    // recorde?
+        {
+            memcpy(&amp;s, &amp;atual, sizeof(Solucao));
+            melhor_iter = iter;
+            tempo_melhor = (double)(clock() - inicio) / CLOCKS_PER_SEC;
+        }
+        tempo_total = (double)(clock() - inicio) / CLOCKS_PER_SEC;
+    }
+}</code></pre>
+    <p>
+      <strong>Por que <code>!achou ||</code>?</strong> A primeira vizinha permitida tem que entrar como escolhida, seja qual for a FO dela.
+      Na melhor melhora da P3, a <code>melhor</code> começava igual a <code>s</code> e só aceitava quem fosse melhor.
+      Aqui a escolhida <strong>pode ser pior que a atual</strong>, então ela começa "vazia".
+    </p>
+    <p>No <code>main</code>, como no SA, a Tabu precisa de uma solução pronta antes:</p>
+    <pre class="code"><code>srand(time(NULL));
+Solucao s;
+double tempo_total, tempo_melhor;
+heur_cons_ale_gul(s);
+printf("FO inicial: %d\n", s.fo);
+busca_tabu(s, 7, 1000, 5, tempo_total, tempo_melhor);
+escrever_solucao(s, "");
+printf("Tempo total: %.2f s | melhor encontrada em: %.2f s\n", tempo_total, tempo_melhor);</code></pre>
+
+    <h3>6.6 Erros que custam nota</h3>
+    <ul>
+      <li><strong>Só andar quando melhora:</strong> aí é a melhor melhora da P3 de novo. A Tabu anda <strong>sempre</strong> para a melhor permitida.</li>
+      <li><strong>Começar a <code>escolhida</code> igual à atual</strong> (como a <code>melhor</code> da P3): nenhuma vizinha pior é escolhida e a busca trava.</li>
+      <li><strong>Guardar na lista o movimento feito, e não o reverso:</strong> proíbe continuar em frente em vez de proibir voltar. Guarde a posição <strong>antiga</strong>.</li>
+      <li><strong>Esquecer a aspiração:</strong> não zera a questão, mas o slide pede. É o <code>&amp;&amp; vizinha.fo &lt;= s.fo</code> no teste de pular.</li>
+      <li><strong>Esquecer <code>melhor_iter = iter</code> no recorde:</strong> a busca pára depois de <code>BT_Max</code> iterações, mesmo melhorando.</li>
+      <li><strong><code>Tam_Tab</code> maior que <code>MAX_TABU</code>:</strong> escreve fora do vetor.</li>
+      <li><strong>Sinais em minimizar:</strong> escolhida com <code>&lt;</code>, recorde com <code>&lt;</code> e aspiração com <code>vizinha.fo &gt;= s.fo</code> para pular (proibida e não é menor que o recorde).</li>
+    </ul>
+
+    <h3>6.7 Como conferir</h3>
+    <ol>
+      <li><strong>FO final ≥ FO inicial</strong> (maximiza). <code>s</code> só muda com recorde.</li>
+      <li>A nota guardada bate com a recalculada, e a solução é válida.</li>
+      <li><strong>Teste do BT_Max:</strong> com <code>BT_Max</code> pequeno (20) e muito tempo (5 s), ela tem que parar <strong>antes</strong> do tempo.</li>
+      <li><code>tempo_melhor ≤ tempo_total</code>.</li>
+    </ol>
+    <div class="alert alert-success">
+      <strong>Meu teste</strong> (g++ MinGW local, <code>Tam_Tab = 7</code>, <code>srand(1)</code> a <code>srand(3)</code>):
+      <ul>
+        <li><code>i25</code> com 0,3 s: a FO foi de 17, 14 e 15 para 21, 22 e 21.</li>
+        <li><code>BT_Max = 20</code> com 5 s: parou em menos de 0,01 s, com a mesma FO. O critério de parada funciona.</li>
+        <li><code>i1000</code> com 2 s: de 600 e 570 para 690 e 661, abaixo do SA (916). Cada iteração da Tabu avalia a vizinhança <strong>inteira</strong> (1000 pontos × 3 posições = 3000 vizinhas, cada uma com <code>calcular_fo</code> completo), então em 2 s ela faz poucas iterações. Com mais tempo ela continua subindo: o <code>tempo_melhor</code> ficou igual ao total.</li>
+      </ul>
+      Passou nas quatro conferências.
+    </div>
+
+    <h3>6.8 Perguntas de verificação</h3>
+    <ol>
+      <li>Qual é a diferença entre o "D" da melhor melhora da P3 e o da Busca Tabu?</li>
+      <li>No PRCP, o ponto 7 saiu da posição 2 e foi para a posição 0. O que entra na lista tabu?</li>
+      <li>Para que serve a lista tabu? O que acontece sem ela?</li>
+      <li>Uma vizinha proibida tem FO 50 e o recorde é 48 (maximiza). Ela pode ser escolhida? Por quê?</li>
+      <li>Com <code>BT_Max = 10</code>, o recorde foi batido pela última vez na iteração 35. Em que iteração a busca pára?</li>
+    </ol>
+    <details>
+      <summary>Respostas</summary>
+      <ol>
+        <li>Na P3, só anda se a melhor vizinha for melhor que a atual; senão, pára. Na Tabu, anda <strong>sempre</strong> para a melhor vizinha permitida, mesmo pior, e pára por <code>BT_Max</code> ou tempo.</li>
+        <li>O par <strong>(ponto 7, posição 2)</strong>: o ponto 7 fica proibido de voltar para a posição 2.</li>
+        <li>Para evitar ciclagem. Sem ela, depois de andar para uma vizinha pior, a melhor vizinha seria voltar, e o algoritmo ficaria indo e voltando.</li>
+        <li>Sim, pela <strong>aspiração</strong>: 50 &gt; 48 bate o recorde, e uma solução melhor que todas as já vistas não pode ser repetida.</li>
+        <li>O teste é feito <strong>antes</strong> do <code>iter++</code>. Com <code>iter</code> = 45, <code>45 − 35 = 10 ≤ 10</code>: ainda entra e faz a iteração 46. Com <code>iter</code> = 46, <code>46 − 35 = 11 &gt; 10</code>: pára. A última iteração é a <strong>46</strong>, depois de 11 iterações sem melhora (36 a 46).</li>
+      </ol>
+    </details>
+
+    <h2 id="grasp">7. GRASP: o algoritmo base dos slides</h2>
+    <div class="alert alert-info">
+      <strong>Fonte:</strong> slides da Unidade VI do professor (<code>PlanoEnsino\MO-Un6.pdf</code>), "Algoritmo Base". Assim como a Tabu, nenhuma prova antiga desta pasta cobrou o GRASP, mas ele está na ementa da P4.
+      É o método que mais reaproveita: a construtiva da P2 e a busca local da P3.
+    </div>
+
+    <h3>7.1 A ideia</h3>
+    <p>
+      <strong>Imagine</strong> que você procura o ponto mais alto de uma serra, mas só sabe subir (a busca local da P3).
+      Se você começa sempre do mesmo lugar, sobe sempre o mesmo morro.
+      A solução do GRASP: ser levado de helicóptero para <strong>vários pontos de partida diferentes</strong>, subir a partir de cada um, e no fim contar qual foi o topo mais alto.
+    </p>
+    <p>
+      O helicóptero não te larga em qualquer lugar: ele escolhe lugares <strong>que parecem bons</strong>, mas com um pouco de sorteio, para não largar sempre no mesmo.
+      É daí que vem o nome: <strong>G</strong>reedy (guloso) <strong>R</strong>andomized (aleatório) <strong>A</strong>daptive <strong>S</strong>earch <strong>P</strong>rocedure.
+      Os slides chamam de método <strong>multi-start</strong> (vários inícios), com duas fases por iteração:
+    </p>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th>Fase</th><th>O que faz</th><th>De onde vem</th></tr></thead>
+      <tbody>
+        <tr><td>1. Construção</td><td>Monta uma solução nova, misturando gulosidade e sorteio (LRC)</td><td>P2: construtiva aleatória-gulosa</td></tr>
+        <tr><td>2. Busca local</td><td>Sobe dessa solução até um ótimo local</td><td>P3: primeira ou melhor melhora</td></tr>
+        <tr><td>(depois)</td><td>Se o resultado for o melhor até agora, guarda</td><td>o "guarde a melhor" de sempre</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>7.2 A LRC (Lista Restrita de Candidatos)</h3>
+    <p>
+      <strong>Imagine</strong> um técnico escalando o time, posição por posição. O 100% guloso escala sempre o melhor jogador disponível, e todo jogo sai o mesmo time.
+      O técnico GRASP monta uma <strong>lista dos "bons o bastante"</strong> e sorteia um deles. O time é sempre bom, mas muda de um jogo para outro.
+    </p>
+    <p>A LRC baseada em qualidade (slide "Calibração de Parâmetros") usa uma nota de corte:</p>
+    <pre class="code"><code>limite = c_min + alfa * (c_max - c_min)     // entra na LRC quem tem custo &lt;= limite</code></pre>
+    <p>
+      No PRCP, o "custo" de pôr o ponto numa posição é <strong>quantos conflitos ela cria com os pontos já rotulados</strong>.
+      Exemplo: o ponto tem 4 posições, com custos <code>pos0 = 2</code>, <code>pos1 = 0</code>, <code>pos2 = 1</code>, <code>pos3 = 3</code>. Então <code>c_min = 0</code> e <code>c_max = 3</code>.
+    </p>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th>alfa</th><th>Limite</th><th>LRC</th><th>Comportamento</th></tr></thead>
+      <tbody>
+        <tr><td>0</td><td>0 + 0 × 3 = 0</td><td>{pos1}</td><td>100% gulosa: sempre a melhor, nunca varia</td></tr>
+        <tr><td>0,5</td><td>0 + 0,5 × 3 = 1,5</td><td>{pos1, pos2}</td><td>sorteia entre as duas melhores</td></tr>
+        <tr><td>1</td><td>0 + 1 × 3 = 3</td><td>{pos0, pos1, pos2, pos3}</td><td>100% aleatória: qualquer uma</td></tr>
+      </tbody>
+    </table></div>
+    <p>
+      A LRC <strong>nunca fica vazia</strong>: quem tem <code>c_min</code> sempre passa no limite. Por isso o <code>rand() % tam</code> é seguro.
+      Os slides avisam que é preciso <strong>equilibrar</strong>: alfa perto de 0 gera soluções parecidas; perto de 1 gera soluções ruins.
+    </p>
+
+    <h3>7.3 Os parâmetros, cada um com sua analogia</h3>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th>Parâmetro (slide)</th><th>No código</th><th>No helicóptero</th><th>Valor no exemplo</th></tr></thead>
+      <tbody>
+        <tr><td>G<sub>max</sub></td><td><code>G_Max</code></td><td>Quantos voos (pontos de partida) o helicóptero faz</td><td>3 voos</td></tr>
+        <tr><td>LRC</td><td><code>alfa</code></td><td>O quanto o piloto pode variar o lugar de pouso</td><td>(o exemplo dá as soluções construídas prontas)</td></tr>
+        <tr><td>(tempo)</td><td><code>Tem_Max</code></td><td>Combustível do helicóptero</td><td>"até parar"</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>7.4 Uma execução feita na mão (a mesma rua de 5 casas)</h3>
+    <p>
+      Para focar no GRASP, o exemplo dá a solução que a construção montou em cada voo. A busca local é a primeira melhora da P3: testa trocar as casas 0, 1, 2, 3, 4 nessa ordem, aceita a primeira que melhora e recomeça.
+      <code>f*</code> começa em −∞ (o slide manda, para maximizar).
+    </p>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th>Voo (Iter)</th><th>Fase 1: construída</th><th>FO</th><th>Fase 2: busca local</th><th>FO final</th><th>f*</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td><code>[1, 0, 0, 1, 0]</code></td><td>3</td><td>Nenhuma troca melhora: já é ótimo local. Fica igual</td><td>3</td><td>3 &gt; −∞: <strong>guarda</strong></td></tr>
+        <tr><td>2</td><td><code>[1, 0, 1, 1, 0]</code></td><td>3</td><td>Também é ótimo local. Fica igual</td><td>3</td><td>3 não é &gt; 3: <strong>não guarda</strong></td></tr>
+        <tr><td>3</td><td><code>[1, 1, 0, 0, 0]</code></td><td>1</td><td>Casa 0 → <code>[0, 1, 0, 0, 0]</code> (FO 3); recomeça; casa 3 → <code>[0, 1, 0, 1, 0]</code> (FO 5); recomeça; nada melhora</td><td>5</td><td>5 &gt; 3: <strong>guarda</strong></td></tr>
+      </tbody>
+    </table></div>
+    <div class="alert alert-success">
+      <strong>O que esse exemplo mostra:</strong> os voos 1 e 2 começaram melhores (FO 3), mas caíram em morrinhos.
+      O voo 3 começou <strong>pior</strong> (FO 1) e foi o que chegou ao topo (5). Importa onde a busca local termina, não onde começa.
+      Por isso a variedade da construção é essencial: com alfa = 0, os voos pousariam quase sempre no mesmo lugar (só os empates seriam sorteados) e o GRASP viraria praticamente uma busca local só.
+    </div>
+
+    <h3>7.5 O código</h3>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th>Algoritmo base (slide)</th><th>Código</th></tr></thead>
+      <tbody>
+        <tr><td>1. DADO (G<sub>max</sub> e LRC)</td><td>parâmetros <code>G_Max</code> e <code>alfa</code></td></tr>
+        <tr><td>2. f* ← −∞ (maximização)</td><td><code>s.fo = -1;</code> (no PRCP a FO nunca é negativa, então −1 faz o papel de −∞)</td></tr>
+        <tr><td>3. Iter ← 0</td><td><code>int iter = 0;</code></td></tr>
+        <tr><td>4. ENQUANTO (Iter ≤ G<sub>max</sub>)</td><td><code>while (iter &lt;= G_Max &amp;&amp; tempo_total &lt; Tem_Max)</code></td></tr>
+        <tr><td>5. Iter ← Iter + 1</td><td><code>iter++;</code></td></tr>
+        <tr><td>6. S ← HEURÍSTICA_DE_CONSTRUÇÃO (LRC)</td><td><code>construtiva_lrc(atual, alfa);</code></td></tr>
+        <tr><td>7. S ← BUSCA_LOCAL (S)</td><td><code>busca_local(atual);</code></td></tr>
+        <tr><td>8–10. SE f(S) &gt; f*: f* ← f(S); S* ← S</td><td><code>if (atual.fo &gt; s.fo)</code> copia para <code>s</code> (a <code>fo</code> vai junto) e anota <code>tempo_melhor</code></td></tr>
+        <tr><td>13. RETORNAR (S*)</td><td><code>s</code>, <code>tempo_total</code>, <code>tempo_melhor</code></td></tr>
+      </tbody>
+    </table></div>
+    <pre class="code"><code>#define MAX_POS 50
+
+// Fase 1: construtiva aleatória-gulosa com LRC (alfa: 0 = gulosa, 1 = aleatória)
+void construtiva_lrc(Solucao&amp; s, double alfa)
+{
+    int custo[MAX_POS], lrc[MAX_POS];
+    for (int i = 0; i &lt; num_pts; i++)
+        s.vet_sol[i] = -1;                                  // ninguém rotulado ainda
+    for (int i = 0; i &lt; num_pts; i++)                       // rotula os pontos em ordem
+    {
+        int c_min = 1000000, c_max = -1;
+        for (int pos = 0; pos &lt; num_pos; pos++)             // custo = conflitos com os já rotulados
+        {
+            int id = get_id(i, pos);
+            custo[pos] = 0;
+            for (int k = 0; k &lt; vet_qtd_conf[id]; k++)
+            {
+                int pt = get_ponto(mat_conflitos[id][k]);
+                int p2 = get_posicao(mat_conflitos[id][k]);
+                if (s.vet_sol[pt] == p2)                    // o vizinho já está na posição conflitante
+                    custo[pos]++;
+            }
+            if (custo[pos] &lt; c_min) c_min = custo[pos];
+            if (custo[pos] &gt; c_max) c_max = custo[pos];
+        }
+        double limite = c_min + alfa * (c_max - c_min);     // nota de corte
+        int tam = 0;
+        for (int pos = 0; pos &lt; num_pos; pos++)
+            if (custo[pos] &lt;= limite)                       // passou no corte: entra na LRC
+            {
+                lrc[tam] = pos;
+                tam++;
+            }
+        s.vet_sol[i] = lrc[rand() % tam];                   // sorteia um da LRC
+    }
+    calcular_fo(s);
+}
+
+// Fase 2: primeira melhora da P3 (movimento: um ponto muda de posição)
+void busca_local(Solucao&amp; s)
+{
+    Solucao vizinha;
+    INICIO: ;
+    for (int pt = 0; pt &lt; num_pts; pt++)
+        for (int pos = 0; pos &lt; num_pos; pos++)
+        {
+            if (pos == s.vet_sol[pt])
+                continue;
+            memcpy(&amp;vizinha, &amp;s, sizeof(Solucao));          // C
+            vizinha.vet_sol[pt] = pos;                      // M
+            calcular_fo(vizinha);                           // N
+            if (vizinha.fo &gt; s.fo)                          // D (maximiza)
+            {
+                memcpy(&amp;s, &amp;vizinha, sizeof(Solucao));
+                goto INICIO;
+            }
+        }
+}
+
+void grasp(Solucao&amp; s, int G_Max, double alfa, double Tem_Max, double&amp; tempo_total, double&amp; tempo_melhor)
+{
+    Solucao atual;
+    int iter = 0;
+    s.fo = -1;                                              // f* &lt;- -infinito (maximiza)
+    clock_t inicio = clock();
+    tempo_total = 0;
+    tempo_melhor = 0;
+    while (iter &lt;= G_Max &amp;&amp; tempo_total &lt; Tem_Max)          // slide: ENQUANTO (Iter &lt;= Gmax)
+    {
+        iter++;
+        construtiva_lrc(atual, alfa);                       // fase 1: constrói (já calcula a fo)
+        busca_local(atual);                                 // fase 2: sobe até o ótimo local
+        if (atual.fo &gt; s.fo)                                // melhor que f*?
+        {
+            memcpy(&amp;s, &amp;atual, sizeof(Solucao));            // S* &lt;- S (f* vai junto, em s.fo)
+            tempo_melhor = (double)(clock() - inicio) / CLOCKS_PER_SEC;
+        }
+        tempo_total = (double)(clock() - inicio) / CLOCKS_PER_SEC;
+    }
+}</code></pre>
+    <p>No <code>main</code>, ao contrário do SA e da Tabu, o GRASP <strong>não precisa</strong> de solução inicial: ele mesmo constrói.</p>
+    <pre class="code"><code>srand(time(NULL));
+Solucao s;
+double tempo_total, tempo_melhor;
+grasp(s, 1000, 0.3, 5, tempo_total, tempo_melhor);
+escrever_solucao(s, "");
+printf("Tempo total: %.2f s | melhor encontrada em: %.2f s\n", tempo_total, tempo_melhor);</code></pre>
+
+    <h3>7.6 Detalhes que o professor pode cobrar</h3>
+    <ul>
+      <li><strong>f* ← −∞ e +∞:</strong> para maximizar, comece <code>s.fo</code> com um valor que qualquer solução vença (aqui −1). Para <strong>minimizar</strong>, o slide diz <code>f* ← ∞</code>: use um número enorme, como <code>s.fo = 1000000000;</code>, e o teste vira <code>if (atual.fo &lt; s.fo)</code>.</li>
+      <li><strong><code>Iter ≤ G<sub>max</sub></code> faz G<sub>max</sub> + 1 voltas:</strong> o teste vem antes do <code>iter++</code>. O código segue o slide ao pé da letra. Se o enunciado pedir "exatamente G<sub>max</sub> iterações", use <code>&lt;</code>.</li>
+      <li><strong>A construção da prova pode já vir pronta:</strong> o <code>prova4.cpp</code> traz <code>heur_cons_ale_gul</code> (ordem dos pontos sorteada, posição gulosa), mas sem <code>alfa</code>. Se o enunciado pedir LRC, escreva a sua. Se só pedir "construção aleatória-gulosa", pode usar a pronta.</li>
+      <li><strong>O tempo é conferido entre voos:</strong> como no pseudo-código, uma volta começada vai até o fim. Em instâncias grandes, a última volta pode passar um pouco de <code>Tem_Max</code>.</li>
+    </ul>
+
+    <h3>7.7 Erros que custam nota</h3>
+    <ul>
+      <li><strong>Não reiniciar a solução a cada voo</strong> (construir em cima da anterior): na construção, todos os pontos começam em <code>-1</code>.</li>
+      <li><strong>Guardar o resultado da construção, e não o da busca local:</strong> a comparação com <code>f*</code> vem <strong>depois</strong> da fase 2.</li>
+      <li><strong>Esquecer o <code>calcular_fo</code> no fim da construção:</strong> a busca local compara com uma nota errada.</li>
+      <li><strong>Esquecer o <code>f* ← −∞</code>:</strong> se <code>s</code> vier com lixo na <code>fo</code>, o primeiro voo pode nunca ser guardado.</li>
+      <li><strong><code>alfa</code> em porcentagem:</strong> se o teste passar <code>30</code>, divida por 100.</li>
+      <li><strong>Busca local com o sinal errado:</strong> <code>&gt;</code> para maximizar, <code>&lt;</code> para minimizar, sempre estrito.</li>
+    </ul>
+
+    <h3>7.8 Como conferir</h3>
+    <ol>
+      <li>A nota guardada bate com a recalculada, e a solução é válida.</li>
+      <li><strong>Teste do G_Max:</strong> com <code>G_Max</code> pequeno (5) e muito tempo (5 s), ele tem que parar <strong>antes</strong> do tempo.</li>
+      <li><strong>Teste do alfa:</strong> imprima a FO de cada construção. Com <code>alfa = 1</code>, as FOs variam muito e são baixas. Com <code>alfa = 0</code>, ficam altas e parecidas.</li>
+      <li><code>tempo_melhor ≤ tempo_total</code>.</li>
+    </ol>
+    <div class="alert alert-success">
+      <strong>Meu teste</strong> (g++ MinGW local, <code>alfa = 0,3</code>, <code>srand(1)</code> a <code>srand(3)</code>):
+      <ul>
+        <li><code>i25</code> com 0,3 s: FO <strong>23</strong> nas três sementes, o mesmo valor do SA.</li>
+        <li><code>G_Max = 5</code> com 5 s: parou em menos de 0,01 s, com FO 20. O critério de parada funciona.</li>
+        <li><code>i1000</code> com 2 s: FO 762 e 781, terminando em 2,4 s e 2,3 s. A última volta passou do limite, como explicado em 7.6.</li>
+        <li>Só a construção, 6 vezes na <code>i1000</code>: <code>alfa = 0</code> deu 557 a 594; <code>alfa = 1</code> deu 284 a 322. O alfa muda mesmo a qualidade das soluções construídas.</li>
+      </ul>
+      Passou nas checagens de nota e validade.
+    </div>
+
+    <h3>7.9 Perguntas de verificação</h3>
+    <ol>
+      <li>Quais são as duas fases de cada iteração do GRASP, e de qual prova vem cada uma?</li>
+      <li>Custos <code>pos0 = 4</code>, <code>pos1 = 1</code>, <code>pos2 = 1</code>, <code>pos3 = 7</code> e <code>alfa = 0,5</code>. Qual é o limite e quem entra na LRC?</li>
+      <li>O que acontece com o GRASP se <code>alfa = 0</code>? E se <code>alfa = 1</code>?</li>
+      <li>Por que <code>s.fo</code> começa em −1 neste código? E num problema de minimizar?</li>
+      <li>No exemplo da rua, o voo 3 começou com FO 1 e terminou com FO 5. O que isso ensina sobre "começar bem"?</li>
+    </ol>
+    <details>
+      <summary>Respostas</summary>
+      <ol>
+        <li>Construção aleatória-gulosa (da P2) e busca local (da P3).</li>
+        <li><code>c_min = 1</code> e <code>c_max = 7</code>; limite = <code>1 + 0,5 × 6 = 4</code>. Entram pos0 (4), pos1 (1) e pos2 (1). A pos3 (7) fica fora.</li>
+        <li>Com <code>alfa = 0</code>, a LRC só tem as de custo mínimo; com o PRCP, que tem empates, ainda sobra um pouco de sorteio, mas os voos ficam muito parecidos. Com <code>alfa = 1</code>, a construção vira 100% aleatória: soluções variadas, porém ruins, e a busca local tem mais trabalho.</li>
+        <li>É o "f* ← −∞" do slide: qualquer FO real (≥ 0) vence −1, então o primeiro voo é sempre guardado. Para minimizar, começa com um número enorme (o "+∞"), e o teste vira <code>&lt;</code>.</li>
+        <li>Uma solução inicial melhor não garante um resultado melhor: o que importa é onde a busca local termina. Por isso o GRASP testa vários começos.</li>
+      </ol>
+    </details>
+
+    <h2 id="regra">8. Do enunciado ao código: a regra passo a passo</h2>
+    <p>
+      <strong>Imagine</strong> um mecânico com uma ficha de inspeção: ele não decide "de cabeça" o que olhar, segue a ficha item por item, e cada item tem uma resposta que manda fazer algo.
+      Esta seção é a ficha da P4. Vale para qualquer problema, porque cada passo procura um <strong>gatilho no texto</strong> e diz <strong>o que escrever</strong>.
+    </p>
+
+    <h3>Passo 1: qual método? (procure estas palavras)</h3>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th>Se o enunciado ou pseudo-código fala em…</th><th>É o método</th><th>Seção</th></tr></thead>
+      <tbody>
+        <tr><td>população, indivíduo, elite, crossover/cruzamento, mutação, Tam_Pop</td><td>Algoritmo Genético</td><td><a href="#ag">4</a></td></tr>
+        <tr><td>temperatura, Tem_Ini, Tax_Res, Tem_Con, SA_Max, e<sup>−Δ/T</sup></td><td>Simulated Annealing</td><td><a href="#sa">5</a></td></tr>
+        <tr><td>lista tabu, |T|, BT<sub>max</sub>, aspiração, movimento proibido</td><td>Busca Tabu</td><td><a href="#tabu">6</a></td></tr>
+        <tr><td>construção, LRC, alfa, G<sub>max</sub>, busca local repetida, multi-start</td><td>GRASP</td><td><a href="#grasp">7</a></td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>Passo 2: minimizar ou maximizar? (procure o objetivo)</h3>
+    <p>
+      Gatilhos: "minimizar", "menor custo", "reduzir" → <strong>minimiza</strong>. "Maximizar", "maior número", "o máximo de" → <strong>maximiza</strong>.
+      Depois, troque <strong>todos</strong> estes lugares (se o pseudo-código for de minimizar e o problema de maximizar, o slide costuma ter a linha "Maximização: …" embaixo):
+    </p>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th>Lugar</th><th>Minimizar</th><th>Maximizar</th></tr></thead>
+      <tbody>
+        <tr><td>Teste do recorde (todos)</td><td><code>vizinha.fo &lt; s.fo</code></td><td><code>vizinha.fo &gt; s.fo</code></td></tr>
+        <tr><td>SA: conta do delta ("quanto piorou")</td><td><code>vizinha.fo - atual.fo</code></td><td><code>atual.fo - vizinha.fo</code></td></tr>
+        <tr><td>Tabu: escolhida</td><td><code>vizinha.fo &lt; escolhida.fo</code></td><td><code>vizinha.fo &gt; escolhida.fo</code></td></tr>
+        <tr><td>Tabu: pular proibida (sem aspiração)</td><td><code>eh_tabu &amp;&amp; vizinha.fo &gt;= s.fo</code></td><td><code>eh_tabu &amp;&amp; vizinha.fo &lt;= s.fo</code></td></tr>
+        <tr><td>GRASP: f* inicial</td><td>número enorme (+∞)</td><td>−1 ou número muito negativo (−∞)</td></tr>
+        <tr><td>GRASP: busca local</td><td><code>&lt;</code></td><td><code>&gt;</code></td></tr>
+        <tr><td>AG: ordenação (melhor primeiro)</td><td>troca se <code>pop[i].fo &gt; pop[i+1].fo</code></td><td>troca se <code>pop[i].fo &lt; pop[i+1].fo</code></td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>Passo 3: qual é o movimento? (procure a regra de viabilidade)</h3>
+    <p>É a mesma regra da P3. O movimento vira a <code>gerar_vizinha</code> (SA), a mutação (AG) e os <code>for</code> da vizinhança (Tabu e busca local do GRASP).</p>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th>Gatilho no texto</th><th>Movimento</th></tr></thead>
+      <tbody>
+        <tr><td>"cada item recebe um valor/grupo/posição" (PRCP: "exatamente uma posição candidata")</td><td>mudar o valor de uma posição do vetor para outro diferente</td></tr>
+        <tr><td>"exatamente p/k escolhidos" (hubs)</td><td>trocar um escolhido por um não escolhido</td></tr>
+        <tr><td>"cada elemento uma vez", rota, ordem, permutação</td><td>trocar duas posições de lugar (e o crossover precisa de cuidado: ver 4.5)</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>Passo 4: a assinatura (leia a linha ENTRADA e a SAÍDA)</h3>
+    <ul>
+      <li><strong>Cada nome da ENTRADA vira um parâmetro, na mesma ordem.</strong> Inteiros (tamanhos, contagens) → <code>int</code>. Taxas, temperaturas, probabilidades, tempo → <code>double</code>.</li>
+      <li>Se a ENTRADA tem <code>S</code> (SA, Tabu), a solução entra pronta: <code>Solucao&amp; s</code>, e o <code>main</code> chama a construtiva antes. Se não tem (AG, GRASP), o método cria as soluções, e <code>s</code> só recebe a saída.</li>
+      <li><strong>SAÍDA "tempo total" e "tempo para encontrar a melhor"</strong> → <code>double&amp; tempo_total, double&amp; tempo_melhor</code> e o relógio da <a href="#relogio">seção 3</a>.</li>
+      <li>"Não devem possuir retorno" → tudo <code>void</code>.</li>
+    </ul>
+    <pre class="code"><code>// molde: ENTRADA: A; B; C; Tem_Max;   SAÍDA: melhor; tempo total; tempo da melhor
+void metodo(Solucao&amp; s, int A, double B, double C, double Tem_Max, double&amp; tempo_total, double&amp; tempo_melhor);</code></pre>
+
+    <h3>Passo 5: o que já vem pronto? (Ctrl+F no .cpp e no .h)</h3>
+    <ul>
+      <li>Procure <code>calcular_fo</code>, <code>gerar_vizinha</code>, <code>heur_cons</code>, <code>ordenar</code>. O que existir, <strong>use e não reescreva</strong>: duas funções com o mesmo nome não compilam.</li>
+      <li>Leia o comentário da <code>calcular_fo</code>: ela zera e recalcula tudo, ou depende de algo de fora? (Lembre do <code>mat_custo</code> dos hubs na P3.)</li>
+      <li>Veja os <code>#include</code> do topo. Vai usar <code>exp</code>? Acrescente <code>#include &lt;math.h&gt;</code>. O <code>time.h</code> costuma já vir.</li>
+    </ul>
+
+    <h3>Passo 6: as observações do fim do enunciado</h3>
+    <div class="t-outer"><table class="tab">
+      <thead><tr><th>Gatilho</th><th>Ação</th></tr></thead>
+      <tbody>
+        <tr><td>"limitado em 20.000" (ou qualquer tamanho grande de vetor de <code>Solucao</code>)</td><td><code>new</code> / <code>delete[]</code>, nunca vetor local</td></tr>
+        <tr><td>"NAS ÁREAS INDICADAS"</td><td>cabeçalhos na área do <code>.h</code>, código na área do <code>.cpp</code>, teste na área do <code>main</code></td></tr>
+        <tr><td>"variáveis globais podem ser utilizadas"</td><td>a lista tabu pode ser global</td></tr>
+        <tr><td>"renomeados com o nome e sobrenome"</td><td>renomeie os dois arquivos e corrija o <code>#include</code> do .h no .cpp</td></tr>
+        <tr><td>"Pseudo-código para ordenação"</td><td>copie a bolha do enunciado, trocando <code>criterio</code> por <code>fo</code></td></tr>
+        <tr><td>"Qualquer outro método necessário deverá ser implementado"</td><td>ordenação, construtiva com LRC, busca local etc.: escreva o que faltar</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>Passo 7: antes de entregar</h3>
+    <ol>
+      <li>Compila sem erro (erro de compilação zera).</li>
+      <li>Roda com a menor instância e com tempo curto (1 a 2 s).</li>
+      <li>A nota guardada bate com a recalculada (copie <code>s</code>, chame <code>calcular_fo</code>, compare).</li>
+      <li>A FO final não é pior que a inicial, e <code>tempo_melhor ≤ tempo_total</code>.</li>
+      <li>O arquivo foi renomeado (nome_sobrenome) e o <code>#include</code> corrigido.</li>
+    </ol>
+
+    <!-- ============================================================ -->
+    <h2 id="cola">9. Cola mínima da P4 (para revisar em 1 minuto)</h2>
+    <p>Tudo o que está acima, no menor espaço possível. Para estudar no dia a dia, como o <code>COLA_P3.md</code>.</p>
+
+    <div class="card">
+      <div class="card-title">A frase de cada método</div>
+      <ul>
+        <li><strong>SA:</strong> vizinha sorteada; melhorou, aceita; piorou, aceita com chance <code>exp(-delta/T)</code>; esfria; reaquece se sobrar tempo.</li>
+        <li><strong>Tabu:</strong> olha todas as vizinhas; anda para a melhor não proibida (mesmo pior); proíbe voltar; pára após <code>BT_Max</code> sem recorde.</li>
+        <li><strong>GRASP:</strong> repete: constrói com LRC, sobe com busca local, guarda a melhor.</li>
+        <li><strong>AG:</strong> população ordenada; elite × qualquer → 2 filhos; muta com chance; ordena todos e fica com os <code>Tam_Pop</code> melhores.</li>
+        <li><strong>Em todos:</strong> <code>s</code> guarda a melhor de todas; a atual pode piorar; para quando o tempo acaba.</li>
+      </ul>
+    </div>
+
+    <pre class="code"><code>// ===== RELÓGIO (todos) =====
+clock_t inicio = clock();  tempo_total = 0;  tempo_melhor = 0;
+while (tempo_total &lt; Tem_Max) {
+    ... ;
+    if (RECORDE) { memcpy(&amp;s, &amp;nova, sizeof(Solucao)); tempo_melhor = (double)(clock() - inicio) / CLOCKS_PER_SEC; }
+    tempo_total = (double)(clock() - inicio) / CLOCKS_PER_SEC;
+}
+
+// ===== SA =====  (#include &lt;math.h&gt;)
+atual = s;
+while (tempo) { T = Tem_Ini;
+    while (T &gt; Tem_Con &amp;&amp; tempo) {
+        for (SA_Max) { C; gerar_vizinha; N; delta = QUANTO PIOROU;
+            if (delta &lt; 0) { atual = viz; if (RECORDE) s = viz; }
+            else if (x &lt; exp(-delta / T)) atual = viz; }
+        T = T * Tax_Res; } }
+
+// ===== TABU =====
+atual = s;  lista = -1;  prox = 0;  iter = 0;  melhor_iter = 0;
+while (iter - melhor_iter &lt;= BT_Max &amp;&amp; tempo) { iter++;  achou = 0;
+    for (TODAS as vizinhas) { C; M; N;
+        if (proibida &amp;&amp; NÃO bate recorde) continue;
+        if (!achou || MELHOR que escolhida) { escolhida = viz; guarda REVERSO; achou = 1; } }
+    if (!achou) break;
+    lista[prox] = REVERSO;  prox = (prox + 1) % Tam_Tab;
+    atual = escolhida;  if (RECORDE) { s = atual; melhor_iter = iter; } }
+
+// ===== GRASP =====
+s.fo = -INFINITO (max) / +INFINITO (min);  iter = 0;
+while (iter &lt;= G_Max &amp;&amp; tempo) { iter++;
+    construir_lrc(atual, alfa);   // limite = c_min + alfa*(c_max - c_min); sorteia quem tem custo &lt;= limite
+    busca_local(atual);           // P3
+    if (RECORDE) s = atual; }
+
+// ===== AG =====
+pop = new Solucao[Tam_Pop + 2*Num_Cru];  num_eli = Per_Eli * Tam_Pop (mínimo 1);
+cria Tam_Pop;  ordena;  s = pop[0];
+while (tempo) { tam = Tam_Pop;
+    for (Num_Cru) { p1 = rand() % num_eli;  p2 = rand() % Tam_Pop (!= p1);
+        cruzar(pop[p1], pop[p2], pop[tam], pop[tam+1]);   // corte = 1 + rand() % (n-1)
+        se x &lt; Pro_Mut: mutar(pop[tam]);  se x &lt; Pro_Mut: mutar(pop[tam+1]);  tam += 2; }
+    ordena(pop, tam);  if (pop[0] RECORDE) s = pop[0]; }
+delete[] pop;
+
+// "dado" entre 0 e 1:   double x = (rand() % 1001) / 1000.0;</code></pre>
+
+    <div class="card">
+      <div class="card-title">Os 8 erros que mais custam nota</div>
+      <ol>
+        <li>Faltou <code>#include &lt;math.h&gt;</code> (SA): não compila.</li>
+        <li>Uma variável só para atual e melhor: perde o recorde.</li>
+        <li>Sinal de min/max trocado em algum dos lugares do passo 2.</li>
+        <li>Esqueceu de atualizar <code>tempo_total</code> dentro do laço: não termina.</li>
+        <li>Divisão inteira no tempo ou no delta: use <code>(double)</code>.</li>
+        <li>AG: elite sem ordenar antes; população em vetor local; vetor sem espaço para os filhos.</li>
+        <li>Tabu: guardar o movimento feito em vez do reverso; escolhida começando igual à atual.</li>
+        <li>Reescrever uma função que já vem no .cpp: nome duplicado, não compila.</li>
+      </ol>
+    </div>
+
+    <div class="alert alert-success">
+      <strong>Próximo passo:</strong> pegue a pasta <code>Métodos\Métodos\Prova4\prova4\</code>, abra só o <code>prova4.pdf</code> e faça as 3 questões do AG sem olhar esta página. Use só a regra da seção 8. Depois confira com a seção 4 e rode com a <code>i25</code>.
+    </div>
+
+    <div class="pagenav">
+      <a href="p3-busca-local.html">← P3: Busca local</a>
+      <a href="teoria.html">Teoria →</a>
+    </div>
+  </main>
+
+  <footer>
+    Material de estudo pessoal — Métodos de Otimização. Códigos-modelo autorais, testados com os arquivos da Prova IV da disciplina.
+  </footer>
+
+  <script src="../assets/js/site.js"></script>
+  <script>
+    (function () {
+      var p1 = [0, 3, 1, 2, 0, 1];
+      var p2 = [2, 2, 0, 1, 3, 3];
+      var area = document.getElementById('cx-area');
+      var faixa = document.getElementById('corte');
+      var rotulo = document.getElementById('corte-val');
+      function linha(nome, genes, origem, corte) {
+        var html = '<div class="cx-linha"><span class="cx-rot">' + nome + '</span>';
+        for (var i = 0; i < genes.length; i++) {
+          if (corte !== null && i === corte) html += '<span class="cx-corte" aria-hidden="true"></span>';
+          html += '<span class="cx ' + (origem[i] === 1 ? 'cx-a' : 'cx-b') + '">' + genes[i] + '</span>';
+        }
+        return html + '</div>';
+      }
+      function desenhar() {
+        var c = parseInt(faixa.value, 10);
+        rotulo.textContent = c;
+        var f1 = [], f2 = [], o1 = [], o2 = [], u = [], d = [];
+        for (var i = 0; i < p1.length; i++) {
+          u.push(1); d.push(2);
+          if (i < c) { f1.push(p1[i]); o1.push(1); f2.push(p2[i]); o2.push(2); }
+          else { f1.push(p2[i]); o1.push(2); f2.push(p1[i]); o2.push(1); }
+        }
+        area.innerHTML = linha('Pai 1', p1, u, c) + linha('Pai 2', p2, d, c) + linha('Filho 1', f1, o1, c) + linha('Filho 2', f2, o2, c);
+      }
+      faixa.addEventListener('input', desenhar);
+      desenhar();
+    })();
+    (function () {
+      var t = document.getElementById('sa-t');
+      var d = document.getElementById('sa-d');
+      var tv = document.getElementById('sa-t-val');
+      var dv = document.getElementById('sa-d-val');
+      var res = document.getElementById('sa-res');
+      function calc() {
+        var T = parseFloat(t.value), D = parseInt(d.value, 10);
+        tv.textContent = T.toFixed(1);
+        dv.textContent = D;
+        var p = Math.exp(-D / T);
+        var txt = 'exp(-' + D + ' / ' + T.toFixed(1) + ') = <strong>' + p.toFixed(4) + '</strong>, ou seja, aceita em cerca de <strong>' + (p * 100).toFixed(1) + '%</strong> das vezes.';
+        if (D === 0) txt += ' Empate: aceita sempre.';
+        res.innerHTML = txt;
+      }
+      t.addEventListener('input', calc);
+      d.addEventListener('input', calc);
+      calc();
+    })();
+  </script>
+</body>
+</html>
